@@ -97,19 +97,26 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 except Exception:  # noqa: BLE001 - discovery is best-effort
                     info = None
-                if info is not None:
+                if info is None:
+                    errors["base"] = "discovery_required"
+                else:
                     uplus_id = info.uplus_id or ""
                     device_id = device_id or info.device_id
+                    if not uplus_id:
+                        errors["base"] = "unsupported_model"
 
             name = (user_input.get(CONF_NAME) or "").strip()
             if not name:
                 errors.setdefault("base", "name_required")
             if not device_id:
                 errors.setdefault("base", "device_id_required")
-            if uplus_id and len(uplus_id) >= 20 and uplus_id[16:20] != "0501":
+            if not errors and len(uplus_id) >= 20 and uplus_id[16:20] != "0501":
                 errors["base"] = "unsupported_class"
-            elif (uplus_id
-                  and uplus_id.upper() != CASARTE_CE_AB13LWTUWCU1.uplus_id.upper()):
+            elif (
+                not errors
+                and uplus_id
+                and uplus_id.upper() != CASARTE_CE_AB13LWTUWCU1.uplus_id.upper()
+            ):
                 errors["base"] = "unsupported_model"
 
             if not errors:

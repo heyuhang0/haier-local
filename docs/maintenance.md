@@ -1,8 +1,7 @@
-# Maintenance and reconstruction
+# Maintenance
 
-Commands for changing the vendored code, regenerating the profile data, and
-checking a second appliance. Run from the repository root with the CLI
-dependencies installed:
+Commands for updating dependency snapshots and regenerating derived files. Run
+from the repository root:
 
 ```bash
 python3 -m venv .venv
@@ -24,50 +23,46 @@ The vendored packages are snapshots of
 git clone https://github.com/enapt/haismart-local
 cd haismart-local
 git checkout <upstream-commit>
+rm -rf ../haier-local/custom_components/haier_local/vendor/haier_local_hrdp
 cp -r custom_components/haismart/vendor/haismart_hrdp \
   ../haier-local/custom_components/haier_local/vendor/haier_local_hrdp
+rm -rf ../haier-local/tools/vendor/haismart_extractor
 cp -r custom_components/haismart/vendor/haismart_extractor \
   ../haier-local/tools/vendor/haismart_extractor
 cp LICENSE ../haier-local/custom_components/haier_local/vendor/haier_local_hrdp/LICENSE
 cp LICENSE ../haier-local/tools/vendor/haismart_extractor/LICENSE
 ```
 
-Update the upstream revision in `THIRD_PARTY_NOTICES.md`, then run:
+The profile's `map_typeid` is loaded directly from
+`vendor/haier_local_hrdp/device_models.json.gz`; there is no separate copy to
+regenerate. After updating the snapshot, run:
 
 ```bash
 python -m pytest
-python3 -I tools/refresh_model.py --check
+python3 -I tools/read_washer.py --help
 ```
 
-## Regenerate the class-0501 map
-
-The profile pins both the device's uPlusId and the catalogue map. Edit
-`custom_components/haier_local/profile.py` first if either changes, then:
-
-```bash
-python3 -I tools/refresh_model.py
-python3 -I tools/refresh_model.py --check
-```
-
-This rebuilds `custom_components/haier_local/data/model_0501.json` from the
-vendored `device_models.json.gz`. The output keeps `source_typeid` so the
-selected map is auditable.
+Update the upstream revision in `THIRD_PARTY_NOTICES.md`.
 
 ## Regenerate translations
 
-`tools/generate_component_translations.py` writes `strings.json`,
-`translations/en.json` and `translations/zh-Hans.json` from `specs.py` and
-`enum_defs.py`:
+`tools/generate_component_translations.py` expands the entity and enum tables in
+`specs.py` and `enum_defs.py`. It preserves the existing `config` and `options`
+sections in the translation files:
 
 ```bash
 python3 -I tools/generate_component_translations.py
 ```
 
+Run the tests afterward; they check that the generated entity keys and states
+cover the specs.
+
 ## Refresh cloud descriptions
 
-`tools/refresh_digital_model.py` keeps only the attributes present in the local
-map and writes `custom_components/haier_local/data/digital_model.json`. It
-requires the access token and key produced by the one-time setup:
+`tools/refresh_digital_model.py` keeps the device-declared attributes in
+`custom_components/haier_local/data/digital_model.json`, filtered against the
+profile's class map. It requires the access token and key from the one-time
+setup:
 
 ```bash
 python3 -I tools/china_key.py --mqtt-probe
@@ -75,21 +70,8 @@ python3 -I tools/refresh_digital_model.py
 ```
 
 The second command contacts Haier's cloud; it is not part of normal local
-operation.
-
-## Check another appliance
-
-Use the read-only probe first:
-
-```bash
-python3 -I tools/probe_haier.py <ip>
-```
-
-It reports the uPlusId, class, open ports and uSS localKey version. Do not add a
-profile from UDISCOVERY alone: obtain the class-0501 map, decode a report, and
-verify its values against the cloud shadow before changing
-`custom_components/haier_local/profile.py`. The config flow rejects an unknown
-class-0501 uPlusId; adding support requires a verified profile.
+operation. It fails if any currently declared attribute is absent from the
+cloud response.
 
 ## Validate
 
@@ -98,16 +80,15 @@ python -m pytest
 python3 -I tools/read_washer.py --host <washer-ip>
 ```
 
-The reader and the integration intentionally load the same fixed profile map.
-If the reader succeeds but Home Assistant does not, check the config entry's
-host/key/device id and the HA logs rather than changing the map.
+The reader and integration load the same fixed profile map. If the reader
+succeeds but Home Assistant does not, check the config entry's host/key/device
+id and the HA logs rather than changing the map.
 
-To preserve a report for a future decoder regression test, ask the reader to
-save the decrypted bytes:
+To capture a report for a future decoder test:
 
 ```bash
 python3 -I tools/read_washer.py --host <washer-ip> --raw-out /tmp/status.bin
 ```
 
-Review the bytes before committing a sanitized fixture; they contain device
-state even though they no longer contain the localKey.
+The decrypted bytes contain device state but not the localKey. Review them
+before committing any fixture.

@@ -22,7 +22,7 @@ PROJECT = Path(__file__).resolve().parent.parent
 VENDOR = PROJECT / "custom_components/haier_local/vendor"
 sys.path.insert(0, str(VENDOR))
 
-from haier_local_hrdp.device_model import model_from_record  # noqa: E402
+from haier_local_hrdp.device_model import model_for  # noqa: E402
 from haier_local_hrdp.uss import read_status  # noqa: E402
 
 _profile_spec = importlib.util.spec_from_file_location(
@@ -37,12 +37,11 @@ CASARTE_CE_AB13LWTUWCU1 = _profile.CASARTE_CE_AB13LWTUWCU1
 
 
 def load_model():
-    record = json.loads(CASARTE_CE_AB13LWTUWCU1.model_file.read_text())
-    model = model_from_record(
-        record["typeid"],
-        {"cls": record["cls"], "fields": record["fields"],
-         "alarms": record.get("alarms", [])},
-    )
+    model = model_for(CASARTE_CE_AB13LWTUWCU1.map_typeid)
+    if model is None:
+        raise SystemExit(
+            f"map {CASARTE_CE_AB13LWTUWCU1.map_typeid} is not in the vendored catalogue"
+        )
     return model
 
 

@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Generate strings.json, translations/en.json and translations/zh-Hans.json
-from the entity specs and enum_defs (English is the source language)."""
+"""Expand entity and enum translations from specs.py and enum_defs.py.
+
+The static config/options strings stay in the translation JSON files; this
+script only replaces the ``entity`` section.
+"""
 from __future__ import annotations
 
+import argparse
 import importlib
 import json
 import sys
@@ -19,94 +23,6 @@ sys.modules["haier_local"] = pkg
 
 specs = importlib.import_module("haier_local.specs")
 enum_defs = importlib.import_module("haier_local.enum_defs")
-
-CONFIG_EN = {
-    "config": {
-        "step": {
-            "user": {
-                "title": "Haier Local",
-                "description": "Connect to the washer over its local uSS protocol on TCP 56800. localKey accepts the 32-hex key or a pasted local_key.json.",
-                "data": {
-                    "host": "LAN address",
-                    "local_key": "localKey (32 hex or local_key.json)",
-                    "device_id": "Device ID (optional)",
-                    "name": "Name",
-                    "scan_interval": "Poll interval (seconds)",
-                },
-            },
-        },
-        "error": {
-            "cannot_connect": "Could not decrypt a status report. Check the address and localKey.",
-            "invalid_key": "localKey must be 32 hexadecimal characters (or a local_key.json document).",
-            "device_id_required": "UDISCOVERY did not report a device ID. Enter the Wi-Fi module's MAC address.",
-            "name_required": "Enter a name for the device.",
-            "unsupported_class": "This appliance is not a class-0501 washer. This integration only supports class 0501.",
-            "unsupported_model": "This appliance is not a supported device profile.",
-        },
-        "abort": {"already_configured": "This washer is already configured."},
-    },
-    "options": {
-        "step": {
-            "init": {
-                "title": "Haier Local options",
-                "description": "Update the address, localKey or poll interval.",
-                "data": {
-                    "host": "LAN address",
-                    "local_key": "localKey (32 hex or local_key.json)",
-                    "scan_interval": "Poll interval (seconds)",
-                },
-            }
-        },
-        "error": {
-            "cannot_connect": "Could not decrypt a status report with these settings.",
-            "invalid_key": "localKey must be 32 hexadecimal characters (or a local_key.json document).",
-        },
-    },
-}
-
-CONFIG_ZH = {
-    "config": {
-        "step": {
-            "user": {
-                "title": "海尔本地设备",
-                "description": "通过本地 uSS 协议（TCP 56800）连接洗衣机。localKey 可以填 32 位十六进制，或直接粘贴 local_key.json。",
-                "data": {
-                    "host": "局域网地址",
-                    "local_key": "localKey（32 位十六进制或 local_key.json）",
-                    "device_id": "设备 ID（可选）",
-                    "name": "名称",
-                    "scan_interval": "轮询间隔（秒）",
-                },
-            },
-        },
-        "error": {
-            "cannot_connect": "无法解密状态报文，请检查地址和 localKey。",
-            "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。",
-            "device_id_required": "UDISCOVERY 没有返回设备 ID，请填写 Wi-Fi 模块的 MAC 地址。",
-            "name_required": "请为设备填写名称。",
-            "unsupported_class": "该设备不是 class 0501 洗衣机；本集成目前只支持 class 0501。",
-            "unsupported_model": "该设备的型号配置尚未受支持。",
-        },
-        "abort": {"already_configured": "这台洗衣机已经配置过了。"},
-    },
-    "options": {
-        "step": {
-            "init": {
-                "title": "海尔本地设备选项",
-                "description": "修改地址、localKey 或轮询间隔。",
-                "data": {
-                    "host": "局域网地址",
-                    "local_key": "localKey（32 位十六进制或 local_key.json）",
-                    "scan_interval": "轮询间隔（秒）",
-                },
-            }
-        },
-        "error": {
-            "cannot_connect": "用这些设置无法解密状态报文。",
-            "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。",
-        },
-    },
-}
 
 EXTRA_SENSORS = {
     "raw_state": ("Raw state", "原始状态"),
@@ -133,19 +49,45 @@ def _entity_blocks(language: str) -> dict:
     return {"sensor": sensors, "binary_sensor": binary}
 
 
-def _write(path: Path, data: dict) -> None:
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+def _load(path: Path) -> dict:
+    return json.loads(path.read_text())
+
+
+def _rendered() -> dict[Path, str]:
+    strings = _load(COMPONENT / "strings.json")
+    en = _load(COMPONENT / "translations/en.json")
+    zh = _load(COMPONENT / "translations/zh-Hans.json")
+    strings["entity"] = _entity_blocks("en")
+    en["entity"] = _entity_blocks("en")
+    zh["entity"] = _entity_blocks("zh")
+    return {
+        COMPONENT / "strings.json": json.dumps(strings, indent=2, ensure_ascii=False) + "\n",
+        COMPONENT / "translations/en.json": json.dumps(en, indent=2, ensure_ascii=False) + "\n",
+        COMPONENT / "translations/zh-Hans.json": json.dumps(zh, indent=2, ensure_ascii=False) + "\n",
+    }
 
 
 def main() -> int:
-    en = {**CONFIG_EN, "entity": _entity_blocks("en")}
-    zh = {**CONFIG_ZH, "entity": _entity_blocks("zh")}
-    _write(COMPONENT / "strings.json", en)
-    _write(COMPONENT / "translations/en.json", en)
-    _write(COMPONENT / "translations/zh-Hans.json", zh)
-    print(f"sensors={len(en['entity']['sensor'])}, "
-          f"binary={len(en['entity']['binary_sensor'])}")
-    print("wrote strings.json, translations/en.json, translations/zh-Hans.json")
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--check", action="store_true",
+                        help="exit non-zero if the files are not up to date")
+    args = parser.parse_args()
+
+    rendered = _rendered()
+    if args.check:
+        stale = [str(path) for path, text in rendered.items()
+                 if path.read_text() != text]
+        if stale:
+            print("out of date: " + ", ".join(stale), file=sys.stderr)
+            return 1
+        print("translation files are up to date")
+        return 0
+
+    for path, text in rendered.items():
+        path.write_text(text)
+    blocks = _entity_blocks("en")
+    print(f"sensors={len(blocks['sensor'])}, binary={len(blocks['binary_sensor'])}")
+    print("wrote " + ", ".join(str(path.relative_to(PROJECT)) for path in rendered))
     return 0
 
 

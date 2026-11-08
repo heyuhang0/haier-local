@@ -9,7 +9,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 COMPONENT = ROOT / "custom_components" / "haier_local"
-FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 # Load the integration as a package without executing its HA-dependent
 # __init__.py. specs.py and enum_defs.py are deliberately HA-free.
@@ -22,6 +21,9 @@ enum_defs = importlib.import_module("haier_local.enum_defs")
 decoder = importlib.import_module("haier_local.decoder")
 const = importlib.import_module("haier_local.const")
 profile = importlib.import_module("haier_local.profile")
+
+sys.path.insert(0, str(ROOT / "tools"))
+from refresh_digital_model import select_attributes  # noqa: E402
 
 
 def _translations(name: str) -> dict:
@@ -110,7 +112,6 @@ def test_manifest_and_project_metadata() -> None:
     assert manifest["iot_class"] == "local_polling"
     assert manifest["version"] == const.VERSION
     device = profile.CASARTE_CE_AB13LWTUWCU1
-    assert device.model_file.is_file()
     assert device.digital_model_file.is_file()
     assert len(device.uplus_id) > 32
     assert not device.uplus_id.startswith("0x")
@@ -133,35 +134,18 @@ def test_washer_alarm_labels_are_not_air_conditioner_labels() -> None:
     assert alarms["_alarm_labels"] == ["doorLockFail"]
 
 
-def _normalise(value) -> str:
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    text = str(value).strip().lower()
-    try:
-        return f"{float(text):.6f}"
-    except ValueError:
-        return text
-
-
-def test_historical_local_values_match_cloud_shadow() -> None:
-    """Historical evidence, not a decoder test: both sides are saved outputs."""
-    local = json.loads((FIXTURES / "local_status_93.json").read_text())
-    cloud = json.loads((FIXTURES / "cloud_values_93.json").read_text())
-    assert len(local) == 93
-    assert set(local) == set(cloud)
-    assert set(local) == set(decoder.digital_model())
-
-    # The cloud shadow had a null value for this one attribute; it is a
-    # mapping check, not a value comparison.
-    assert cloud["clothesAnionStatus"] is None
-    comparable = [name for name in local if cloud[name] is not None]
-    assert len(comparable) == 92
-    mismatches = [
-        (name, local[name], cloud[name])
-        for name in comparable
-        if _normalise(local[name]) != _normalise(cloud[name])
+def test_cloud_selection_uses_declared_device_names() -> None:
+    attributes = [
+        {"name": "declared_a", "value": 1},
+        {"name": "declared_b", "value": 2},
+        {"name": "class_only", "value": 3},
     ]
-    assert not mismatches, mismatches
+    selected, missing = select_attributes(attributes, {"declared_a", "declared_b"})
+    assert [item["name"] for item in selected] == ["declared_a", "declared_b"]
+    assert missing == []
+
+    _selected, missing = select_attributes(attributes, {"declared_a", "absent"})
+    assert missing == ["absent"]
 
 
 def test_decoder_value_helpers() -> None:

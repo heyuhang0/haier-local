@@ -80,9 +80,9 @@ python -m pip install -r requirements_test.txt
 python -m pytest
 ```
 
-The tests cover enum behavior, alarm labels, translation coverage, the
-historical cloud comparison, and the device profile files. They do not boot
-Home Assistant; runtime setup/options flows are not covered by CI yet.
+The tests cover enum behavior, alarm labels, translation coverage, and the
+device profile files. They do not boot Home Assistant; runtime setup/options
+flows are not covered by CI yet.
 
 Entity names and enum labels are generated from `specs.py` and `enum_defs.py`:
 
@@ -93,7 +93,7 @@ python3 -I tools/generate_component_translations.py
 ## Documentation
 
 - [`docs/protocol.md`](docs/protocol.md) — uSS, localKey, decoding and evidence
-- [`docs/maintenance.md`](docs/maintenance.md) — vendor, model and verification procedures
+- [`docs/maintenance.md`](docs/maintenance.md) — vendor, translation/cloud refresh and verification procedures
 - [`docs/devices/`](docs/devices/) — device-specific profiles and results
 - [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) — vendored/adapted code and
   licenses

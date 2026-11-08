@@ -7,11 +7,10 @@ Install their dependency with `pip install -r requirements.txt`.
 
 - `read_washer.py` — read-only status using the same fixed profile map as the
   integration.
-- `probe_haier.py` — read-only UDISCOVERY/port/uSS preflight.
-- `refresh_model.py` — rebuild the profile map from the vendored catalogue.
-- `refresh_digital_model.py` — refresh the 93 cloud descriptions (requires the
-  saved token/key).
-- `generate_component_translations.py` — regenerate translations from specs.
+- `refresh_digital_model.py` — refresh the device-declared cloud descriptions
+  (requires the saved token/key).
+- `generate_component_translations.py` — regenerate entity/enum translations
+  from specs.
 
 ## Key helper
 
@@ -26,4 +25,5 @@ python3 -I tools/china_key.py \
 The helper also contains candidate brokers, topic shapes and request variants
 used during discovery. They are experiments, not guaranteed compatibility
 paths; use `--mqtt-probe` with the broker above when repeating the verified
-procedure. The normal `.env` command in the project README is the same path.
+procedure. The README command uses the default broker list, whose first entry
+is this verified gateway.

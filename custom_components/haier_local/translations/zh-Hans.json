@@ -19,7 +19,8 @@
       "device_id_required": "UDISCOVERY 没有返回设备 ID，请填写 Wi-Fi 模块的 MAC 地址。",
       "name_required": "请为设备填写名称。",
       "unsupported_class": "该设备不是 class 0501 洗衣机；本集成目前只支持 class 0501。",
-      "unsupported_model": "该设备的型号配置尚未受支持。"
+      "unsupported_model": "该设备的型号配置尚未受支持。",
+      "discovery_required": "UDISCOVERY 未能识别设备，请检查局域网地址后重试。"
     },
     "abort": {
       "already_configured": "这台洗衣机已经配置过了。"

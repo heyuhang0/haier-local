@@ -18,15 +18,16 @@ observed field correctly.
 
 ## Verification
 
-One local status report captured on 2026-11-08 decoded to **93 attributes**.
-The same 93 names were present in Haier's cloud digital model for the device.
-All **92 non-null cloud values matched** after normalizing booleans and decimal
-formatting; `clothesAnionStatus` was null in the cloud snapshot.
+One local status report observed during initial development (2026-11-08,
+firmware `e_4.6.38 / R_6.0.01`) decoded to 93 attributes. The same 93 names were
+present in the cloud digital model; 92 non-null cloud values matched, and
+`clothesAnionStatus` was null in that snapshot.
 
-The sanitized paired values and capture conditions are in
-[`tests/fixtures/`](../../tests/fixtures/). That test is historical evidence for
-this observation, not a decoder regression test: the raw report is not kept
-because it requires the per-device key.
+The repository does not currently contain the raw report or the original cloud
+response, so those numbers are development observations rather than an
+independently reproducible fixture. `tools/read_washer.py --raw-out` can capture
+a decrypted report for a future regression test; see
+[`docs/maintenance.md`](../maintenance.md).
 
 ## Entity presentation
 
