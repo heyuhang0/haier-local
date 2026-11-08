@@ -17,6 +17,7 @@
       "cannot_connect": "Could not decrypt a status report. Check the address and localKey.",
       "invalid_key": "localKey must be 32 hexadecimal characters (or a local_key.json document).",
       "device_id_required": "UDISCOVERY did not report a device ID. Enter the Wi-Fi module's MAC address.",
+      "name_required": "Enter a name for the device.",
       "unsupported_class": "This appliance is not a class-0501 washer. This integration only supports class 0501.",
       "unsupported_model": "This appliance is not a supported device profile."
     },

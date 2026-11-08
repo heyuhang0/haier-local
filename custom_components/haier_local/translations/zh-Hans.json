@@ -17,6 +17,7 @@
       "cannot_connect": "无法解密状态报文，请检查地址和 localKey。",
       "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。",
       "device_id_required": "UDISCOVERY 没有返回设备 ID，请填写 Wi-Fi 模块的 MAC 地址。",
+      "name_required": "请为设备填写名称。",
       "unsupported_class": "该设备不是 class 0501 洗衣机；本集成目前只支持 class 0501。",
       "unsupported_model": "该设备的型号配置尚未受支持。"
     },

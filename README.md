@@ -31,7 +31,7 @@ Restart Home Assistant, then add **Haier Local** from
 | LAN address | yes | e.g. `192.168.1.50` |
 | localKey | yes | 32-hex key, or paste the whole `local_key.json` |
 | Device ID | no | UDISCOVERY fills it from the MAC |
-| Name | no | no default; blank uses the LAN address as the entry title |
+| Name | yes | used as the config-entry title |
 | Poll interval | no | default 30 s, minimum 15 s |
 
 The config flow performs UDISCOVERY, identifies the device and validates the
