@@ -12,7 +12,7 @@ obtains the key.
 
 - ✅ Local uSS protocol on TCP `56800` discovered and verified
 - ✅ `localKey` obtained from the mainland uSDK gateway and verified locally
-- ✅ Class-0501 status decode matches Haier's cloud shadow **93/93 attributes**
+- ✅ Class-0501 decode covers **93 shared attributes**; all 92 non-null cloud values matched
 - ✅ Standalone reader works (`tools/read_washer.py`)
 - ✅ HA custom component: `custom_components/haier_local/`
 - ✅ English source + `zh-Hans` translations
@@ -20,25 +20,29 @@ obtains the key.
   (including the grouped `Raw state` and `Feature flags` diagnostic entities)
 - ✅ HACS metadata
 - ⏳ Control (start/pause/cancel/settings) not enabled yet
-- ⏳ WAN block at the router: do this after the HA entities update reliably
 
 Protocol notes, verification details and upstream revisions:
 [`docs/protocol.md`](docs/protocol.md).
 
 ## Requirements
 
-- Home Assistant **2024.6** or newer
+- Home Assistant **2024.6** or newer (the manifest/HACS floor; CI currently runs
+  static tests only, not a Home Assistant runtime)
 - The washer reachable on the LAN (TCP 56800); this project was tested on a
   class-0501 CE AB13LWTUWCU1
 - A valid per-device `localKey` (one-time cloud fetch, see below)
-- Python 3.11+ only for the command-line tools; the integration itself runs in
-  Home Assistant
+- Python 3.11+ and `cryptography` only for the command-line tools; the
+  integration itself runs in Home Assistant (which already ships it)
 
 ## 1. One-time localKey fetch
 
 The key is issued by Haier's cloud and is needed for every local read.
 
 ```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+
 cp .env.example .env
 $EDITOR .env          # Haier Smart Home account + washer IP
 chmod 600 .env
@@ -167,10 +171,9 @@ The integration is read-only in this version.
 
 Do this only after the Home Assistant entities have updated reliably for a
 while. Keep the washer's LAN access to TCP `56800` open; block its outbound WAN
-traffic at the router (the MikroTik can do this with a firewall rule or an
-address-list). The localKey does not rotate while the appliance is cut off from
-Haier's cloud. The Haier app will show the washer offline; local polling
-continues.
+traffic with a firewall rule or address-list on your router. The localKey does
+not rotate while the appliance is cut off from Haier's cloud. The Haier app will
+show the washer offline; local polling continues.
 
 Before blocking, confirm that:
 
@@ -206,6 +209,7 @@ docs/                             protocol notes, licenses
 Run the tests:
 
 ```bash
+python -m pip install -r requirements_test.txt
 python -m pytest
 ```
 

@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 COMPONENT = ROOT / "custom_components" / "haier_local"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 # Load the integration as a package without executing its HA-dependent
 # __init__.py. specs.py and enum_defs.py are deliberately HA-free.
@@ -53,6 +54,15 @@ def test_translation_key_coverage() -> None:
         assert set(document["entity"]["binary_sensor"]) == binary_keys
         assert document["config"]
         assert document["options"]
+
+
+def test_spec_names_match_translations() -> None:
+    for spec in specs.ALL_SENSORS:
+        assert STRINGS["entity"]["sensor"][spec.key]["name"] == spec.name_en
+        assert ZH["entity"]["sensor"][spec.key]["name"] == spec.name_zh
+    for spec in specs.ALL_BINARY:
+        assert STRINGS["entity"]["binary_sensor"][spec.key]["name"] == spec.name_en
+        assert ZH["entity"]["binary_sensor"][spec.key]["name"] == spec.name_zh
 
 
 def test_enum_translations_and_tokens() -> None:
@@ -108,6 +118,49 @@ def test_manifest_and_project_metadata() -> None:
     hacs = json.loads((ROOT / "hacs.json").read_text())
     assert hacs["name"] == "Haier Local"
     assert hacs["render_readme"] is True
+
+
+def test_washer_alarm_labels_are_not_air_conditioner_labels() -> None:
+    # Fault position 22. The shared AC table calls this an indoor PM2.5 sensor
+    # failure; the washer model calls it doorLockFail.
+    frame = (
+        b"\xff\xff" + bytes([13]) + b"\x00" * 7
+        + b"\x0f\x5a" + b"\x40\x00\x00"
+    )
+    alarms = decoder.parse_alarms([frame])
+    assert alarms["_alarm_count"] == 1
+    assert alarms["_alarm_codes"] == [22]
+    assert alarms["_alarm_labels"] == ["doorLockFail"]
+
+
+def _normalise(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    text = str(value).strip().lower()
+    try:
+        return f"{float(text):.6f}"
+    except ValueError:
+        return text
+
+
+def test_local_values_match_cloud_shadow() -> None:
+    local = json.loads((FIXTURES / "local_status_93.json").read_text())
+    cloud = json.loads((FIXTURES / "cloud_values_93.json").read_text())
+    assert len(local) == 93
+    assert set(local) == set(cloud)
+    assert set(local) == set(decoder.digital_model())
+
+    # The cloud shadow had a null value for this one attribute; it is a
+    # mapping check, not a value comparison.
+    assert cloud["clothesAnionStatus"] is None
+    comparable = [name for name in local if cloud[name] is not None]
+    assert len(comparable) == 92
+    mismatches = [
+        (name, local[name], cloud[name])
+        for name in comparable
+        if _normalise(local[name]) != _normalise(cloud[name])
+    ]
+    assert not mismatches, mismatches
 
 
 def test_decoder_value_helpers() -> None:

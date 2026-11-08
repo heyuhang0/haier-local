@@ -61,6 +61,7 @@ from haismart_extractor.gateway import (  # noqa: E402
     localkey_request_payload,
     parse_localkey_response,
 )
+from haier_local_hrdp.udiscovery import query as udiscovery_query  # noqa: E402
 from haier_local_hrdp.uss import read_status  # noqa: E402
 
 APP_SOURCES = {
@@ -91,6 +92,12 @@ DEFAULT_HOSTS = [
     "gw.haier.net:56042",
     "gw.haieriot.net:56042",
 ]
+
+# SHA-256 of the DER certificate embedded in the mainland app for gw.haier.net
+# (self-signed, CN=gw.haier.net, valid 2014-10-30..2044-10-22).  The gateway is
+# reached by IP and uses no publicly trusted chain, so pin the exact certificate
+# before sending the account token over MQTT.
+GATEWAY_CERT_SHA256 = "163f1c6f89c896866bac8c85d1996927a01d49fa78ad6a35fbc58b11be49c4c9"
 
 
 def _sign(app_id: str, app_key: str, timestamp: str, body: str, url: str) -> str:
@@ -274,8 +281,9 @@ class LegacyTlsMqttConnection(_TlsMqttConnection):
     """MQTT/TLS to the uSDK ``gw.haier.net`` gateway (self-signed 2014 cert).
 
     The APK pins this exact certificate; it is C=CN, O=haier ubic, CN=gw.haier.net,
-    valid 2014-2044. Modern trust stores reject it, so verification is disabled
-    here but the host is fixed to the app's gateway IP and SNI.
+    valid 2014-2044. Modern trust stores reject it, so the chain is not trusted;
+    instead the exact DER certificate is pinned by SHA-256 before any MQTT
+    credentials are sent.  The host is fixed to the app's gateway IP and SNI.
     """
 
     def __init__(self, creds, sni: str = "gw.haier.net") -> None:
@@ -288,6 +296,14 @@ class LegacyTlsMqttConnection(_TlsMqttConnection):
             pass
         raw = socket.create_connection((creds.host, creds.port), timeout=8)
         self.ss = ctx.wrap_socket(raw, server_hostname=sni)
+        server_cert = self.ss.getpeercert(binary_form=True)
+        actual = hashlib.sha256(server_cert or b"").hexdigest()
+        if actual != GATEWAY_CERT_SHA256:
+            self.ss.close()
+            raise GatewayConnectionError(
+                "gateway certificate pin mismatch: "
+                f"expected {GATEWAY_CERT_SHA256}, got {actual}"
+            )
         self._pid = 0
         self._buf = b""
         self._subacked: set[int] = set()
@@ -508,6 +524,25 @@ def _save_key(path: Path, device_id: str, key: str, version: int | None) -> None
     print(f"  key written to {path} (mode 0600)")
 
 
+def _save_and_verify(
+    path: Path,
+    device_id: str,
+    key: str,
+    version: int | None,
+    washer_ip: str,
+    skip_verify: bool,
+) -> int:
+    """Save the key, then make verification failure visible to scripts."""
+    _save_key(path, device_id, key, version)
+    if skip_verify:
+        print("  local verification skipped")
+        return 0
+    if not verify_local(washer_ip, device_id, key):
+        print("  key saved, but local verification failed", file=sys.stderr)
+        return 5
+    return 0
+
+
 def load_env(path: Path) -> None:
     """Load KEY=VALUE lines from .env (no python-dotenv dependency)."""
     if not path.exists():
@@ -584,8 +619,22 @@ def main() -> int:
     load_env(Path(args.env_file).expanduser())
     args.device_id = args.device_id or os.environ.get("HAIER_DEVICE_ID", "")
     args.washer_ip = args.washer_ip or os.environ.get("HAIER_WASHER_IP", "")
+
     if not args.device_id:
-        parser.error("--device-id or HAIER_DEVICE_ID is required")
+        if not args.washer_ip:
+            parser.error("set --washer-ip/HAIER_WASHER_IP so UDISCOVERY can find "
+                         "the device, or set --device-id/HAIER_DEVICE_ID")
+        try:
+            info = udiscovery_query(args.washer_ip, timeout=2.0)
+        except Exception as exc:  # noqa: BLE001
+            parser.error(f"UDISCOVERY failed: {type(exc).__name__}: {exc}")
+        if info is None:
+            parser.error("UDISCOVERY got no reply; set --device-id/HAIER_DEVICE_ID")
+        args.device_id = "".join(ch for ch in info.device_id if ch.isalnum()).upper()
+        if not args.device_id:
+            parser.error("UDISCOVERY replied without a device id; set --device-id")
+        print(f"discovered device {args.device_id} at {args.washer_ip}")
+
     if not args.washer_ip and not args.skip_verify:
         parser.error("--washer-ip or HAIER_WASHER_IP is required "
                      "(or pass --skip-verify)")
@@ -671,10 +720,10 @@ def main() -> int:
     for key, value in target.items():
         if "local" in key.lower() and "key" in key.lower() and isinstance(value, str) and len(value) == 32:
             print(f"  cloud device list carries {key}; saving it")
-            _save_key(Path(args.key_out), args.device_id, value, None)
-            if not args.skip_verify:
-                verify_local(args.washer_ip, args.device_id, value)
-            return 0
+            return _save_and_verify(
+                Path(args.key_out), args.device_id, value, None,
+                args.washer_ip, args.skip_verify,
+            )
 
     if args.mqtt_probe:
         print("querying MQTT broker info...")
@@ -694,11 +743,13 @@ def main() -> int:
                                  brokers, args.timeout)
         if found:
             key, version, host, port = found
-            _save_key(Path(args.key_out), args.device_id, key, version)
-            if not args.skip_verify:
-                verify_local(args.washer_ip, args.device_id, key)
-            print(f"done via {host}:{port}")
-            return 0
+            result = _save_and_verify(
+                Path(args.key_out), args.device_id, key, version,
+                args.washer_ip, args.skip_verify,
+            )
+            if result == 0:
+                print(f"done via {host}:{port}")
+            return result
         print("no MQTT broker returned a key")
         return 4
 
@@ -723,11 +774,13 @@ def main() -> int:
         print("no gateway returned a key")
         return 3
     key, version, host, port = found
-    _save_key(Path(args.key_out), args.device_id, key, version)
-    if not args.skip_verify:
-        verify_local(args.washer_ip, args.device_id, key)
-    print(f"done via {host}:{port}")
-    return 0
+    result = _save_and_verify(
+        Path(args.key_out), args.device_id, key, version,
+        args.washer_ip, args.skip_verify,
+    )
+    if result == 0:
+        print(f"done via {host}:{port}")
+    return result
 
 
 if __name__ == "__main__":

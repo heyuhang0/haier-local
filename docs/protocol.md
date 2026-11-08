@@ -1,16 +1,15 @@
 # Protocol notes
 
 How the local connection to the **Casarte CE AB13LWTUWCU1** (Haier class
-`0501`) works, and how the implementation was verified. This is a technical
-summary, not a chronological research log.
+`0501`) works, and how the implementation was verified.
 
 ## Result
 
 - The appliance exposes Haier's uSS protocol on **TCP 56800**.
 - UDISCOVERY on **UDP 7083** identifies it without a key.
 - The status report is AES-128-CBC encrypted with a per-device `localKey`.
-- The class-0501 byte map decodes **93 attributes**, all of which matched the
-  values in Haier's cloud shadow for this unit.
+- The class-0501 byte map decodes **93 attributes**. All 92 attributes with a
+  non-null value in Haier's cloud shadow matched; the remaining cloud value was null.
 - The integration is read-only and does not use the cloud at runtime.
 
 ## Discovery
@@ -64,8 +63,10 @@ cloud API. The path used by `tools/china_key.py` is:
 
 The gateway certificate is self-signed and is also embedded in the mainland
 APK. The APK was used only to confirm that identity; it is not redistributed.
-The helper writes the key with mode `0600` and verifies it with one read-only
-uSS session. The key is not part of this repository.
+`tools/china_key.py` pins the certificate by SHA-256
+`163f1c6f89c896866bac8c85d1996927a01d49fa78ad6a35fbc58b11be49c4c9`
+before sending any MQTT credentials. The key is written with mode `0600` and
+verified with one read-only uSS session; it is not part of this repository.
 
 The key remains valid for local use while the appliance is cut off from
 Haier's cloud; that is why the WAN block is done only after the HA entities
@@ -82,17 +83,20 @@ The class-0501 map used for this unit is:
 It contains 219 fields and 61 alarm positions. The device's own uPlusId is not
 in the bundled model table, so `tools/read_washer.py` tries the bundled
 class-0501 maps against a live report and selects the map that places the most
-known fields. The selected map produced the same 93 attributes as the cloud
-digital model, including `remainingTimeHH/MM`, `cyclePhase`, `laundryCycle`,
+known fields. The selected map produced the same 93 field names as the cloud
+digital model; all 92 non-null values matched, including `remainingTimeHH/MM`, `cyclePhase`, `laundryCycle`,
 `washTemp`, `spinSpeed`, `currentWater/totalWater`, and
 `currentElectricity/totalElectricity`.
 
 Two practical details:
 
-- The 93-field local model is in
+- The class-0501 map (219 fields) is in
   `custom_components/haier_local/data/model_0501.json`.
-- The decoded cloud descriptions (used for the field table) are in
+- The 93 attributes exposed for this unit and their cloud descriptions are in
   `custom_components/haier_local/data/digital_model.json`.
+
+The paired values from the verification run are kept as sanitized fixtures in
+`tests/fixtures/`; `tests/test_component.py` compares all 93 offline.
 
 ## Integration
 

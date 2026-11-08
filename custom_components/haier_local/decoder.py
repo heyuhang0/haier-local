@@ -34,28 +34,6 @@ def digital_model() -> dict[str, dict]:
     return _DIGITAL
 
 
-def friendly_name(attribute: str) -> str:
-    return str(_DIGITAL.get(attribute, {}).get("desc") or attribute)
-
-
-def enum_label(attribute: str, value):
-    """Map a raw enum value using the cloud digital model's dataList, if it has one."""
-    entry = _DIGITAL.get(attribute) or {}
-    value_range = entry.get("valueRange") or {}
-    for item in value_range.get("dataList") or []:
-        if str(item.get("data")) == str(value):
-            return item.get("desc") or str(value)
-    return str(value)
-
-
-def enum_options(attribute: str) -> dict[str, str]:
-    entry = _DIGITAL.get(attribute) or {}
-    return {
-        str(item.get("data")): str(item.get("desc"))
-        for item in (entry.get("valueRange") or {}).get("dataList") or []
-    }
-
-
 def discover_device(host: str):
     """Key-free UDISCOVERY: returns DeviceInfo or None."""
     return _udiscovery_query(host, timeout=2.0)
@@ -71,13 +49,23 @@ def read_state(host: str, device_id: str, local_key: str) -> dict:
     if not state:
         raise RuntimeError("decrypted report but no class-0501 fields placed")
     state["_blob_lengths"] = [len(blob) for blob in blobs]
+    state.update(parse_alarms(blobs))
+    return state
 
+
+def parse_alarms(blobs: list[bytes]) -> dict:
+    """Collect fault positions using this washer's own alarm names.
+
+    ``parse_alarm_frame`` defaults to an air-conditioner label table; using it
+    for a washer would confidently name the wrong fault.
+    """
+    names = _MODEL.alarm_names()
     alarm_count = 0
     alarm_codes: list = []
     alarm_labels: list = []
     for blob in blobs:
         try:
-            alarm = parse_alarm_frame(blob)
+            alarm = parse_alarm_frame(blob, names, shared_table=False)
         except Exception:  # noqa: BLE001 - a non-alarm frame is normal
             continue
         if not alarm:
@@ -85,10 +73,11 @@ def read_state(host: str, device_id: str, local_key: str) -> dict:
         alarm_count += int(alarm.get("alarm_count") or 0)
         alarm_codes.extend(alarm.get("alarm_codes") or [])
         alarm_labels.extend(alarm.get("alarm_labels") or [])
-    state["_alarm_count"] = alarm_count
-    state["_alarm_codes"] = alarm_codes
-    state["_alarm_labels"] = alarm_labels
-    return state
+    return {
+        "_alarm_count": alarm_count,
+        "_alarm_codes": alarm_codes,
+        "_alarm_labels": alarm_labels,
+    }
 
 
 def remaining_minutes(state: dict) -> int | None:

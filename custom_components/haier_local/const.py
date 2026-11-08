@@ -29,7 +29,3 @@ MODEL_FILE = DATA_DIR / "model_0501.json"
 DIGITAL_MODEL_FILE = DATA_DIR / "digital_model.json"
 
 PLATFORMS = ["sensor", "binary_sensor"]
-
-# Idle cycle phases from the digital model's 洗涤阶段 list: standby, finished,
-# post-wash drying/tangle finished.  Anything else means the drum is busy.
-IDLE_PHASES = frozenset({0, 14, 18, 19})
