@@ -63,9 +63,10 @@ cloud API. The path used by `tools/china_key.py` is:
 
 The gateway certificate is self-signed and is also embedded in the mainland
 APK. The APK was used only to confirm that identity; it is not redistributed.
-`tools/china_key.py` pins the certificate by SHA-256
-`163f1c6f89c896866bac8c85d1996927a01d49fa78ad6a35fbc58b11be49c4c9`
-before sending any MQTT credentials. The key is written with mode `0600` and
+`tools/china_key.py` pins known certificate fingerprints before sending any
+MQTT credentials: `163f1c6f89c896866bac8c85d1996927a01d49fa78ad6a35fbc58b11be49c4c9`
+(app APK) and `d5cabcab7d6429aaecfc43cc1fa1beb6bec8140761e334a39eec149491829e76`
+(observed on the gateway on 2026-11-09). The key is written with mode `0600` and
 verified with one read-only uSS session; it is not part of this repository.
 
 ## Status decoding

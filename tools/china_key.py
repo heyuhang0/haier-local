@@ -92,11 +92,16 @@ DEFAULT_HOSTS = [
     "gw.haieriot.net:56042",
 ]
 
-# SHA-256 of the DER certificate embedded in the mainland app for gw.haier.net
-# (self-signed, CN=gw.haier.net, valid 2014-10-30..2044-10-22).  The gateway is
-# reached by IP and uses no publicly trusted chain, so pin the exact certificate
-# before sending the account token over MQTT.
-GATEWAY_CERT_SHA256 = "163f1c6f89c896866bac8c85d1996927a01d49fa78ad6a35fbc58b11be49c4c9"
+# SHA-256 fingerprints of the DER certificates known for gw.haier.net
+# (self-signed, CN=gw.haier.net, valid 2014..2044).  The gateway is reached by
+# IP and has no publicly trusted chain, so pin a known certificate before
+# sending the account token over MQTT.
+GATEWAY_CERT_SHA256S = {
+    # Embedded in the mainland app / observed originally.
+    "163f1c6f89c896866bac8c85d1996927a01d49fa78ad6a35fbc58b11be49c4c9",
+    # Presented by 39.107.46.61:56262 on 2026-11-09.
+    "d5cabcab7d6429aaecfc43cc1fa1beb6bec8140761e334a39eec149491829e76",
+}
 
 
 def _sign(app_id: str, app_key: str, timestamp: str, body: str, url: str) -> str:
@@ -283,11 +288,11 @@ class LegacyTlsMqttConnection(_TlsMqttConnection):
         self.ss = ctx.wrap_socket(raw, server_hostname=sni)
         server_cert = self.ss.getpeercert(binary_form=True)
         actual = hashlib.sha256(server_cert or b"").hexdigest()
-        if actual != GATEWAY_CERT_SHA256:
+        if actual not in GATEWAY_CERT_SHA256S:
             self.ss.close()
             raise GatewayConnectionError(
                 "gateway certificate pin mismatch: "
-                f"expected {GATEWAY_CERT_SHA256}, got {actual}"
+                f"expected one of {sorted(GATEWAY_CERT_SHA256S)}, got {actual}"
             )
         self._pid = 0
         self._buf = b""
