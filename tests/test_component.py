@@ -11,6 +11,7 @@ COMPONENT = ROOT / "custom_components" / "haier_local"
 sys.path.insert(0, str(COMPONENT.parent))
 
 from haier_local import const, decoder, profile, specs  # noqa: E402
+from haier_local.profile import DeviceProfile  # noqa: E402
 
 DEVICE = profile.DEVICE
 
@@ -91,6 +92,27 @@ def test_spec_sources_exist_in_raw_state_fields_and_catalogue() -> None:
             assert spec.source in fields, spec.key
     for field in (*DEVICE.raw_only, *(row[0] for row in DEVICE.feature_flags)):
         assert field in fields, field
+
+
+def test_profile_data_is_owned_by_the_instance() -> None:
+    other = DeviceProfile(
+        manufacturer="Other",
+        model="Other",
+        uplus_id="0" * 64,
+        map_typeid="0" * 64,
+        sensors=(),
+        binary_sensors=(),
+        raw_state_fields=(),
+        feature_flags=(),
+        raw_only=frozenset(),
+        extra_sensor_names=(),
+        enums={},
+    )
+    assert other.sensors == ()
+    assert other.raw_state_fields == ()
+    assert other.enums == {}
+    assert other.token_for("phase", 0) is None
+    assert DEVICE.sensors
 
 
 def test_manifest_and_project_metadata() -> None:
