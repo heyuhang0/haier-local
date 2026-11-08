@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,12 +34,6 @@ def test_entity_specs_are_unique_and_have_translation_keys() -> None:
     assert set(sensor_keys).isdisjoint(binary_keys)
     assert all(spec.key and spec.name_en and spec.name_zh
                for spec in (*DEVICE.sensors, *DEVICE.binary_sensors))
-    assert all(hasattr(spec, "entity_registry_visible_default")
-               for spec in DEVICE.sensors)
-    assert all(hasattr(spec, "suggested_unit_of_measurement")
-               for spec in DEVICE.sensors)
-    assert all(hasattr(spec, "entity_registry_visible_default")
-               for spec in DEVICE.binary_sensors)
 
 
 def test_translation_key_coverage() -> None:
@@ -129,6 +124,8 @@ def test_profile_data_is_owned_by_the_instance() -> None:
 
 def test_manifest_and_project_metadata() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    assert pyproject["project"]["version"] == manifest["version"]
     assert manifest["domain"] == "haier_local"
     assert manifest["config_flow"] is True
     assert manifest["iot_class"] == "local_polling"

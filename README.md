@@ -89,9 +89,10 @@ python -m pip install -r requirements_test.txt
 python -m pytest
 ```
 
-The tests cover enum behavior, alarm labels, translation coverage, and the
-raw-field whitelist. They do not boot Home Assistant; runtime setup/options
-flows are not covered by CI yet.
+The static tests cover enum behavior, alarm labels, translation coverage, and
+the raw-field whitelist. `tests/test_ha_contract.py` additionally exercises the
+entity classes against an installed Home Assistant; it is skipped when HA is not
+available, so CI does not run it yet.
 
 Entity names and enum labels are generated from `specs.py` and `enum_defs.py`:
 

@@ -1,6 +1,6 @@
 [project]
 name = "haier-local"
-version = "0.1.0"
+version = "0.1.2"
 description = "Local Home Assistant integration for supported Haier/Casarte washers"
 readme = "README.md"
 license = { text = "MIT" }

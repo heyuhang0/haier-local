@@ -41,12 +41,11 @@ def _device_info(entry: ConfigEntry) -> DeviceInfo:
 class WasherSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
     _attr_has_entity_name = True
     _attr_name = None
-    entity_description: SensorSpec
 
     def __init__(self, coordinator: WasherCoordinator, entry: ConfigEntry,
                  description: SensorSpec) -> None:
         super().__init__(coordinator)
-        self.entity_description = description
+        self._spec = description
         self._attr_translation_key = description.key
         self._attr_unique_id = f"{entry.data[CONF_DEVICE_ID]}_{description.key}"
         self._attr_native_unit_of_measurement = description.unit
@@ -68,7 +67,7 @@ class WasherSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
 
     def _raw_value(self):
         state = self.coordinator.data or {}
-        spec = self.entity_description
+        spec = self._spec
         if spec.value_fn is not None:
             return spec.value_fn(state)
         return state.get(spec.source) if spec.source else None
@@ -76,14 +75,14 @@ class WasherSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
     @property
     def native_value(self):
         raw = self._raw_value()
-        if self.entity_description.enum:
-            return DEVICE.token_for(self.entity_description.enum, raw)
+        if self._spec.enum:
+            return DEVICE.token_for(self._spec.enum, raw)
         return raw
 
     @property
     def extra_state_attributes(self) -> dict | None:
         state = self.coordinator.data or {}
-        spec = self.entity_description
+        spec = self._spec
         attrs: dict = {}
         if spec.enum:
             raw = self._raw_value()

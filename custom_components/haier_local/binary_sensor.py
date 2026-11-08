@@ -36,12 +36,11 @@ def _device_info(entry: ConfigEntry) -> DeviceInfo:
 class WasherBinarySensor(CoordinatorEntity[WasherCoordinator], BinarySensorEntity):
     _attr_has_entity_name = True
     _attr_name = None
-    entity_description: BinarySpec
 
     def __init__(self, coordinator: WasherCoordinator, entry: ConfigEntry,
                  description: BinarySpec) -> None:
         super().__init__(coordinator)
-        self.entity_description = description
+        self._spec = description
         self._attr_translation_key = description.key
         self._attr_unique_id = f"{entry.data[CONF_DEVICE_ID]}_{description.key}"
         self._attr_icon = description.icon
@@ -56,7 +55,7 @@ class WasherBinarySensor(CoordinatorEntity[WasherCoordinator], BinarySensorEntit
     @property
     def is_on(self) -> bool | None:
         state = self.coordinator.data or {}
-        spec = self.entity_description
+        spec = self._spec
         if spec.value_fn is not None:
             return spec.value_fn(state)
         return as_bool(state.get(spec.source)) if spec.source else None
@@ -64,9 +63,9 @@ class WasherBinarySensor(CoordinatorEntity[WasherCoordinator], BinarySensorEntit
     @property
     def extra_state_attributes(self) -> dict | None:
         state = self.coordinator.data or {}
-        if self.entity_description.attributes_fn is None:
+        if self._spec.attributes_fn is None:
             return None
-        return self.entity_description.attributes_fn(state)
+        return self._spec.attributes_fn(state)
 
 
 async def async_setup_entry(
