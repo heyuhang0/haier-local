@@ -20,7 +20,7 @@ from .const import (
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
 )
-from .profile import CASARTE_CE_AB13LWTUWCU1
+from .profile import DEVICE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             elif (
                 not errors
                 and uplus_id
-                and uplus_id.upper() != CASARTE_CE_AB13LWTUWCU1.uplus_id.upper()
+                and uplus_id.upper() != DEVICE.uplus_id.upper()
             ):
                 errors["base"] = "unsupported_model"
 

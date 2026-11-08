@@ -15,21 +15,14 @@ import argparse
 import json
 import os
 import sys
-import types
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent.parent
 COMPONENT = PROJECT / "custom_components/haier_local"
-VENDOR = COMPONENT / "vendor"
-sys.path.insert(0, str(VENDOR))
+sys.path.insert(0, str(COMPONENT.parent))
 
-from haier_local_hrdp.uss import read_status  # noqa: E402
-
-# Load decoder.py without executing the HA-dependent package __init__.
-_pkg = types.ModuleType("haier_local")
-_pkg.__path__ = [str(COMPONENT)]
-sys.modules["haier_local"] = _pkg
 from haier_local.decoder import decode_reports  # noqa: E402
+from haier_local_hrdp.uss import read_status  # noqa: E402
 
 
 def main() -> int:
@@ -40,7 +33,8 @@ def main() -> int:
     parser.add_argument("--attributes", help="optional JSON list of declared attribute names")
     parser.add_argument("--status-cmd", default="6D01")
     parser.add_argument("--out", default=str(PROJECT / "washer_status.json"))
-    parser.add_argument("--raw-out", help="also save the decrypted report bytes")
+    parser.add_argument("--raw-out",
+                        help="save every decrypted report blob as hex JSON")
     args = parser.parse_args()
     host = args.host or os.environ.get("HAIER_WASHER_IP", "")
     if not host:
@@ -60,10 +54,12 @@ def main() -> int:
         print("no status blobs")
         return 1
 
-    full = max(blobs, key=len)
     if args.raw_out:
-        Path(args.raw_out).write_bytes(full)
-        print(f"  raw report written to {args.raw_out}")
+        Path(args.raw_out).write_text(json.dumps({
+            "status_cmd": args.status_cmd,
+            "blobs": [blob.hex() for blob in blobs],
+        }, indent=2) + "\n")
+        print(f"  {len(blobs)} raw blob(s) written to {args.raw_out}")
     decoded = decode_reports(
         blobs, status_cmd=args.status_cmd,
         only=frozenset(declared) if declared else None,

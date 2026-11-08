@@ -7,7 +7,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from .profile import CASARTE_CE_AB13LWTUWCU1
+from .profile import DEVICE
 
 _VENDOR = Path(__file__).resolve().parent / "vendor"
 if str(_VENDOR) not in sys.path:
@@ -17,11 +17,16 @@ from haier_local_hrdp.device_model import model_for  # noqa: E402
 from haier_local_hrdp.udiscovery import query as _udiscovery_query  # noqa: E402
 from haier_local_hrdp.uss import parse_alarm_frame, read_status  # noqa: E402
 
-_MODEL = model_for(CASARTE_CE_AB13LWTUWCU1.map_typeid)
+_MODEL = model_for(DEVICE.map_typeid)
 if _MODEL is None:
     raise RuntimeError(
-        f"device map {CASARTE_CE_AB13LWTUWCU1.map_typeid} is not in the vendored catalogue"
+        f"device map {DEVICE.map_typeid} is not in the vendored catalogue"
     )
+
+
+def map_field_names() -> frozenset[str]:
+    """Field names present in the selected catalogue map."""
+    return frozenset(field.name for field in _MODEL.fields)
 
 
 def discover_device(host: str):

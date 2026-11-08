@@ -16,12 +16,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from . import decoder
 from .const import CONF_DEVICE_ID, DOMAIN
 from .coordinator import WasherCoordinator
-from .enum_defs import labels_for, options_for, token_for
-from .profile import CASARTE_CE_AB13LWTUWCU1
+from .profile import DEVICE
 from .specs import (
-    ALL_SENSORS,
-    FEATURE_FLAGS,
-    RAW_STATE_FIELDS,
     SensorSpec,
     as_bool,
 )
@@ -32,8 +28,8 @@ def _device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, device_id)},
         name=entry.title,
-        manufacturer=CASARTE_CE_AB13LWTUWCU1.manufacturer,
-        model=CASARTE_CE_AB13LWTUWCU1.model,
+        manufacturer=DEVICE.manufacturer,
+        model=DEVICE.model,
         serial_number=device_id,
     )
 
@@ -57,7 +53,7 @@ class WasherSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
         )
         if description.enum:
             self._attr_device_class = SensorDeviceClass.ENUM
-            self._attr_options = options_for(description.enum)
+            self._attr_options = DEVICE.options_for(description.enum)
         elif description.device_class:
             self._attr_device_class = SensorDeviceClass(description.device_class)
         self._attr_entity_category = (
@@ -77,7 +73,7 @@ class WasherSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
     def native_value(self):
         raw = self._raw_value()
         if self.entity_description.enum:
-            return token_for(self.entity_description.enum, raw)
+            return DEVICE.token_for(self.entity_description.enum, raw)
         return raw
 
     @property
@@ -88,8 +84,8 @@ class WasherSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
         if spec.enum:
             raw = self._raw_value()
             attrs["raw_value"] = raw
-            attrs["label_en"] = labels_for(spec.enum, raw, "en")
-            attrs["label_zh"] = labels_for(spec.enum, raw, "zh")
+            attrs["label_en"] = DEVICE.labels_for(spec.enum, raw, "en")
+            attrs["label_zh"] = DEVICE.labels_for(spec.enum, raw, "zh")
         if spec.attributes_fn is not None:
             attrs.update(spec.attributes_fn(state))
         return attrs or None
@@ -113,12 +109,12 @@ class RawStateSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
     @property
     def native_value(self):
         state = self.coordinator.data or {}
-        return sum(1 for key in RAW_STATE_FIELDS if state.get(key) is not None)
+        return sum(1 for key in DEVICE.raw_state_fields if state.get(key) is not None)
 
     @property
     def extra_state_attributes(self) -> dict:
         state = self.coordinator.data or {}
-        attrs = {key: state.get(key) for key in RAW_STATE_FIELDS}
+        attrs = {key: state.get(key) for key in DEVICE.raw_state_fields}
         for key, value in state.items():
             if key.startswith("_"):
                 attrs[key.lstrip("_")] = value
@@ -143,19 +139,19 @@ class FeatureFlagsSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
     @property
     def native_value(self):
         state = self.coordinator.data or {}
-        return sum(1 for field, _en, _zh in FEATURE_FLAGS if as_bool(state.get(field)))
+        return sum(1 for field, _en, _zh in DEVICE.feature_flags if as_bool(state.get(field)))
 
     @property
     def extra_state_attributes(self) -> dict:
         state = self.coordinator.data or {}
-        return {english: as_bool(state.get(field)) for field, english, _zh in FEATURE_FLAGS}
+        return {english: as_bool(state.get(field)) for field, english, _zh in DEVICE.feature_flags}
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: WasherCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities = [WasherSensor(coordinator, entry, spec) for spec in ALL_SENSORS]
+    entities = [WasherSensor(coordinator, entry, spec) for spec in DEVICE.sensors]
     entities.append(RawStateSensor(coordinator, entry))
     entities.append(FeatureFlagsSensor(coordinator, entry))
     async_add_entities(entities)

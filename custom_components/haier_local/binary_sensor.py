@@ -14,8 +14,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_DEVICE_ID, DOMAIN
 from .coordinator import WasherCoordinator
-from .profile import CASARTE_CE_AB13LWTUWCU1
-from .specs import ALL_BINARY, BinarySpec, as_bool
+from .profile import DEVICE
+from .specs import BinarySpec, as_bool
 
 
 def _device_info(entry: ConfigEntry) -> DeviceInfo:
@@ -23,8 +23,8 @@ def _device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, device_id)},
         name=entry.title,
-        manufacturer=CASARTE_CE_AB13LWTUWCU1.manufacturer,
-        model=CASARTE_CE_AB13LWTUWCU1.model,
+        manufacturer=DEVICE.manufacturer,
+        model=DEVICE.model,
         serial_number=device_id,
     )
 
@@ -70,5 +70,5 @@ async def async_setup_entry(
 ) -> None:
     coordinator: WasherCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
-        WasherBinarySensor(coordinator, entry, spec) for spec in ALL_BINARY
+        WasherBinarySensor(coordinator, entry, spec) for spec in DEVICE.binary_sensors
     )

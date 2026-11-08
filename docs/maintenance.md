@@ -66,15 +66,15 @@ python -m pytest
 python3 -I tools/read_washer.py --host <washer-ip>
 ```
 
-The reader and integration load the same fixed profile map. If the reader
+The reader and integration load the same fixed profile and call the same decode function. If the reader
 succeeds but Home Assistant does not, check the config entry's host/key/device
 id and the HA logs rather than changing the map.
 
 To capture a report for a future decoder test:
 
 ```bash
-python3 -I tools/read_washer.py --host <washer-ip> --raw-out /tmp/status.bin
+python3 -I tools/read_washer.py --host <washer-ip> --raw-out /tmp/status.json
 ```
 
-The decrypted bytes contain device state but not the localKey. Review them
+The JSON contains every decrypted blob from the burst, but not the localKey. Review them
 before committing any fixture.

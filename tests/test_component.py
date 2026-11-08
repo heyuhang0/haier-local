@@ -1,27 +1,18 @@
 """Static checks for entity specs and translations (no Home Assistant needed)."""
 from __future__ import annotations
 
-import importlib
 import json
 import sys
-import types
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 COMPONENT = ROOT / "custom_components" / "haier_local"
 
-# Load the integration as a package without executing its HA-dependent
-# __init__.py. specs.py and enum_defs.py are deliberately HA-free.
-_pkg = types.ModuleType("haier_local")
-_pkg.__path__ = [str(COMPONENT)]
-sys.modules["haier_local"] = _pkg
+sys.path.insert(0, str(COMPONENT.parent))
 
-specs = importlib.import_module("haier_local.specs")
-enum_defs = importlib.import_module("haier_local.enum_defs")
-decoder = importlib.import_module("haier_local.decoder")
-const = importlib.import_module("haier_local.const")
-profile = importlib.import_module("haier_local.profile")
+from haier_local import const, decoder, profile, specs  # noqa: E402
 
+DEVICE = profile.DEVICE
 
 
 def _translations(name: str) -> dict:
@@ -34,21 +25,20 @@ ZH = _translations("zh-Hans.json")
 
 
 def test_entity_specs_are_unique_and_have_translation_keys() -> None:
-    sensor_keys = [spec.key for spec in specs.ALL_SENSORS]
-    binary_keys = [spec.key for spec in specs.ALL_BINARY]
+    sensor_keys = [spec.key for spec in DEVICE.sensors]
+    binary_keys = [spec.key for spec in DEVICE.binary_sensors]
     assert len(sensor_keys) == len(set(sensor_keys))
     assert len(binary_keys) == len(set(binary_keys))
     assert set(sensor_keys).isdisjoint(binary_keys)
     assert all(spec.key and spec.name_en and spec.name_zh
-               for spec in (*specs.ALL_SENSORS, *specs.ALL_BINARY))
+               for spec in (*DEVICE.sensors, *DEVICE.binary_sensors))
 
 
 def test_translation_key_coverage() -> None:
-    sensor_keys = {spec.key for spec in specs.ALL_SENSORS} | {
-        "raw_state",
-        "feature_flags",
+    sensor_keys = {spec.key for spec in DEVICE.sensors} | {
+        key for key, _en, _zh in DEVICE.extra_sensor_names
     }
-    binary_keys = {spec.key for spec in specs.ALL_BINARY}
+    binary_keys = {spec.key for spec in DEVICE.binary_sensors}
     for document in (STRINGS, EN, ZH):
         assert set(document["entity"]["sensor"]) == sensor_keys
         assert set(document["entity"]["binary_sensor"]) == binary_keys
@@ -57,20 +47,19 @@ def test_translation_key_coverage() -> None:
 
 
 def test_spec_names_match_translations() -> None:
-    for spec in specs.ALL_SENSORS:
+    for spec in DEVICE.sensors:
         assert STRINGS["entity"]["sensor"][spec.key]["name"] == spec.name_en
         assert ZH["entity"]["sensor"][spec.key]["name"] == spec.name_zh
-    for spec in specs.ALL_BINARY:
+    for spec in DEVICE.binary_sensors:
         assert STRINGS["entity"]["binary_sensor"][spec.key]["name"] == spec.name_en
         assert ZH["entity"]["binary_sensor"][spec.key]["name"] == spec.name_zh
 
 
 def test_enum_translations_and_tokens() -> None:
-    for spec in specs.ALL_SENSORS:
+    for spec in DEVICE.sensors:
         if not spec.enum:
             continue
-        assert spec.enum in enum_defs.ENUM_DEFS
-        entries = enum_defs.ENUM_DEFS[spec.enum]
+        entries = DEVICE.enum_values(spec.enum)
         tokens = [entry[0] for entry in entries.values()]
         assert len(tokens) == len(set(tokens)), spec.enum
 
@@ -84,21 +73,23 @@ def test_enum_translations_and_tokens() -> None:
 
 
 def test_enum_helpers() -> None:
-    assert enum_defs.token_for("phase", 0) == "standby"
-    assert enum_defs.labels_for("phase", 0, "en") == "Standby / not started"
-    assert enum_defs.labels_for("phase", 0, "zh-Hans") == "待机/未启动"
-    assert enum_defs.token_for("phase", 9999) is None
-    assert enum_defs.labels_for("phase", 9999) == "9999"
-    assert len(enum_defs.options_for("phase")) == len(enum_defs.ENUM_DEFS["phase"])
+    assert DEVICE.token_for("phase", 0) == "standby"
+    assert DEVICE.labels_for("phase", 0, "en") == "Standby / not started"
+    assert DEVICE.labels_for("phase", 0, "zh-Hans") == "待机/未启动"
+    assert DEVICE.token_for("phase", 9999) is None
+    assert DEVICE.labels_for("phase", 9999) == "9999"
+    assert len(DEVICE.options_for("phase")) == len(DEVICE.enum_values("phase"))
 
 
-def test_spec_sources_exist_in_raw_state_fields() -> None:
-    fields = set(specs.RAW_STATE_FIELDS)
+def test_spec_sources_exist_in_raw_state_fields_and_catalogue() -> None:
+    fields = set(DEVICE.raw_state_fields)
+    catalogue = decoder.map_field_names()
     assert len(fields) == 93
-    for spec in (*specs.ALL_SENSORS, *specs.ALL_BINARY):
+    assert fields <= catalogue
+    for spec in (*DEVICE.sensors, *DEVICE.binary_sensors):
         if spec.source is not None:
             assert spec.source in fields, spec.key
-    for field in (*specs.RAW_ONLY, *(row[0] for row in specs.FEATURE_FLAGS)):
+    for field in (*DEVICE.raw_only, *(row[0] for row in DEVICE.feature_flags)):
         assert field in fields, field
 
 
@@ -108,7 +99,7 @@ def test_manifest_and_project_metadata() -> None:
     assert manifest["config_flow"] is True
     assert manifest["iot_class"] == "local_polling"
     assert manifest["version"] == const.VERSION
-    device = profile.CASARTE_CE_AB13LWTUWCU1
+    device = profile.DEVICE
     assert len(device.uplus_id) > 32
     assert not device.uplus_id.startswith("0x")
 

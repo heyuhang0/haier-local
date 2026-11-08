@@ -8,44 +8,32 @@ from __future__ import annotations
 
 import argparse
 import copy
-import importlib
 import json
 import sys
-import types
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent.parent
 COMPONENT = PROJECT / "custom_components/haier_local"
 sys.path.insert(0, str(COMPONENT.parent))
 
-pkg = types.ModuleType("haier_local")
-pkg.__path__ = [str(COMPONENT)]
-sys.modules["haier_local"] = pkg
-
-specs = importlib.import_module("haier_local.specs")
-enum_defs = importlib.import_module("haier_local.enum_defs")
-
-EXTRA_SENSORS = {
-    "raw_state": ("Raw state", "原始状态"),
-    "feature_flags": ("Feature flags", "功能开关"),
-}
+from haier_local.profile import DEVICE  # noqa: E402
 
 
 def _entity_blocks(language: str) -> dict:
     en = language == "en"
     sensors: dict = {}
     binary: dict = {}
-    for spec in specs.ALL_SENSORS:
+    for spec in DEVICE.sensors:
         block = {"name": spec.name_en if en else spec.name_zh}
         if spec.enum:
             block["state"] = {
                 token: (label_en if en else label_zh)
-                for token, label_en, label_zh in enum_defs.ENUM_DEFS[spec.enum].values()
+                for token, label_en, label_zh in DEVICE.enum_values(spec.enum).values()
             }
         sensors[spec.key] = block
-    for key, (name_en, name_zh) in EXTRA_SENSORS.items():
+    for key, name_en, name_zh in DEVICE.extra_sensor_names:
         sensors[key] = {"name": name_en if en else name_zh}
-    for spec in specs.ALL_BINARY:
+    for spec in DEVICE.binary_sensors:
         binary[spec.key] = {"name": spec.name_en if en else spec.name_zh}
     return {"sensor": sensors, "binary_sensor": binary}
 
