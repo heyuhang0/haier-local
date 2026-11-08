@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "haier_local"
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 
 CONF_HOST = "host"
 CONF_DEVICE_ID = "device_id"

@@ -33,6 +33,12 @@ def test_entity_specs_are_unique_and_have_translation_keys() -> None:
     assert set(sensor_keys).isdisjoint(binary_keys)
     assert all(spec.key and spec.name_en and spec.name_zh
                for spec in (*DEVICE.sensors, *DEVICE.binary_sensors))
+    assert all(hasattr(spec, "entity_registry_visible_default")
+               for spec in DEVICE.sensors)
+    assert all(hasattr(spec, "suggested_unit_of_measurement")
+               for spec in DEVICE.sensors)
+    assert all(hasattr(spec, "entity_registry_visible_default")
+               for spec in DEVICE.binary_sensors)
 
 
 def test_translation_key_coverage() -> None:

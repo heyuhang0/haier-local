@@ -57,6 +57,8 @@ class SensorSpec:
     diagnostic: bool = False
     enabled_default: bool = True
     attributes_fn: Callable[[dict], dict] | None = None
+    suggested_unit_of_measurement: str | None = None
+    entity_registry_visible_default: bool = True
 
 
 @dataclass(frozen=True)
@@ -71,6 +73,7 @@ class BinarySpec:
     diagnostic: bool = False
     enabled_default: bool = True
     attributes_fn: Callable[[dict], dict] | None = None
+    entity_registry_visible_default: bool = True
 
 
 PRIMARY_SENSORS: tuple[SensorSpec, ...] = (
