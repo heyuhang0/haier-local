@@ -21,8 +21,8 @@ verification and entity presentation live in
   firmware versions, and the module's current cloud-connection state.
 
 The class is encoded in `uPlusId` characters 16–20 (`0501` for this washer).
-The config flow uses this to reject non-washer appliances and to ask for
-confirmation when the exact uPlusId is not the verified model.
+The config flow uses this to reject non-washer appliances and other uPlusIds;
+only the profile's exact uPlusId is accepted when discovery reports one.
 
 ## uSS transport
 

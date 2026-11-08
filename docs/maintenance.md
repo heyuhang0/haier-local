@@ -88,9 +88,8 @@ python3 -I tools/probe_haier.py <ip>
 It reports the uPlusId, class, open ports and uSS localKey version. Do not add a
 profile from UDISCOVERY alone: obtain the class-0501 map, decode a report, and
 verify its values against the cloud shadow before changing
-`custom_components/haier_local/profile.py`. The config flow accepts an unknown
-class-0501 uPlusId only after explicit confirmation, but that does not prove the
-field map is correct.
+`custom_components/haier_local/profile.py`. The config flow rejects an unknown
+class-0501 uPlusId; adding support requires a verified profile.
 
 ## Validate
 

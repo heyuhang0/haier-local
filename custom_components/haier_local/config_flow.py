@@ -15,7 +15,6 @@ from .const import (
     CONF_HOST,
     CONF_LOCAL_KEY,
     CONF_SCAN_INTERVAL,
-    CONF_UPIUS_ID,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MAX_SCAN_INTERVAL,
@@ -106,6 +105,9 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors.setdefault("base", "device_id_required")
             if uplus_id and len(uplus_id) >= 20 and uplus_id[16:20] != "0501":
                 errors["base"] = "unsupported_class"
+            elif (uplus_id
+                  and uplus_id.upper() != CASARTE_CE_AB13LWTUWCU1.uplus_id.upper()):
+                errors["base"] = "unsupported_model"
 
             if not errors:
                 try:
@@ -125,31 +127,13 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_SCAN_INTERVAL: int(
                         user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
                     ),
-                    CONF_UPIUS_ID: uplus_id,
                 }
-                if uplus_id and (
-                    uplus_id.upper() != CASARTE_CE_AB13LWTUWCU1.uplus_id.upper()
-                ):
-                    return await self.async_step_confirm()
                 return await self._async_create_entry()
 
         return self.async_show_form(
             step_id="user",
             data_schema=_user_schema(user_input),
             errors=errors,
-        )
-
-    async def async_step_confirm(self, user_input: dict | None = None) -> config_entries.ConfigFlowResult:
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            if user_input.get("confirm"):
-                return await self._async_create_entry()
-            errors["base"] = "confirm_required"
-        return self.async_show_form(
-            step_id="confirm",
-            data_schema=vol.Schema({vol.Required("confirm", default=False): bool}),
-            errors=errors,
-            description_placeholders={"uplus_id": self._pending.get(CONF_UPIUS_ID, "")},
         )
 
     async def _async_create_entry(self) -> config_entries.ConfigFlowResult:
@@ -163,7 +147,6 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_DEVICE_ID: pending[CONF_DEVICE_ID],
                 CONF_LOCAL_KEY: pending[CONF_LOCAL_KEY],
                 CONF_SCAN_INTERVAL: pending[CONF_SCAN_INTERVAL],
-                CONF_UPIUS_ID: pending.get(CONF_UPIUS_ID, ""),
             },
         )
 

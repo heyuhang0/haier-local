@@ -11,8 +11,7 @@ the cloud only once, to obtain the per-device `localKey`.
 | Casarte CE AB13LWTUWCU1 | `0501` | verified | [`docs/devices/casarte-ce-ab13lwtu.md`](docs/devices/casarte-ce-ab13lwtu.md) |
 
 When UDISCOVERY reports a class other than `0501`, setup is refused. A
-class-0501 appliance whose uPlusId is not the verified profile asks for
-confirmation before setup.
+class-0501 appliance whose uPlusId is not the verified profile is also refused.
 
 ## Install
 

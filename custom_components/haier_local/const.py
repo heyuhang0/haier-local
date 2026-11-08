@@ -8,7 +8,6 @@ CONF_HOST = "host"
 CONF_DEVICE_ID = "device_id"
 CONF_LOCAL_KEY = "local_key"
 CONF_SCAN_INTERVAL = "scan_interval"
-CONF_UPIUS_ID = "uplus_id"
 
 DEFAULT_SCAN_INTERVAL = 30
 MIN_SCAN_INTERVAL = 15

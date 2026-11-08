@@ -11,13 +11,6 @@
           "name": "名称",
           "scan_interval": "轮询间隔（秒）"
         }
-      },
-      "confirm": {
-        "title": "未验证型号",
-        "description": "检测到 uPlusId {uplus_id}，不是本集成验证过的型号配置。仍要继续吗？",
-        "data": {
-          "confirm": "我了解该型号未经完整验证"
-        }
       }
     },
     "error": {
@@ -25,7 +18,7 @@
       "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。",
       "device_id_required": "UDISCOVERY 没有返回设备 ID，请填写 Wi-Fi 模块的 MAC 地址。",
       "unsupported_class": "该设备不是 class 0501 洗衣机；本集成目前只支持 class 0501。",
-      "confirm_required": "请勾选确认后再继续。"
+      "unsupported_model": "该设备的型号配置尚未受支持。"
     },
     "abort": {
       "already_configured": "这台洗衣机已经配置过了。"
