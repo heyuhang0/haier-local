@@ -3,10 +3,10 @@
     "step": {
       "user": {
         "title": "海尔本地设备",
-        "description": "通过本地 uSS 协议（TCP 56800）连接洗衣机。localKey 可以填 32 位十六进制，或直接粘贴 local_key.json。",
+        "description": "通过本地 uSS 协议（TCP 56800）连接洗衣机。本地密钥可以填 32 位十六进制，或直接粘贴 local_key.json。",
         "data": {
           "host": "局域网地址",
-          "local_key": "localKey（32 位十六进制或 local_key.json）",
+          "local_key": "本地密钥（32 位十六进制或 local_key.json）",
           "device_id": "设备 ID（可选）",
           "name": "名称",
           "scan_interval": "轮询间隔（秒）"
@@ -14,8 +14,8 @@
       }
     },
     "error": {
-      "cannot_connect": "无法解密状态报文，请检查地址和 localKey。",
-      "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。",
+      "cannot_connect": "无法解密状态报文，请检查地址和本地密钥。",
+      "invalid_key": "本地密钥必须是 32 位十六进制（或 local_key.json 文档）。",
       "device_id_required": "UDISCOVERY 没有返回设备 ID，请填写 Wi-Fi 模块的 MAC 地址。",
       "name_required": "请为设备填写名称。",
       "unsupported_class": "该设备不是 class 0501 洗衣机；本集成目前只支持 class 0501。",
@@ -30,17 +30,17 @@
     "step": {
       "init": {
         "title": "海尔本地设备选项",
-        "description": "修改地址、localKey 或轮询间隔。",
+        "description": "修改地址、本地密钥或轮询间隔。",
         "data": {
           "host": "局域网地址",
-          "local_key": "localKey（32 位十六进制或 local_key.json）",
+          "local_key": "本地密钥（32 位十六进制或 local_key.json）",
           "scan_interval": "轮询间隔（秒）"
         }
       }
     },
     "error": {
       "cannot_connect": "用这些设置无法解密状态报文。",
-      "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。"
+      "invalid_key": "本地密钥必须是 32 位十六进制（或 local_key.json 文档）。"
     }
   },
   "entity": {
