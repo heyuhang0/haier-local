@@ -15,6 +15,15 @@ class-0501 appliance whose uPlusId is not the verified profile is also refused.
 
 ## Install
 
+### HACS
+
+1. In HACS, open **Integrations → ⋮ → Custom repositories**.
+2. Add `https://github.com/heyuhang0/haier-local` with category
+   **Integration**.
+3. Install **Haier Local** and restart Home Assistant.
+
+### Manual
+
 Copy the integration into Home Assistant:
 
 ```bash
