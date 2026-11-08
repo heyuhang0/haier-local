@@ -1,0 +1,2981 @@
+"""Per-family EPP wire models — the positional attribute map for status reports whose layout is
+*not* the classic split-AC family that :func:`haismart_hrdp.uss.parse_full_status` decodes inline.
+
+Background
+----------
+Every Haier AC packs its status attributes into a bit-field array of 16-bit big-endian words that
+begins at byte 92 of the decrypted report (right after the ``6d 01`` getAllProperty response code).
+*Where* each attribute sits in that array is the **wire model**, and it is a property of the model a
+device reports itself as (its uPlusId) rather than of the device. The *digital* model we fetch per
+device carries an attribute's valueRange and enums but no position, so these maps are transcribed
+from the published per-model descriptions and validated field by field against real captured
+reports. :mod:`haismart_hrdp.canonical_map` covers where those descriptions agree with each other,
+which is nearly everywhere; this module covers the families and the exceptions.
+
+What a "family" is
+------------------
+A family is a **distinct field map**, and one map can span several report lengths (the classic
+split-AC family is described at report lengths 109/121/125 and appears on real hardware at 127 —
+only its trailing word count differs). So report length alone is a *good but imperfect* key: among
+AC split units each length maps to a single field map, but there is a genuine collision at 149 B (a
+floor/heat-pump class we don't target). Selection therefore prefers an exact uPlusId match and
+otherwise keys on report length **with a decode sanity-check** (see :meth:`WireModel.decode`),
+degrading to the caller's unknown-layout path rather than mis-decoding.
+
+The classic family stays in ``uss.py``
+--------------------------------------
+The classic 125/127-byte family keeps its existing hardware-verified decode + the grSetDAC **write**
+path in ``uss.py`` untouched. This module adds decoding for other families, plus — for a family whose
+group-set command its model fully specifies (``group_cmd`` + :attr:`WireModel.write_fields`)
+— a **control encoder** built on that spec. That spec basis is the same one heat mode shipped on
+(model-derived, method hardware-confirmed on other units); a family without a ``group_cmd`` stays
+monitoring-only.
+"""
+from __future__ import annotations
+
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
+from functools import lru_cache
+from types import MappingProxyType
+
+from .canonical_map import CANONICAL, CANONICAL_WRITE, PROFILE_DISPLACEMENTS
+from .panel import PANEL_BOOL_CONTROLS, PANEL_ENUM_CONTROLS, PANEL_EXTRA_POSITIONS
+
+# Attribute-array geometry, shared with uss.py (kept local to avoid an import cycle).
+_ATTR_BASE = 92          # first attribute byte; word N (1-based) starts at _ATTR_BASE + 2*(N-1)
+_PLAUSIBLE_INDOOR_C = (0.0, 60.0)   # a decoded indoorTemperature outside this ⇒ wrong family
+_PLAUSIBLE_TARGET_C = (10.0, 40.0)  # setpoints live in ~16..30; a wide band still catches a mis-decode
+# The band for a reading of AIR -- the room and the outdoor temperature -- in EVERY family: this one
+# for the wire families' ``"temp"`` fields, and `uss._sensor_temp` for the classic family's. One
+# band, so the same probe reading is not published by one family and dropped by another. The floor
+# is -40 C rather than a comfort band's, because heat pumps run, and report, well below freezing.
+# Engineering readings (coil, discharge, defrost) are a different kind and keep `uss`'s wider band.
+_PLAUSIBLE_AMBIENT_C = (-40.0, 70.0)
+_SENSOR_ABSENT = (0x00, 0xFF)        # raw values a unit reports for a probe it does not have
+
+
+@dataclass(frozen=True)
+class WireField:
+    """One attribute's position in the word array plus how to turn its raw bits into a value.
+
+    ``word`` is 1-based (word 1 = bytes 92..93). ``bit`` is the LSB within the 16-bit big-endian
+    word (bit 0 = least-significant).
+
+    An attribute wider than the word that holds its LSB simply continues into the words **before**
+    it: ``word``/``bit`` locate the least-significant end, and significance grows backwards through
+    the array. The published map is written that way and only makes sense read that way — its
+    32-bit cumulative counter puts its low half at the stated word and its high half one word
+    earlier (both families carrying it agree), and its two 24-bit stamps, at word 7 bit 8 and word 8
+    bit 0, tile words 6..8 exactly with no overlap backwards and collide forwards.
+
+    ``kind`` selects the decode:
+
+    * ``"bool"``  -> ``bool(raw)``
+    * ``"int"``   -> ``raw * k + c`` (a temperature/number)
+    * ``"temp"``  -> ``raw * k + c``, but ``None`` for a raw value that means "no such probe"
+      (``0x00``/``0xFF``) or that lands outside :data:`_PLAUSIBLE_AMBIENT_C`. Use this for an *air*
+      reading rather than ``"int"``: a unit without an outdoor probe reports 0, which the raw formula
+      would turn into a confident −64 °C, and one fabricated MEASUREMENT permanently skews the
+      min/max/mean of a user's long-term statistics. This mirrors ``uss._sensor_temp`` on the classic
+      family.
+    * ``"raw"``   -> the field's integer value, unscaled: a code, or a reading that needs no
+      scaling at all (a register already in watts). ``"int"`` would return the same number as a
+      float, which is right for a scaled temperature and wrong for a whole-unit counter.
+    * ``"counter"`` -> like ``"raw"``, but ``None`` for zero. A cumulative register that reads
+      exactly 0 is one the firmware never populates rather than a unit that has used nothing —
+      whole classes of these air conditioners carry the register and leave it at zero for their
+      whole service life, and a total that is permanently 0 is worse than absent: it sits in the
+      Energy dashboard reporting no consumption.
+    * ``"enum"``  -> ``enum[raw]`` — translates the raw wire value into the code the device
+      **publishes** for that attribute, or drops the field when the raw value isn't in the map. Most
+      attributes number themselves the same way in both places and need no entry here; the few that
+      do not are the reason this exists. The mapped-to value is a Haier STD code — a string where a
+      per-model :class:`~haismart_hrdp.models.AttributeProfile` names it, an integer where the
+      published map carries the translation itself.
+    * ``"humidity"`` -> the raw percentage, but ``None`` for 0 or anything above 100. A humidity
+      probe never reads a true 0 in habitable air; units without the probe leave the register at
+      zero for their whole service life (every capture of every family so far), and a permanent
+      0 % is a fabricated reading, not a measurement.
+    """
+
+    word: int
+    bit: int
+    length: int
+    kind: str = "int"
+    k: float = 1.0
+    c: float = 0.0
+    enum: Mapping[int, str] | Mapping[int, int] | None = None
+
+    def read(self, data: bytes):
+        # The words this field spans, ending at its own: one for anything that fits a single word,
+        # more for an attribute whose significance runs back into the words before it.
+        span = (self.bit + self.length + 15) // 16
+        end = _ATTR_BASE + self.word * 2
+        start = end - span * 2
+        if start < _ATTR_BASE or end > len(data):
+            return None
+        raw = int.from_bytes(data[start:end], "big") >> self.bit & ((1 << self.length) - 1)
+        if self.kind == "bool":
+            return bool(raw)
+        if self.kind == "raw":
+            return raw
+        if self.kind == "counter":
+            return raw or None
+        if self.kind == "bool_inv":
+            return not raw
+        if self.kind == "vane_v":
+            return vane_v_sweeping(raw)
+        if self.kind == "vane_h":
+            return vane_h_sweeping(raw)
+        if self.kind == "enum":
+            return None if self.enum is None else self.enum.get(raw)
+        if self.kind == "humidity":
+            return raw if 0 < raw <= 100 else None
+        if self.kind == "temp":
+            if raw in _SENSOR_ABSENT:
+                return None
+            value = raw * self.k + self.c
+            lo, hi = _PLAUSIBLE_AMBIENT_C
+            return value if lo <= value <= hi else None
+        return raw * self.k + self.c
+
+
+# Who made the last change. The unit reports this in every status frame, which lets an automation
+# tell an owner reaching for the handset apart from a command it sent itself.
+#
+# ⚠️ Only two of the four are evidenced. **1 (handset) and 3 (module/app)** are confirmed against an
+# independent implementation of the same protocol. **0 and 2 are not**: the device models declare the
+# attribute as a plain two-bit integer with no descriptions for its values, so nothing states what
+# they mean. `other` is a catch-all and asserts nothing; `panel` names a wired wall controller, which
+# is the obvious remaining source on this hardware and is still an inference. Do not cite it as
+# evidence that a unit accepts wired control -- that would be this project's own guess coming back as
+# a fact. A reading taken while a wired controller is used would settle it.
+OPERATION_SOURCE: Mapping[int, str] = {0: "other", 1: "remote", 2: "panel", 3: "network"}
+
+
+# --- vane semantics, defined once -------------------------------------------
+# The vane fields are POSITION CODES, not bitmasks, on every family that inherits the classic map.
+# The device model spells them out: vertical 0 = fixed, 2/4/5/6/7 = positions one..five, 8 = auto,
+# mapping to wire 0/2/4/6/8/10 and 12; horizontal 0 = fixed, 3..6 = positions, 7 = auto.
+#
+# Only the auto codes sweep. Testing bit 3 alone also matches wire 8 and 10 -- the vane parked LOW --
+# so a stationary vane gets reported to HA as sweeping. Both auto codes (0x0C, and 0x0E used by the
+# special modes) have bits 2 and 3 set, so mask for both.
+#
+# The 117-byte compact family is the exception and is NOT covered here: its own model collapses the
+# vane to a genuine 1-bit flag (STD 8/7 auto -> EPP 1, STD 0 fixed -> EPP 0), so it keeps `kind="bool"`.
+VANE_V_AUTO_MASK = 0x0C
+VANE_H_AUTO = 0x07
+
+# Model code -> wire value for the UP-DOWN vane. The left-right vane needs no such table: the code
+# its model names is the value on the wire. This axis is different — a model numbers its stops 0, 2,
+# 4, 5, 6, 8 while the unit works in even steps — and the difference is why a position on this axis
+# cannot simply be passed through.
+#
+# ⚠️ **Read from the published map, not written out by hand.** This table used to be a literal of the
+# seven stops one unit was stepped through on hardware, and a code absent from it does not decode
+# wrong — it VANISHES, because every consumer filters against the table's keys
+# (``_model_authorized_codes`` drops an unlisted code from the model-authorized set, and the vane
+# select drops it from its options). So the four codes the vendor publishes and that unit lacks were
+# silently unreachable on the 86 products that declare them: ``1``/``3`` (健康气流, health airflow
+# up and down) and ``9`` (上下摆自动2, the special-model auto), plus ``10``, which no published
+# product declares at all.
+#
+# The map's ``enum`` is the vendor's own epp->std table, generated from the models' ``variants``, so
+# inverting it is the same table read from its source rather than a wider guess. It AGREES with the
+# hardware-confirmed seven on every one of them — zero disagreements — which is what licenses taking
+# the rest from it; ``test_vane_table_matches_the_stops_confirmed_on_hardware`` pins that agreement,
+# so a regenerated map that moved one of the confirmed stops fails rather than silently redefining
+# what a unit is told to do.
+VANE_V_MODEL_TO_EPP: Mapping[int, int] = {
+    std: epp for epp, std in (CANONICAL["windDirectionVertical"].enum or {}).items()
+}
+VANE_V_EPP_TO_MODEL: Mapping[int, int] = {epp: std for std, epp in VANE_V_MODEL_TO_EPP.items()}
+
+#: The stops a real unit was stepped through, one capture per stop, and reported. Kept separately
+#: from the table above so the published map is checked against an observation rather than trusted:
+#: ``12`` is the same ``0x0C`` the classic family has always used for auto, which is the check that
+#: the two ends agree.
+VANE_V_CONFIRMED_ON_HARDWARE: Mapping[int, int] = {0: 0, 2: 2, 4: 4, 5: 6, 6: 8, 8: 12}
+
+
+VANE_NAMED_STOPS: Mapping[str, Mapping[int, str]] = {
+    "windDirectionVertical": {
+        1: "health_up",
+        3: "health_down",
+        9: "auto_2",
+        12: "up_half_auto",
+        13: "down_half_auto",
+    },
+    "windDirectionHorizontal": {8: "left_half_auto", 9: "right_half_auto"},
+}
+"""The stops the vendor gives a name to rather than a number, per axis, in the model's codes.
+
+Read off the manufacturer's own panel dictionary, whose ``windDirectionUD<N>`` keys are the model
+codes themselves: ``1``/``3`` are 健康气流 up and down -- a comfort preset that points the vane away
+from the room rather than a place along the sweep -- and the rest are the half-sweep and secondary
+automatic modes. They are named because numbering them says the wrong thing about what they do, and
+because doing so is what makes the numbered stops line up with the numbers printed in the manual:
+the two health stops sit at codes ``1`` and ``3``, *between* the ordinary positions, so counting
+them pushes every stop after them one place along.
+
+⚠️ The same code means different things on the two axes -- ``9`` is a second automatic sweep
+vertically and the right-half sweep horizontally -- so this is keyed by attribute and must stay
+that way.
+"""
+
+
+def vane_position_name(
+    code: int, codes: Collection[int], fixed: int, auto: int, attribute: str | None = None
+) -> str:
+    """Name one vane stop: an end, one of the vendor's named stops, or ``"position_N"``.
+
+    ``N`` counts the *numbered* stops this device publishes, skipping the ends and anything in
+    :data:`VANE_NAMED_STOPS`, so it reproduces the position numbers the vendor prints for that
+    model. Two units with different stop sets both count from one, which is what a person reads off
+    a panel; the raw codes are not a sequence and would make a poor label.
+
+    ``attribute`` names the axis. Omitting it numbers every stop, which is right only for an axis
+    whose codes are all ordinary positions -- pass it whenever the axis is known.
+
+    Shared so the writable axis (a select) and the read-only one (a sensor) cannot drift apart: they
+    are the same question asked of the same codes, and the day they disagree is the day one of them
+    is wrong.
+    """
+    if code == fixed:
+        return "fixed"
+    if code == auto:
+        return "auto"
+    named = VANE_NAMED_STOPS.get(attribute or "", {})
+    if code in named:
+        return named[code]
+    numbered = sorted(set(codes) - {fixed, auto} - set(named))
+    return f"position_{numbered.index(code) + 1}"
+
+
+def vane_code(model: WireModel, data: bytes, key: str) -> int | None:
+    """The raw wire code of a vane axis on ``model``, or ``None`` if it places that axis nowhere.
+
+    ``key`` is ``"swing_vertical"`` or ``"swing_horizontal"``. The decode kinds ``vane_v``/``vane_h``
+    answer *is it sweeping*, which is the right answer for a climate entity's swing control and the
+    wrong one for "where is it pointing": a vane parked at a real stop and a vane held closed both
+    read ``False``. The position is on the wire either way -- this returns it unreduced, so a caller
+    that wants the stop can have it without re-deriving the placement.
+
+    ⚠️ **Vertical is in EPP codes, not the model's.** The two spaces differ above the second stop
+    (:data:`VANE_V_MODEL_TO_EPP`); the left-right axis needs no translation. Callers comparing
+    against a device's published stops must convert -- :func:`vane_model_code` does both.
+    """
+    field = model.fields.get(key)
+    if field is None:
+        return None
+    return replace(field, kind="raw").read(data)
+
+
+def vane_model_code(model: WireModel, data: bytes, key: str) -> int | None:
+    """A vane axis's position in the code space the DEVICE'S OWN MODEL publishes, or ``None``.
+
+    ``None`` also for a wire code no published stop maps to: the special modes park a vane at codes
+    no model names, and reporting one as a stop the unit never claimed to have would be an invention.
+
+    A family carrying its own :attr:`WireModel.vane_codes` is translated through those, on BOTH
+    axes: the shared rule that the left-right code is already the published one is a property of the
+    shared frame, and a family with its own frame numbers its stops its own way.
+    """
+    raw = vane_code(model, data, key)
+    if raw is None:
+        return None
+    if (own := model.vane_codes.get(key)) is not None:
+        return own.get(raw)
+    if key == "swing_vertical":
+        return VANE_V_EPP_TO_MODEL.get(raw)
+    return raw
+
+
+def vane_v_sweeping(raw: int) -> bool:
+    """True only for the vertical vane's auto codes (0x0C, 0x0E)."""
+    return (raw & VANE_V_AUTO_MASK) == VANE_V_AUTO_MASK
+
+
+def vane_h_sweeping(raw: int) -> bool:
+    """True only for the horizontal vane's auto code (7)."""
+    return raw == VANE_H_AUTO
+
+
+@dataclass(frozen=True)
+class WriteField:
+    """How a control change for one attribute is packed into the group-set word array.
+
+    The coordinator hands control values in the *classic* representation (the same one the climate
+    entity builds): a Haier STD code for enums, ``°C − 16`` for the setpoint, ``0/1`` for booleans,
+    and a device-specific raw value for swing. ``kind`` says how to turn that into this family's raw
+    wire (EPP) value before packing at ``word``/``bit``:
+
+    * ``"passthrough"`` — already the wire value (setpoint, on/off).
+    * ``"std_enum"``   — a STD code; map via ``std_to_epp`` (refuse anything not in it).
+    * ``"onoff"``      — any nonzero classic "on" value packs ``on_value``; ``0`` packs ``0`` (swing,
+      whose classic raw value — 0x0c / 7 — is not this family's code).
+    * ``"celsius"``    — a setpoint the family encodes as **°C × ``scale``** rather than as the
+      classic ``°C − 16``. The classic value is converted back to °C first, so the caller keeps
+      handing setpoints in one representation whatever the family does on the wire.
+
+    ``min_epp``/``max_epp`` bound a field whose valid range is narrower than its bit width — the
+    setpoint being the case that matters, where 8 bits would otherwise accept a wire value meaning
+    115 °C. The enum kinds are already bounded by their own maps.
+    """
+
+    word: int
+    bit: int
+    length: int
+    kind: str = "passthrough"
+    std_to_epp: Mapping[int, int] | None = None
+    on_value: int = 1
+    min_epp: int | None = None
+    max_epp: int | None = None
+    scale: float = 1.0      # "celsius": wire value per °C
+
+
+@dataclass(frozen=True)
+class SingleParam:
+    """A control written one parameter at a time (not via the group-set).
+
+    ``on``/``off`` are the two-byte EPP commands that set the attribute — for a paired boolean the
+    command itself carries the value (``4d05`` = electric-heat on, ``4d04`` = off), so there is no
+    data payload. ``off`` is ``None`` for a start-only trigger (self-clean has no off command).
+    ``read`` is the :class:`WireField` its state is read back from, so the control shows real state.
+    """
+
+    on: bytes
+    off: bytes | None
+    read: WireField
+
+    def command(self, value: int) -> bytes | None:
+        """The EPP command for ``value`` (1 = on / 0 = off), or ``None`` if that direction has no
+        command (a start-only trigger asked to turn off)."""
+        return self.on if value else self.off
+
+
+@dataclass(frozen=True)
+class ValueParam:
+    """A control written one parameter at a time, where the COMMAND names the attribute and the
+    PAYLOAD carries the value.
+
+    This is the other single-parameter form. :class:`SingleParam` covers the paired-command shape,
+    where the command *is* the value (``4d05`` = electric-heat on, ``4d04`` = off) and there is no
+    payload; here one command per attribute takes a **big-endian 16-bit** value, so an enum or a
+    setpoint can be written without a group-set and without knowing where the attribute sits in a
+    packed word block.
+
+    The command is ``0x5D00 | param_id``. ``spec`` supplies the value semantics only -- the same
+    :class:`WriteField` kinds the group-set path uses, so a caller hands control values in one
+    representation whatever mechanism the family turns out to need; its ``word``/``bit`` are unused
+    and its ``length`` bounds the payload. ``read`` is where the written value reads back in this
+    family's report, so a control written this way still shows real state rather than an echo of
+    what we sent.
+    """
+
+    param_id: int
+    spec: WriteField
+    read: WireField
+    #: ``True`` where the id is DERIVED rather than observed being accepted. The appliance settles
+    #: it: the value is written, and the same attribute's own read-back position says whether it
+    #: landed. A caller that offers one of these must check, once, and stop offering it if it does
+    #: not take -- see :data:`PROVISIONAL_SINGLE_PARAM_IDS`.
+    provisional: bool = False
+
+    @property
+    def command(self) -> bytes:
+        """The two EPP command bytes that select this attribute."""
+        cmd = 0x5D00 | self.param_id
+        return bytes(((cmd >> 8) & 0xFF, cmd & 0xFF))
+
+
+@dataclass(frozen=True)
+class WireModel:
+    """A decoder (and, when ``group_cmd`` is set, a control encoder) for one AC family, selected by
+    uPlusId or report length.
+
+    ``fields`` maps a ``parse_full_status`` output key to its :class:`WireField`. ``mode``/``fan_mode``
+    tokens are derived from ``operation_mode``/``wind_speed`` via the profile, exactly as the classic
+    path does, so the coordinator/entities see the same shape.
+
+    ``writable`` families additionally define ``group_cmd`` (the group-set EPP command), ``word_count``
+    (how many words the settable array holds), ``write_base_word`` (the *report* word at which that
+    array starts) and ``write_fields`` (the packing map). Control is a read-modify-write group-set:
+    seed the word array from a live report, flip the requested fields, wrap in an ``FF FF`` frame with
+    ``group_cmd``.
+
+    ``write_fields`` positions are **group-set-relative** (word 1 = the first word of the op's data),
+    while ``fields`` positions are **report-relative** (word 1 = byte 92). On most families these
+    coincide, but a family can carry an unrelated block ahead of its climate attributes in the report
+    while the op still starts at its own word 1 — ``write_base_word`` is exactly that displacement.
+    """
+
+    family: str
+    report_lengths: frozenset[int]
+    fields: Mapping[str, WireField]
+    uplus_ids: frozenset[str] = frozenset()
+    writable: bool = False          # False = monitoring-only (no confirmed control path)
+    indoor_key: str = "current_temperature"
+    target_key: str = "target_temperature"
+    group_cmd: bytes | None = None  # group-set EPP command (e.g. b"\x4d\x5f")
+    word_count: int = 0             # settable words 1..word_count
+    write_base_word: int = 1        # report word holding group-set word 1 (1 = the report's own word 1)
+    write_fields: Mapping[str, WriteField] = field(default_factory=dict)
+    # Write fields that carry a POSITION rather than an on/off state — the vanes, on a family that
+    # packs them as the multi-bit code they are. A family that collapses a vane to a single bit
+    # (compact-12 does, and its own model describes it that way) must leave the field out: a position
+    # packed there would arrive as "sweep", which is not what was asked for.
+    position_fields: frozenset[str] = frozenset()
+    # This family's whole-word offset from the published map, when it HAS one. Set only where the
+    # map has been checked against real reports field for field -- classic at -19 (9 of 9 positions
+    # reproduced) and extended-36 at 0 (12 of 12).
+    canonical_displacement: int | None = None
+    # A block this family inserts that the published map does not describe, as
+    # ``(first inserted word, how many words)``. A family with an insert is still a displacement of
+    # the map -- just a piecewise one: everything below the pivot sits at ``canonical_displacement``
+    # and everything from it upward is pushed along by the insert.
+    #
+    # extended-46 is the case: canonical, with ten words inserted at w25 for a dual-airflow
+    # cabinet's per-tower vane and fan, which the published map does not carry because no bundled
+    # model has that hardware. This used to be expressed by leaving the displacement ``None``, which
+    # said "unplaceable" when the truth was "placeable, in two pieces" -- so nothing read the
+    # attributes this family's devices declare, and its optional-feature entities never appeared.
+    canonical_insert: tuple[int, int] | None = None
+    # Like ``canonical_insert``, but applying only to reports of a given LENGTH, for a family whose
+    # members differ by one inserted word. The classic family is the case: its 125-byte members are
+    # the flat map at -19, while the 127-byte rental SKU carries one extra word (``targetRentTime``,
+    # its report word 6) that the published map does not describe, pushing everything from canonical
+    # word 25 up along by one. The report length is the evidence for the insert -- the 127-byte
+    # layout's hardware-confirmed sensor offsets (indoor temperature at byte 104, outdoor at 106,
+    # the energy counter's low word at 124) are each exactly one word past where the flat map puts
+    # them, and each reproduces under the insert.
+    length_inserts: Mapping[int, tuple[int, int]] = field(default_factory=dict)
+    # Controls written ONE PARAMETER AT A TIME rather than through the group-set, for families that
+    # publish per-attribute write commands (compact-12 does: `4d04`/`4d05` electric-heat, …). Maps an
+    # attribute name to ``SingleParam`` — its off/on EPP command bytes and the WireField to read its
+    # state back with. This is a different mechanism from ``group_cmd``: each write is its own op with
+    # no baseline, and a boolean's command IS its value (the on-command sets on, the off-command off).
+    single_param_fields: Mapping[str, SingleParam] = field(default_factory=dict)
+    # Controls written one parameter at a time where the command names the attribute and the payload
+    # carries the value (``0x5D00 | param_id``, big-endian 16-bit). This is the mechanism for a class
+    # that publishes NO group command at all -- every attribute ``writeType: I`` -- so there is no
+    # word block to seed and each change is its own op. Maps an attribute name to :class:`ValueParam`.
+    value_param_fields: Mapping[str, ValueParam] = field(default_factory=dict)
+    # A family that publishes its OWN map rather than a displacement of the shared one: the
+    # attributes beyond the climate block that its map places, keyed by the published attribute name
+    # the way :func:`declared_fields` keys them. Read only when ``canonical_displacement`` is
+    # ``None`` -- a family that has a displacement takes its extras from the shared map instead, and
+    # carrying both would let two tables disagree about one attribute.
+    own_fields: Mapping[str, WireField] = field(default_factory=dict)
+    # The family's own vane code tables, wire code -> the code its model publishes, per axis key
+    # (``"swing_vertical"`` / ``"swing_horizontal"``). Empty means the shared tables apply: the
+    # up-down axis through :data:`VANE_V_EPP_TO_MODEL`, the left-right axis as the identity. A family
+    # that numbers its stops differently MUST carry its own, or a stop it reports is named as a
+    # different stop of the shared family.
+    vane_codes: Mapping[str, Mapping[int, int]] = field(default_factory=dict)
+    # Core readings no product of this family carries, by the products' own published models. The
+    # map may still place one -- it is the device TYPE's map, wider than any product of it -- but a
+    # unit that does not carry the attribute reports a constant there, and that constant decodes to
+    # a confident, wrong value. Not decoded, and the entity is not created for this family.
+    withheld_readings: frozenset[str] = frozenset()
+
+    def canonical_word(self, word: int) -> int | None:
+        """Where a published map word lands in this family's report, or ``None`` if unplaceable.
+
+        The safe direction is ``None``: a family whose relationship to the map has not been checked
+        against real reports must place nothing, since a guessed offset puts every attribute
+        somewhere plausible and wrong.
+        """
+        if self.canonical_displacement is None:
+            return None
+        placed = word + self.canonical_displacement
+        if self.canonical_insert is not None:
+            pivot, count = self.canonical_insert
+            if word >= pivot:
+                placed += count
+        return placed
+
+    def model_fields(self, declared: Iterable[str], report_length: int) -> dict[str, WireField]:
+        """Fields for the attributes ``declared`` by this device that the family map does not carry.
+
+        Empty for a family whose relationship to the map is unknown, which is the safe direction:
+        the device keeps the attributes that were established from captures and gains nothing
+        invented. A family that publishes its own map places them from :attr:`own_fields` instead,
+        under the same two gates: the device declares the attribute, and the report is long enough
+        to carry it.
+        """
+        if self.canonical_displacement is None:
+            word_limit = (report_length - _ATTR_BASE) // 2
+            wanted = set(declared)
+            return {
+                name: wf for name, wf in self.own_fields.items()
+                if name in wanted
+                and wf.word <= word_limit
+                and wf.word - (wf.bit + wf.length + 15) // 16 + 1 >= 1
+            }
+        place = self.canonical_word
+        if insert := self.length_inserts.get(report_length):
+            pivot, count = insert
+
+            def place(word: int, _base=self.canonical_word) -> int | None:
+                placed = _base(word)
+                if placed is None:
+                    return None
+                return placed + count if word >= pivot else placed
+
+        return declared_fields(
+            place, declared,
+            word_limit=(report_length - _ATTR_BASE) // 2,
+        )
+
+    def matches(self, length: int, uplus_id: str | None) -> bool:
+        if uplus_id and uplus_id in self.uplus_ids:
+            return True
+        return length in self.report_lengths
+
+    def baseline_words(self, report: bytes) -> bytearray:
+        """The settable word array (words 1..word_count) sliced from a full-status report — the seed
+        for a group-set so untouched attributes are preserved."""
+        start = _ATTR_BASE + 2 * (self.write_base_word - 1)
+        end = start + 2 * self.word_count
+        if len(report) < end:
+            raise ValueError(f"report too short ({len(report)}) for {self.family} baseline")
+        return bytearray(report[start:end])
+
+    def single_param_value(self, report: bytes, name: str) -> int | None:
+        """Read a single-parameter control's current state back from ``report``, or ``None``.
+
+        A single-parameter control is written by command rather than into the group-set word block,
+        so its state is read from its own :class:`SingleParam.read` position, not from ``write_fields``.
+        """
+        sp = self.single_param_fields.get(name)
+        if sp is None:
+            return None
+        value = sp.read.read(report)
+        return int(value) if isinstance(value, bool) else value
+
+    def current_write_value(self, report: bytes, name: str) -> int | None:
+        """The live value of a *writable* field, read back out of ``report`` in the same
+        representation :meth:`encode_control` accepts — so a caller can show the current state of an
+        attribute the read map doesn't publish (the secondary toggles). ``None`` when the field isn't
+        writable on this family or the report is too short to carry it."""
+        wf = self.write_fields.get(name)
+        if wf is None:
+            return None
+        try:
+            words = self.baseline_words(report)
+        except ValueError:
+            return None
+        off = (wf.word - 1) * 2
+        if off + 1 >= len(words):
+            return None
+        raw = ((words[off] << 8) | words[off + 1]) >> wf.bit & ((1 << wf.length) - 1)
+        if wf.kind == "std_enum":
+            inverse = {epp: std for std, epp in (wf.std_to_epp or {}).items()}
+            return inverse.get(raw)
+        if wf.kind == "onoff":
+            return wf.on_value if raw else 0
+        if wf.kind == "celsius":
+            return round(raw / wf.scale) - 16
+        return raw
+
+    def encode_value_param(self, name: str, value: int) -> tuple[bytes, bytes]:
+        """The EPP command and 2-byte big-endian payload that set ``name`` to ``value``.
+
+        Refuses any attribute this family does not publish a parameter id for, and any value the
+        attribute's own spec rejects -- the same encoder guard the group-set path applies, for the
+        same reason: control may only ever emit a mapped attribute with a supported value.
+        """
+        vp = self.value_param_fields.get(name)
+        if vp is None:
+            raise KeyError(f"{name!r} has no single-parameter command on {self.family}")
+        epp = self._to_epp(vp.spec, name, int(value))
+        return vp.command, bytes(((epp >> 8) & 0xFF, epp & 0xFF))
+
+    def value_param_value(self, report: bytes, name: str) -> int | None:
+        """The live raw value of a single-parameter control, read out of ``report``.
+
+        Read back from the attribute's own position in the report rather than from anything the
+        write path holds, so a command the appliance declined shows as unchanged.
+        """
+        vp = self.value_param_fields.get(name)
+        if vp is None:
+            return None
+        return vp.read.read(report)
+
+    def encode_control(self, baseline: bytes, changes: Mapping[str, int]) -> bytes:
+        """Pack ``changes`` ({classic field name: classic value}) into a copy of ``baseline`` (the
+        settable word array). Refuses any field/value not in :attr:`write_fields` — the encoder
+        safety guard: control can only ever emit a mapped attribute with a supported value."""
+        if not self.group_cmd or not self.write_fields:
+            raise ValueError(f"{self.family} has no confirmed control path")
+        words = bytearray(baseline)
+        for name, value in changes.items():
+            wf = self.write_fields.get(name)
+            if wf is None:
+                raise KeyError(f"{name!r} is not a writable field on {self.family}")
+            epp = self._to_epp(wf, name, int(value))
+            off = (wf.word - 1) * 2
+            if off + 1 >= len(words):
+                raise ValueError(f"{name}: word {wf.word} outside the {self.family} word array")
+            word = (words[off] << 8) | words[off + 1]
+            mask = ((1 << wf.length) - 1) << wf.bit
+            word = (word & ~mask) | ((epp << wf.bit) & mask)
+            words[off], words[off + 1] = (word >> 8) & 0xFF, word & 0xFF
+        return bytes(words)
+
+    def _to_epp(self, wf: WriteField, name: str, value: int) -> int:
+        if wf.kind == "std_enum":
+            epp = (wf.std_to_epp or {}).get(value)
+            if epp is None:
+                raise ValueError(
+                    f"{name}={value} is not a supported code on {self.family} "
+                    f"(allowed {sorted(wf.std_to_epp or {})})"
+                )
+        elif wf.kind == "onoff":
+            epp = wf.on_value if value else 0
+        elif wf.kind == "celsius":
+            epp = round((value + 16) * wf.scale)
+        else:  # passthrough
+            epp = value
+        if not 0 <= epp < (1 << wf.length):
+            raise ValueError(f"{name}={epp} does not fit its {wf.length}-bit field on {self.family}")
+        lo, hi = wf.min_epp, wf.max_epp
+        if (lo is not None and epp < lo) or (hi is not None and epp > hi):
+            raise ValueError(
+                f"{name}={epp} is outside the {lo}..{hi} this field accepts on {self.family}"
+            )
+        return epp
+
+    def decode(self, data: bytes, profile=None) -> dict | None:
+        """Decode ``data`` to the ``parse_full_status`` dict, or ``None`` if the result fails the
+        plausibility sanity-check (the guard that makes length-keying safe against a collision:
+        a wrong family reads an implausible indoor temperature / setpoint)."""
+        out: dict = {}
+        for key, wf in self.fields.items():
+            val = wf.read(data)
+            if val is not None:
+                out[key] = val
+
+        # A report this family cannot actually read is NOT a report of this family. Both anchors
+        # have to arrive, or the checks below are asked about values that were never read -- and a
+        # check on a value that was never read passes, which is the whole of Rule 13. What made
+        # this reachable is that a uPlusId match wins over the length in `matches`, deliberately
+        # (the appliance names its own family on the discovery channel, key-free). So a SHORT frame
+        # from a known appliance -- an ack, a reply to a query the unit does not implement -- was
+        # claimed by its family, read nothing, vetoed nothing, and came back as a successful decode
+        # carrying only the two markers below. Downstream that is a full status report: it becomes
+        # the coordinator's cached blob, and the next control command seeds its group-set from a
+        # 93-byte "report" and fails with `report too short (93) for extended46 baseline` until a
+        # poll happens to overwrite it. Refusing here costs nothing -- the caller falls through to
+        # the related-layout and partial paths exactly as it does for any unclaimed report.
+        for anchor in (self.indoor_key, self.target_key):
+            if anchor in self.fields and anchor not in out:
+                return None
+
+        indoor = out.get(self.indoor_key)
+        if indoor is not None and not _PLAUSIBLE_INDOOR_C[0] <= indoor <= _PLAUSIBLE_INDOOR_C[1]:
+            return None
+        target = out.get(self.target_key)
+        if target is not None and not _PLAUSIBLE_TARGET_C[0] <= target <= _PLAUSIBLE_TARGET_C[1]:
+            return None
+
+        if profile is not None:
+            if "operation_mode" in out:
+                out["mode"] = profile.normalized_mode(out["operation_mode"])
+            if "wind_speed" in out:
+                out["fan_mode"] = profile.normalized_fan(out["wind_speed"])
+        # Markers the coordinator reads: a known non-classic family (NOT "unknown", so no repair is
+        # raised) that is display-only until its write path is capture-confirmed.
+        out["layout"] = self.family
+        out["writable"] = self.writable
+        return out
+
+
+# --- registry ---------------------------------------------------------------------------------
+
+# operationMode / windSpeed enums map the raw EPP index -> the Haier STD code string the digital
+# model uses, so the AttributeProfile names them (STD 4 = heat, 2 = dry, 6 = fan, etc.). The mapping
+# is the one this model publishes in its own stdCode:eppValue table, i.e. epp 2 == STD "4".
+_COMPACT12_MODE = {0: "0", 1: "1", 2: "4", 3: "6", 4: "2"}   # auto / cool / heat / fan_only / dry
+_COMPACT12_FAN = {0: "1", 1: "2", 2: "3", 3: "5"}            # high / medium / low / auto
+
+# Control (group-set): this model fully specifies its group command — eppCmd
+# `4d5f`, a 12-word array (words 1..12, the same span as the report), and each settable field's
+# stdCode->eppValue map. This is the SAME spec basis as heat mode (issue #1): derived from the model,
+# not captured on this exact family, but the group-set method is hardware-confirmed on other units.
+# Control is read-modify-write from a live report, and the encoder refuses any field/value not below.
+#   operationMode STD->EPP: 0->0 (auto) 1->1 (cool) 4->2 (heat) 6->3 (fan) 2->4 (dry)
+#   windSpeed     STD->EPP: 1->0 (high) 2->1 (med) 3->2 (low) 5->3 (auto)
+#   swings: STD 8/7 (auto) -> EPP 1, STD 0 (fixed) -> EPP 0 ("onoff": the classic 0x0c/7 "on" -> 1)
+#   targetTemperature: EPP = °C - 16 (same as classic); onOffStatus: 0/1 (same as classic)
+_COMPACT12_WRITE = {
+    "operationMode": WriteField(6, 0, 16, "std_enum", std_to_epp={0: 0, 1: 1, 4: 2, 6: 3, 2: 4}),
+    "windSpeed": WriteField(7, 0, 16, "std_enum", std_to_epp={1: 0, 2: 1, 3: 2, 5: 3}),
+    "windDirectionVertical": WriteField(8, 0, 1, "onoff", on_value=1),
+    "windDirectionHorizontal": WriteField(8, 1, 1, "onoff", on_value=1),
+    # 16..30 C (the model's own minValue/maxValue), i.e. EPP 0..14 — same range as the classic
+    # family, and far narrower than the 16 bits the field occupies.
+    "targetTemperature": WriteField(12, 0, 16, "passthrough", min_epp=0, max_epp=14),
+    "onOffStatus": WriteField(9, 0, 1, "passthrough"),
+    # Presence-based airflow, from the same published group-command line as everything above:
+    # `20200H#2&9,12,1*00:00,03:01` — word 9, bit 12, one bit, STD 0 -> EPP 0 and STD 3 -> EPP 1.
+    # ⚠️ **TWO codes, not four.** The shared frame gives this attribute a 2-bit slot carrying
+    # off/avoid/follow/on; this lineage gives it ONE bit and its own map names only the two ends, so
+    # `avoid` (1) and `follow` (2) cannot be expressed here at all. `std_enum` is what refuses them
+    # -- the encoder rejects a code the map does not carry, and the select offers only the codes the
+    # family can express, rather than a control that fails on two of its four options.
+    # The position is the one the read map already publishes for `human_sensing` (w9.b12), so the
+    # write reads back at the bit it wrote, which is the relation every family here is held to.
+    "humanSensingStatus": WriteField(9, 12, 1, "std_enum", std_to_epp={0: 0, 3: 1}),
+}
+
+# The "compact-12" family: a 12-word report (117 B) where every attribute — sensors included — lives
+# in the word array (unlike the classic family's separate sensor block). Transcribed from the two
+# published models that describe it, and validated field-for-field against three real reports from a
+# HSU-12HFMF (haismart-local issue #4): power/setpoint/indoor/mode/fan/both swings all matched the
+# state the reporter said the unit was in.
+#
+# The family's own published description positions every one of its 38 fields, and all of them are
+# now read (below). The ones with UNPROVEN MEANING are keyed so no entity consumes them — they land
+# in the decode (hence diagnostics) only, and each names what promotes it:
+#
+#   * `w2_low_raw` (w2 LOW byte) — `外温`/outdoorTemperature, a real sensor this variant HAS (the
+#     catalogue marks it invisible:false) and NOT humidity: this variant declares no humidity
+#     hardware (its humidity attributes are invisible:true, and w11 `实湿` reads 0), so smartair2's
+#     `room_humidity` at the same offset describes a DIFFERENT variant, not this one. It reads raw
+#     59 / 60 / 60 across off / cool / fan-only. The only open part is the ENCODING, and both survivors
+#     are outdoor temperatures — humidity is ruled out either way:
+#       - taken at face value (k=1) it is ~60, an outdoor-UNIT / hot-side reading — 60 °C off the
+#         condenser while cooling is ordinary (the telemetry family's outdoor-air byte runs 60–85 °C),
+#         holding ~59 stale when off (the v0.39.0 dormant-probe behaviour);
+#       - nine sibling models declare this attribute min −30 / max 60, which would make it ambient
+#         ~30 via a −30 offset.
+#     Held raw/diagnostic until one reading at a known outdoor temperature fixes the offset; never an
+#     "outdoor temperature" sensor (a user reads that as ambient, and it may be the hot side).
+#     ⚠️ An earlier note called this humidity, on "59 can't be outdoor". Rule 6 trap: 60 °C IS
+#     reasonable for outdoor-unit air, and the invisible flags settle it as outdoor. Retracted.
+#     `w2_high_raw` is `空质`/air-quality per the vendor; kept neutral, unconfirmed.
+#   * `input_power_raw` (w3, low+high byte) — LIVE (0 off, 15 cooling, 0 fan-only on the real
+#     reports; it moves with the compressor), but 15 of anything is not watts while cooling, so the
+#     description's unit cannot be taken at face value (0.1 kW steps → 1.5 kW would be plausible).
+#     The same bar that keeps the 209-family's counter out: no unit, no sensor. One reporter reading
+#     their meter or app beside a capture settles the scale.
+#   * the toggles/flags — positions published, every capture so far reads them 0, so there is no
+#     positive confirmation and no entity; they read back for diagnostics and for the day a capture
+#     exercises one.
+#
+# Control covers the core climate fields (power / mode / fan / setpoint / both swings) via the group
+# command its model specifies; the description also names per-attribute write commands, which stay
+# unused (a different mechanism, documented, not needed while the group command works).
+# The compact family's per-attribute (single-parameter) write commands, from its own published
+# profile: paired 开/关 (on/off) EPP commands, and the report position each reads back at (verified
+# against the three issue-#4 reports). This is how the app controls the toggles this family's group
+# command (`4d5f`, mode/fan/vanes/temp/onoff) does not carry. Keyed by the digital-model attribute
+# name so the coordinator's declared∩¬invisible gate applies unchanged; the Chinese-label→name
+# mapping is the profile glossary (电=electric-heat, 新=fresh air, 康=health, 自=self-clean).
+# Only the panel controls this family declares are enabled here. The controls offered through
+# `panel_switch_fields`/`panel_select_fields` are gated by the device DECLARING the attribute
+# (declared ∩ ¬invisible), so a compact unit without electric-heat is not offered it. The family's
+# health (`4d09`/`4d08`) and self-clean (`4d26`, start-only) are included now that a
+# single-parameter control is offered by declaration (see `coordinator.supports_field`), so a
+# compact unit without the function gets no control. The remaining published pairs — `4d18`/`4d19`
+# (child lock), `4d1c`/`4d1d` (humidify) — stay out on the documentary rule, not the gate: the
+# app's panel renders no widget for either, so neither do we.
+_COMPACT12_SINGLE_PARAM = {
+    "electricHeatingStatus": SingleParam(b"\x4d\x05", b"\x4d\x04", WireField(9, 1, 1, kind="bool")),
+    "freshAirStatus": SingleParam(b"\x4d\x1f", b"\x4d\x1e", WireField(10, 0, 1, kind="bool")),
+    # The health toggle and the self-clean trigger, from the family's own published records —
+    # paired on/off commands with the state bit each reads back from, same shape as the two above.
+    # Self-clean has no off command (the cycle runs to completion), hence the start-only form.
+    # These are OFFERED by declaration (`coordinator.supports_field` requires a single-parameter
+    # control's attribute to be declared and not invisible), so a compact unit without the function
+    # gets no control for it.
+    "healthMode": SingleParam(b"\x4d\x09", b"\x4d\x08", WireField(9, 3, 1, kind="bool")),
+    "selfCleaningStatus": SingleParam(b"\x4d\x26", None, WireField(9, 2, 1, kind="bool")),
+}
+
+COMPACT12 = WireModel(
+    family="compact12",
+    report_lengths=frozenset({117}),
+    single_param_fields=_COMPACT12_SINGLE_PARAM,
+    # Every one of the family's 509 catalogue products carries this same 32-character identifier —
+    # it is the family, not a member — so an appliance announcing it on the discovery channel
+    # resolves here before its first report. Length keying stays as the fallback for a unit whose
+    # identifier was never learned.
+    uplus_ids=frozenset({"00000000000000008080000000041410"}),
+    writable=True,
+    group_cmd=b"\x4d\x5f",
+    word_count=12,
+    write_fields=_COMPACT12_WRITE,
+    # ── Label glossary (AUTHORITATIVE — the profile gives Chinese labels, not English names, and
+    # mis-translating them is a recurring error, so the mapping is written down here once). Each field
+    # below is keyed by the profile's own Chinese label; the token is the literal, verified reading.
+    #   实温 indoor temp · 外温 outdoor(-UNIT) temp · 空质 air quality · 功率低/高 power low/high byte ·
+    #   PM值 PM value · 模式 mode · 风速 fan speed · 上下 up-down vane · 左右 left-right vane ·
+    #   开/关机 power · 电 electric heat · 自 self-clean · 康 health · 湿 humidify · 节能有无 energy-save
+    #   CAPABILITY · 单位切换 temp-unit toggle · 感人 human/presence sensing · 云适(应) cloud-ADAPTIVE
+    #   (NOT cloud-control) · 眠线 sleep curve · 锁 lock · 新 fresh air · 强力有无 boost CAPABILITY ·
+    #   静音有无 quiet CAPABILITY · 健康上吹/下吹 healthy airflow up/down · 屏显有无 display CAPABILITY ·
+    #   实湿 indoor humidity · 设湿 target humidity · 设温 target temp.
+    # 有无 = "has / has-not" = a CAPABILITY flag (does the unit HAVE the function), NOT its on/off state.
+    fields={
+        "power": WireField(9, 0, 1, kind="bool"),                 # 开机/关机
+        "target_temperature": WireField(12, 0, 16, kind="int", k=1.0, c=16.0),   # 设温
+        "current_temperature": WireField(1, 0, 16, kind="int", k=1.0, c=0.0),    # 实温
+        "operation_mode": WireField(6, 0, 16, kind="enum", enum=_COMPACT12_MODE),  # 模式
+        "wind_speed": WireField(7, 0, 16, kind="enum", enum=_COMPACT12_FAN),     # 风速
+        "swing_vertical": WireField(8, 0, 1, kind="bool"),       # 上下
+        "swing_horizontal": WireField(8, 1, 1, kind="bool"),     # 左右
+        # --- the rest of the published description (positions verified against the real reports;
+        # none of these keys is consumed by an entity — diagnostics only, see the note above) ---
+        "w2_low_raw": WireField(2, 0, 8, kind="raw"),            # 外温 — outdoor temp (unit; ~60 hot)
+        "w2_high_raw": WireField(2, 8, 8, kind="raw"),           # 空质 — air quality (unconfirmed)
+        "input_power_raw": WireField(3, 0, 16, kind="raw"),      # 功率 — power register, unit unproven
+        "pm_raw": WireField(4, 0, 16, kind="raw"),               # PM值
+        "indoor_humidity": WireField(11, 0, 8, kind="humidity"), # 实湿
+        "target_humidity": WireField(11, 8, 8, kind="humidity"), # 设湿
+        # word 9: the state bits beside power (b0)
+        "electric_heat": WireField(9, 1, 1, kind="bool"),        # 电
+        # keyed the same as the canonical families' self-clean state so the running indicator and
+        # the "last self-clean" timestamp read it — the button this family now offers needs both
+        "self_cleaning": WireField(9, 2, 1, kind="bool"),        # 自
+        "health": WireField(9, 3, 1, kind="bool"),               # 康
+        "humidify": WireField(9, 6, 1, kind="bool"),             # 湿 (开湿/关湿 = moisture on/off)
+        "temp_unit": WireField(9, 11, 1, kind="raw"),            # 单位切换 — °C/°F toggle
+        "human_sensing": WireField(9, 12, 1, kind="bool"),       # 感人
+        "cloud_adaptive": WireField(9, 13, 1, kind="bool"),      # 云适应 (was mis-mapped "cloud_control")
+        "sleep_curve": WireField(9, 14, 1, kind="bool"),         # 眠线
+        "lock": WireField(9, 15, 1, kind="bool"),                # 锁
+        # word 10: fresh air + the healthy-airflow pair, and the 有无 CAPABILITY flags
+        "fresh_air": WireField(10, 0, 1, kind="bool"),           # 新
+        "healthy_wind_up": WireField(10, 3, 1, kind="bool"),     # 健康上吹
+        "healthy_wind_down": WireField(10, 4, 1, kind="bool"),   # 健康下吹
+        "cap_strong": WireField(10, 1, 1, kind="bool"),          # 强力有无
+        "cap_quiet": WireField(10, 2, 1, kind="bool"),           # 静音有无
+        "cap_display": WireField(10, 5, 1, kind="bool"),         # 屏显有无
+        "cap_energy_saving": WireField(9, 10, 1, kind="bool"),   # 节能有无
+    },
+)
+
+# --- extended-36 (165-byte report) --------------------------------------------------------------
+
+# operationMode / windSpeed are plain STD enums here: the model maps stdValue -> eppValue 1:1 for
+# both, so the raw wire value IS the STD code the digital model and the profile already speak.
+# The mode/fan codes these families put on the wire. Both are the IDENTITY -- on every family that
+# is the published map at a displacement the EPP value *is* the Haier STD code -- so their only job
+# is to say which codes exist; a raw value absent from them is dropped rather than published.
+#
+# ⚠️ That makes an omission invisible: the reading simply disappears, which reads downstream as "the
+# unit did not report a mode" rather than as "we do not know this code" (Rule 13's shape). Code 5
+# was omitted, and it is a real published mode -- ``节能模式(窗机)``, energy-saving, on the window air
+# conditioners -- so a window unit sitting in it decoded with NO operationMode at all (issue #11,
+# capture 1). The sets below are therefore ENUMERATED from the published catalogue rather than
+# written from memory, and `test_published_enum_codes_are_all_decodable` holds them to it.
+#
+# Widening cannot mislabel an appliance that does not have the code: the raw value is only a *code*
+# here, and what it MEANS comes from the device's own published enum via `AttributeProfile`, which
+# returns nothing for a code its model does not declare.
+_EXT36_MODE = {
+    0: "0",   # 智能/自动/舒适  auto
+    1: "1",   # 制冷            cool
+    2: "2",   # 除湿            dry
+    3: "3",   # 健康除湿        healthy dehumidify -- named by its description, not by this table
+    4: "4",   # 制热            heat
+    5: "5",   # 节能模式(窗机)  energy-saving, window units only (3 published products)
+    6: "6",   # 送风            fan only
+}
+# Every fan code that FITS this field. `windSpeed` is three bits wide in the shared frame, so
+# 0..7 is the whole of what a report can carry here -- and the published catalogue uses eight of
+# those eight values across the product line. Enumerated, not assumed; `test_published_enum_codes…`
+# holds it to the catalogue.
+#
+# Widening cannot invent a speed for an appliance that does not have one: the raw value is only a
+# *code* at this layer, and what it MEANS comes from the device's own published enum through
+# `AttributeProfile`, which returns nothing for a code its model does not declare. So a unit that
+# declares only 1/2/3/5 is unaffected by the presence of 0, 4, 6 and 7 here.
+#
+# ⚠️ **Codes 8 (中低风) and 9 (静音风) are absent because they cannot be represented**, not because
+# they are doubted -- eight and nine do not fit three bits. Every product declaring one is already
+# refused `windSpeed` control on other grounds (its order refutes the frame, or the bit-reuse gate
+# takes its fan), so nothing is lost that was otherwise reachable. See `docs/FUTURE_WORK.md` item 41.
+_EXT36_FAN = {
+    # ⚠️ **0 is deliberately absent, and so is 超强风 / "Boost" with it.** 0 is what the fan field
+    # reads on a real 209-byte report from a unit that is switched OFF -- so at this layer a raw 0
+    # is "no speed reported", and it is indistinguishable from the Boost code that 23 other products
+    # declare. No capture from any of those products exists to separate the two, and a fan speed
+    # that cannot be read back must not be offered (a control whose state never moves looks to its
+    # owner like a command that did nothing). `profiles._FAN_KEYWORDS` therefore does not name
+    # 超强风 either, so it never reaches a fan list. `docs/FUTURE_WORK.md` item 41.
+    1: "1",   # 高风    high
+    2: "2",   # 中风    medium
+    3: "3",   # 低风    low
+    4: "4",   # 微风    breeze -- the gentlest
+    5: "5",   # 自动    auto
+    6: "6",   # 静音风 OR 快速风 -- ⚠️ the code does NOT determine the speed on this attribute; the
+    7: "7",   # 中高风 OR 快速风 -- product's own description does. See `profiles._FAN_KEYWORDS`.
+}
+
+# --- fields from the published map ------------------------------------------
+# The families below are the same published attribute map at different displacements (see
+# `canonical_map`). So their positions and scaling are read from it rather than written out again:
+# what stays here is the part the map does not state, which is how we choose to DECODE each field —
+# that a temperature sensor reporting its zero sentinel means "no probe" rather than 0 °C, that a
+# vane nibble is a position code with only some values meaning "sweeping", and which enum table
+# names a code. Those are policies, not published facts.
+#
+# Each entry is our key -> (published name, kind[, enum]).
+_CLIMATE_SPEC: Mapping[str, tuple] = {
+    "power": ("onOffStatus", "bool"),
+    "target_temperature": ("targetTemperature", "int"),
+    "current_temperature": ("indoorTemperature", "temp"),
+    "outdoor_temperature": ("outdoorTemperature", "temp"),
+    "heat_capable": ("acType", "bool_inv"),
+    "error_code": ("errCode", "raw"),
+    "last_changed_by": ("opSrc", "enum", OPERATION_SOURCE),
+    "operation_mode": ("operationMode", "enum", _EXT36_MODE),
+    "wind_speed": ("windSpeed", "enum", _EXT36_FAN),
+    "swing_vertical": ("windDirectionVertical", "vane_v"),
+    "swing_horizontal": ("windDirectionHorizontal", "vane_h"),
+    "self_cleaning": ("selfCleaningStatus", "bool"),
+    "energy_wh": ("totalElectricityUsed", "counter"),
+    # The comfort settings, which share one word with the power flag. A family that offers these as
+    # switches must also READ them: a switch whose state never moves looks to its owner like a
+    # command that did nothing, even when the air conditioner obeyed it.
+    "strong": ("rapidMode", "bool"),
+    "quiet": ("muteStatus", "bool"),
+    "health": ("healthMode", "bool"),
+    "sleep": ("silentSleepStatus", "bool"),
+    "lamp": ("screenDisplayStatus", "bool"),
+}
+
+
+def canonical_fields(
+    displacement: int | Callable[[int], int | None],
+    keys: Sequence[str],
+    spec: Mapping[str, tuple] = _CLIMATE_SPEC,
+) -> dict[str, WireField]:
+    """Our decode fields for ``keys``, taken from the published map.
+
+    ``displacement`` is a whole-word offset, or -- for a family that displaces the map piecewise --
+    the placement rule itself (:meth:`WireModel.canonical_word`). A key the rule cannot place is
+    omitted rather than guessed at.
+    """
+    place = (lambda w: w + displacement) if isinstance(displacement, int) else displacement
+    out: dict[str, WireField] = {}
+    for key in keys:
+        name, kind, *rest = spec[key]
+        c = CANONICAL[name]
+        word = place(c.word)
+        if word is None:
+            continue
+        out[key] = WireField(word, c.bit, c.length, kind=kind,
+                             k=c.k, c=c.c, enum=rest[0] if rest else None)
+    return out
+
+
+# A published attribute's declared type, mapped to how we decode it. `string` is deliberately absent:
+# a dozen attributes declare it, and a run of characters is not something a bit field at a word/bit
+# position renders into anything meaningful, so those are skipped rather than guessed at.
+_DTYPE_KINDS = {"bool": "bool", "int": None, "double": None}
+
+
+def declared_fields(
+    displacement: int | Callable[[int], int | None],
+    declared: Iterable[str],
+    *,
+    word_limit: int,
+) -> dict[str, WireField]:
+    """Decode fields for the attributes a DEVICE ITSELF declares, placed by the published map.
+
+    The hand-written family maps carry the dozen or so attributes that were worked out from
+    captures. A device's own model routinely declares three or four times that many -- every one of
+    them at a position the published map already states -- and none of them was being read. This
+    closes that gap without needing a capture per attribute: membership comes from the device's own
+    model, position comes from the map, and the two are independent of each other.
+
+    Keys are the published attribute names (``lockStatus``), never our own field keys, so nothing
+    here can collide with or silently redefine a hand-mapped field. Attributes already covered by
+    :data:`_CLIMATE_SPEC` are skipped for the same reason.
+
+    ``displacement`` is a family's *confirmed* whole-word offset, or the placement rule of a family
+    that displaces the map piecewise (:meth:`WireModel.canonical_word`, which handles an inserted
+    block). Either way it must be confirmed against real reports: a guessed offset would put every
+    one of these attributes somewhere plausible and wrong, which is the failure this gate exists to
+    prevent, and a rule that cannot place a word returns ``None`` so the attribute is dropped.
+
+    ``word_limit`` is the report's word count; an attribute the displacement would push past the end
+    of the report is dropped rather than read off whatever follows.
+    """
+    place = (lambda w: w + displacement) if isinstance(displacement, int) else displacement
+    covered = {name for name, *_ in _CLIMATE_SPEC.values()}
+    out: dict[str, WireField] = {}
+    for name in declared:
+        c = CANONICAL.get(name)
+        if c is None or name in covered:
+            continue
+        if c.dtype not in _DTYPE_KINDS:
+            continue
+        word = place(c.word)
+        if word is None:
+            continue
+        # The field's most significant end runs backwards from its word, so both ends must land
+        # inside the array -- see WireField.read.
+        span = (c.bit + c.length + 15) // 16
+        if word - span + 1 < 1 or word > word_limit:
+            continue
+        kind, enum = _DTYPE_KINDS[c.dtype], None
+        if kind is None:
+            # How a number is read depends on what the published map says about its codes, and the
+            # map states this for every attribute it carries -- there is no third case where the
+            # answer is unknown.
+            #
+            #  * scaled or offset -> a READING, which the wire carries directly.
+            #  * unscaled with a translation -> a CODE the device publishes under different numbers
+            #    than it puts on the wire. The map carries that translation as `enum`, so apply it;
+            #    reporting the raw value here means reporting something the device never says.
+            #  * unscaled with no translation -> a CODE the map states is the same in both places,
+            #    so the wire value is already the published one. An absent `enum` is the map saying
+            #    the two agree, not the map having nothing to say.
+            if (c.k, c.c) != (1.0, 0.0):
+                kind = "int"
+            elif c.enum:
+                kind, enum = "enum", c.enum
+            else:
+                kind = "raw"
+        out[name] = WireField(word, c.bit, c.length, kind=kind, k=c.k, c=c.c, enum=enum)
+    return out
+
+
+
+# Control: the model's own `grSetDAC` operation gives the group command (`6001`) and a five-word
+# array whose bit map is **byte-for-byte the classic family's** — targetTemperature w1.b8,
+# windDirectionVertical w1.b0, operationMode w2.b13, windSpeed w2.b8, then the w3 boolean block
+# (onOff b0, health b1, rapid b3, mute b4, sleep b5, screenDisplay b9) and windDirectionHorizontal
+# w4.b0. That map is hardware-verified on the classic units, and `6001` is the same command the
+# captured classic write path sends; what differs on this family is only *where the report keeps
+# that block* (see `write_base_word` below), not how the op is packed.
+#
+# Enum values are restricted to the app's own mode table {auto, cool, dry, heat, fan_only} and the
+# four fan speeds rather than the full 0..6 the model declares — codes 3 and 5 have no known
+# meaning, and the encoder's job is to refuse what we cannot name.
+# The panel's frame-positioned controls (`haismart_hrdp.panel`), as WriteFields built straight from
+# the invariant group-set frame. Every grSetDAC family (classic, extended-36, extended-46, and the
+# related layouts) packs these at the same words, so they are shared here rather than transcribed per
+# family. Bools take 0/1; the two enums (presence airflow, fresh-air speed) take their raw 0..3. A
+# device is only OFFERED the ones it declares and does not mark invisible (the coordinator's
+# `panel_switch_fields`/`panel_select_fields`), and the family bit-reuse guard still applies -- so
+# merging the whole set into a family's write map is safe: membership here means "the frame places
+# it", not "every unit has it".
+_FRAME_PANEL_WRITE = {
+    **{
+        name: WriteField(
+            CANONICAL_WRITE[name].word,
+            CANONICAL_WRITE[name].bit,
+            CANONICAL_WRITE[name].length,
+            "passthrough",
+            max_epp=(1 if name in PANEL_BOOL_CONTROLS else (1 << CANONICAL_WRITE[name].length) - 1),
+        )
+        for name in (*PANEL_BOOL_CONTROLS, *PANEL_ENUM_CONTROLS)
+        if name in CANONICAL_WRITE
+    },
+    # order-derived (not in the frame): all bools, so passthrough max 1
+    **{
+        name: WriteField(w, b, ln, "passthrough", max_epp=1)
+        for name, (w, b, ln) in PANEL_EXTRA_POSITIONS.items()
+    },
+}
+
+_EXT36_WRITE = {
+    "targetTemperature": WriteField(1, 8, 8, "passthrough", min_epp=0, max_epp=14),  # 16..30 C
+    # Both vanes take their wire value straight through, so a POSITION reaches the unit rather than
+    # only "fixed" or "sweep". The caller passes the wire value — 0x0C is still what "swing on"
+    # means for the up-down axis — and the position codes a device publishes are translated to wire
+    # values before they get here (see `VANE_V_MODEL_TO_EPP`; the left-right axis needs no table).
+    "windDirectionVertical": WriteField(1, 0, 4, "passthrough", max_epp=0x0C),
+    "operationMode": WriteField(2, 13, 3, "std_enum", std_to_epp={0: 0, 1: 1, 2: 2, 4: 4, 6: 6}),
+    "windSpeed": WriteField(2, 8, 3, "std_enum", std_to_epp={1: 1, 2: 2, 3: 3, 5: 5}),
+    "onOffStatus": WriteField(3, 0, 1, "passthrough"),
+    "healthMode": WriteField(3, 1, 1, "passthrough"),
+    "rapidMode": WriteField(3, 3, 1, "passthrough"),
+    "muteStatus": WriteField(3, 4, 1, "passthrough"),
+    "silentSleepStatus": WriteField(3, 5, 1, "passthrough"),
+    "screenDisplayStatus": WriteField(3, 9, 1, "passthrough"),
+    "windDirectionHorizontal": WriteField(4, 0, 3, "passthrough", max_epp=0x07),
+    # The multi-level economy setting, in the same word as the left-right vane and just above it.
+    # This family spends two bits on it and counts them 0..3; the classic family puts it at the same
+    # bit of the same word but spends three, with an enable bit above two level bits (0/5/6/7). The
+    # caller keeps handing the classic codes -- that is what `std_enum` is for -- so nothing above
+    # this line has to know which family it is talking to.
+    #
+    # Its upper bit is one the published map assigns to a neighbouring attribute, so this placement
+    # rests on the device's own declaration rather than on the shared map; see the guard on offering
+    # the control at all.
+    "ecoMode": WriteField(4, 3, 2, "std_enum", std_to_epp={0: 0, 5: 1, 6: 2, 7: 3}),
+    # Start-only self-clean trigger. This family writes with the same 6001 group command at zero
+    # displacement, so the flag sits where the shared write frame puts it (w5.b4) — the same place a
+    # live write confirmed on the classic family. Value is restricted to the start (1); the model
+    # declares no OFF command, and its own modifiers (off / auto / sleep / fault) gate availability.
+    "selfCleaningStatus": WriteField(5, 4, 1, "passthrough", max_epp=1),
+    # The rest of the panel's frame-positioned control surface (offered per device, see the note on
+    # `_FRAME_PANEL_WRITE`).
+    **_FRAME_PANEL_WRITE,
+}
+
+# The "extended-36" family: a 36-word report (165 B) carrying the **classic** climate block displaced
+# by 19 words. Those leading 19 words are a voice/media module (volume, playback, dialect, …) that the
+# generic model describes but a plain split AC leaves inert — which is exactly why the classic
+# partial decode misfires on this model: byte 92 is the module's `volume`, not the setpoint, so the
+# setpoint reads as 48 C and power reads as off (haismart-local issue #5).
+#
+# Transcribed from the published models for `02012036` (挂机通用_V2D18S_0D05, wall mounted) and its
+# floor-standing sibling `0301200n` (柜机通用_V2D18S_0D05) — the only two that imply a 165-byte
+# report, and their field maps are identical, so keying this family on report length is unambiguous.
+# Validated against the two distinct reports captured on a
+# real HSU-12KCROC(IN)-R32 (issue #5): power off/on matched the stated states, the setpoint decoded to
+# the 22 C the reporter had set, indoor read 30.0/27.5 C, and vertical swing matched fixed/swinging.
+#
+# Deliberately omitted from the READ: indoorHumidity and the air-quality attributes (this class of
+# unit has no such probes and every capture read 0), and `specialMode`. `outdoorTemperature` IS read,
+# but as a ``"temp"`` field — both captures report the 0 sentinel, which surfaces as "no reading"
+# rather than a fabricated −64 C.
+#
+# **175 B is the same map with five words on the end** (haismart-local issue #8, a Malaysian
+# HS-25VRB03). Every field above sits at the same word, and the unit's own published attribute values
+# agree with what this map decodes out of its report on ten of them — setpoint, mode, fan speed,
+# power, screen light, self-clean, both vane POSITIONS (vertical 2, horizontal 5) and indoor
+# temperature to within the half degree the two readings were taken apart. So the longer report is
+# this family, not a new one, and the extra words are additional registers rather than a displacement.
+#
+# What those five carry, from the same comparison: an input-power register at word 41 (`acInput`,
+# watts) and the published map's cumulative counter at words 34+35, mirrored at 39+40 — the unit
+# publishes `accumulatedUseMainsPower` and `totalElectricityUsed` with one identical value, and both
+# wire pairs read that number.
+#
+# **The counter is in watt-hours**, settled against a unit whose owner captured it in known states
+# and read its own app's energy page at the same moment. Three measurements, on three timescales:
+#
+#   * The register accumulates in fixed intervals rather than continuously — the model publishes the
+#     interval as `energySavePeriod`, 15 minutes on this unit. One whole interval spent cooling
+#     added 347, i.e. 1388 W held for 15 minutes, against the 1224..1432 W its own power register
+#     read across that same quarter hour.
+#   * A 26-minute session at a measured ~1190 W average added 478, against 494 expected.
+#   * Between a capture at 00:53 and one at 12:07, on a day whose usage began after the first, it
+#     added 7516 — and the app reported 7.52 kWh for that day.
+#
+# So one count is one watt-hour to within the precision of the comparison, three times over, and the
+# entity is published. It reads absent while the register is zero, which is the state our own units
+# and the 165-byte reports are in — those carry the register and never populate it.
+EXTENDED36 = WireModel(
+    family="extended36",
+    # This family IS the published map, unmoved: all 12 of its mapped positions are reproduced by
+    # the map at displacement 0, so a device's other declared attributes can be read off it too.
+    canonical_displacement=0,
+    report_lengths=frozenset({165, 175}),
+    # The uPlusId of the 175-byte variant, which the units report on the discovery channel — so a
+    # unit that answers it is keyed exactly rather than by length.
+    uplus_ids=frozenset({
+        "2008610800820324021200118018900000000000000000000000000000000040",
+    }),
+    writable=True,
+    group_cmd=b"\x60\x01",
+    word_count=5,
+    write_base_word=20,     # report word 20 == group-set word 1 (19 words precede it: media, then a gap)
+    write_fields=_EXT36_WRITE,
+    position_fields=frozenset({"windDirectionVertical", "windDirectionHorizontal"}),
+    fields={
+        # the published map, undisplaced -- this family is where it starts
+        **canonical_fields(0, [
+            "power", "target_temperature", "current_temperature", "outdoor_temperature",
+            "heat_capable", "error_code", "last_changed_by", "operation_mode", "wind_speed",
+            "swing_vertical", "swing_horizontal", "self_cleaning",
+            # The comfort settings this family offers as switches. They sit in the same word as the
+            # power flag, at the positions the published map states, and a report from a unit with
+            # boost on and another with sleep on carry exactly those two bits.
+            "strong", "quiet", "health", "sleep", "lamp",
+            # Cumulative energy, in watt-hours (see above). Absent on the units that leave the
+            # register at zero, which includes every 165-byte report seen — that length reaches the
+            # word, so it is the register being unpopulated rather than the field being off the end.
+            "energy_wh",
+        ]),
+        # Live input power, on the units whose report runs to word 41 (the 175-byte variant; a
+        # shorter report simply has no such word and the field reads absent). Watts: zero with the
+        # unit off, 1432 at full cooling, and a thousand-odd while it holds a room -- and the unit
+        # publishes an `acInput` of its own that agrees. This is a real measurement rather than the
+        # figure the classic family derives from its current sensor.
+        "power_w": WireField(41, 0, 16, kind="raw"),
+    },
+)
+
+# --- extended-46 (209-byte report) --------------------------------------------------------------
+
+# Control: words 20..24 — the whole settable block — are positioned exactly as on the extended-36
+# family, so the group-set is that family's: command `6001`, five words, seeded from report word 20.
+# What differs is only the setpoint's units (see below).
+#
+# `windSpeed` and the up-down vane ARE offered here. `windDirectionHorizontal` is not, and the
+# reason is only that nothing in this family's report reads it back -- see the rule below.
+#
+# ★ Their WRITE positions are published, and are not in doubt. `Operation[grSetDAC].variants` is
+# the write frame, and across every published air-conditioner device type (`02011`, `02012`,
+# `0201201G`, `02012036`, `03012`, `0301200L`, `0301200n`) it is ONE frame -- 39 attributes,
+# eppCmd `6001`, frameType 1, and **zero position disagreements between families**. It places
+# `windDirectionVertical` at w1.b0/4, `windSpeed` at w2.b8/3 and `windDirectionHorizontal` at
+# w4.b0/3, and the three positions this family confirmed on hardware (targetTemperature w1.b8,
+# operationMode w2.b13, onOffStatus w3.b0) reproduce it exactly.
+#
+# ⚠️ The old reason -- "its vertical vane answers at a different word, so the position is not
+# settled" -- conflated two different frames. A displacement in the REPORT says nothing about the
+# group-set: the report inserts ten words at w25 on this family, the write frame displaces nowhere.
+# That conflation is also why the vendor app can command one of these while misreading its sensors:
+# it resolves a profile by **deviceType** (a prefix hierarchy -- the class model `02012` covers this
+# whole class), and the class model's group-set needs no displacement at all.
+#
+# ★★ SETTLED, by one file that carries a report and a cloud record taken together. What had blocked
+# these was a conflict with the READ map: `write_base_word + write_word - 1` is the report word a
+# written bit reads back at, so the published write frame puts the vane at report w20, while this
+# family's captures put it at w25. Both could not be right, and every capture then held read 0 at
+# both, so nothing could choose. One could, and it had been on disc for a day:
+#
+#   | report                       | that same file's cloud record        |
+#   | w20.b0 (map's vane)     = 0  | windDirectionVertical  = 2           |
+#   | w25    (inserted block) = 2  | windDirectionVerticalL/R = 0 / 0     |
+#   | w21.b8 (map's fan)      = 6  | windSpeed              = 1           |
+#   | w26.b9 (inserted block) = 1  | windSpeedL/R           = 3 / 5       |
+#
+# That record is fresh, and provably so in its own file: its setpoint (22.0), indoor temperature
+# (28.0), power and all six word-22 toggles agree with the report bit for bit. So the inserted
+# block holds the APPLIANCE's vane and fan, and the map's own positions do not read them here.
+#
+# ⛔ It also falsifies the PER-TOWER explanation those two positions were withdrawn under -- using
+# the very document that withdrew them. A per-tower register cannot read the appliance value: the
+# towers are published in the same record as 3 / 5 and 0 / 0, and the wire reads 1 and 2.
+#
+# So the relation above holds on this family for words 1..3 as WORDS -- the setpoint, the mode and
+# the whole boolean block land at report w20/w21/w22 -- and fails for exactly two bit-fields inside
+# the first two of them. The five toggles keep their support regardless, having been confirmed 6/6
+# against that fresh record rather than by arithmetic alone.
+#
+# ⚠️ What is NOT established is which way that failure runs: whether the appliance ignores those
+# bits in the group-set, or accepts them and reports the result only in the inserted block. Only a
+# write observes that, which is why these two ship as a control the reporter can now verify himself
+# -- the readback is restored, so setting the fan from Home Assistant and watching w26.b9 follow is
+# the whole test. `windDirectionHorizontal` stays out until this family reads one back.
+# ★ The vane and fan positions here are the APPLIANCE's own, in the ten-word block this family
+# inserts -- group-set words 6 and 7, i.e. report words 25 and 26 -- NOT the shared-frame positions
+# at group-set w1/w2. That is settled from the vendor's own published data plus this family's
+# captures, three lines converging (see `test_ext46_writes_the_appliance_vane_not_the_tower`):
+#
+#   1. the vendor's own `grSetDAC` order for this family (the 74-name `attrNameList`), packed by its
+#      own word-ascending/bit-descending rule, puts `windDirectionVerticalL`/`R` and `windSpeedL` at
+#      group-set w1.b0 / w1.b4 / w2.b8 -- the shared-frame vane/fan slots are the LEFT/RIGHT TOWERS
+#      on a twin-tower cabinet, and the appliance's own vane/fan fall in the appended tail (word 6+);
+#   2. the captures place the appliance's vane at report w25.b0 and its fan at report w26.b9
+#      (`swing_vertical` / `wind_speed` in the read map), moving with the owner's stated swing/speed
+#      while `windDirectionVerticalL/R` and `windSpeedL/R` held other values in the cloud record;
+#   3. those two report words are exactly `write_base_word + write_word - 1` for group-set words 6
+#      and 7 -- so retargeting here makes this family OBEY the write<->read relation every other
+#      family obeys, rather than needing an exception for it.
+#
+# ⚠️ Until v0.47.x these wrote group-set w1.b0 / w2.b8 -- the LEFT TOWER's vane and fan -- and
+# `word_count = 5` stopped the frame before word 6, so the appliance's own vane and fan could not be
+# reached at all. That is corrected here. The one thing source cannot supply is a unit confirming it
+# honours the 7-word frame (Rule 8); the read side is capture-confirmed at these positions and the
+# relation holds, which is as far as no-hardware evidence reaches.
+_EXT46_WRITE = {
+    # 16..30 C. The wire value is °C × 2 on this family, not the classic °C − 16, so 16..30 C is
+    # wire 32..60 — a range that would read as 48..76 C under the classic units.
+    "targetTemperature": WriteField(1, 8, 8, "celsius", scale=2.0, min_epp=32, max_epp=60),
+    "operationMode": WriteField(2, 13, 3, "std_enum", std_to_epp={0: 0, 1: 1, 2: 2, 4: 4, 6: 6}),
+    "onOffStatus": WriteField(3, 0, 1, "passthrough"),
+    "healthMode": WriteField(3, 1, 1, "passthrough"),
+    "rapidMode": WriteField(3, 3, 1, "passthrough"),
+    "muteStatus": WriteField(3, 4, 1, "passthrough"),
+    "silentSleepStatus": WriteField(3, 5, 1, "passthrough"),
+    "screenDisplayStatus": WriteField(3, 9, 1, "passthrough"),
+    # The appliance's own vane and fan, in the inserted block (group-set words 6/7 = report w25/w26).
+    "windDirectionVertical": WriteField(6, 0, 4, "passthrough", max_epp=0x0C),
+    "windSpeed": WriteField(7, 9, 3, "std_enum", std_to_epp={1: 1, 2: 2, 3: 3, 5: 5}),
+    # The panel's frame-positioned control surface — same words as every grSetDAC family, in this
+    # family's first five words (all ≤ w5, within word_count). Offered per device; the bit-reuse
+    # guard keeps a family that puts a different attribute at one of these positions from writing it.
+    **_FRAME_PANEL_WRITE,
+}
+
+# The "extended-46" family: a 58-word report (209 B) that is the **extended-36 layout with a ten-word
+# block inserted around word 25**. The climate block at words 20..22 sits exactly where extended-36
+# puts it, and every attribute from extended-36's word 25 upward is found ten words later. The
+# inserted block was taken for a dual-airflow cabinet's second set of fan and vane attributes, which
+# these units' device models do declare; a single-flow unit leaves most of it at zero.
+#
+# ⚠️ That reading is WRONG for the two words we read from it. The block's w25 and w26 carry the
+# APPLIANCE's vane and fan, not a tower's: on a report whose cloud record was fresh, they read 2 and
+# 1, while the same record published `windDirectionVerticalL`/`R` as 0 / 0 and `windSpeedL`/`R` as
+# 3 / 5. Whatever the other eight words are, those two are not per-tower.
+#
+# ⚠️ **Where the block BEGINS is not pinned, and it matters for anything read from words 23..24.**
+# The captures confirm w20/w21/w22 unmoved, w35/w36 at +10, and a vane at w25 with the fan speed at
+# w26.b9 inside the block — so it starts after w22 and at or before w25, i.e. at w23, w24 or w25.
+# Every one of those predicts indoor temperature at w35, so that cannot separate them, and w23, w24,
+# w33 and w34 all read zero in every capture. Anything mapped into that gap would be a guess: the
+# flag word carrying `selfCleaningStatus` lands at report w24 under one reading and w34 under the
+# other two, which is why this family gets no self-clean field. A single capture with any flag-word
+# feature switched on (health, ambient light, fresh air) pins it.
+#
+# Because the report begins with that media module, the classic partial decode misfires here exactly
+# as it does on extended-36: byte 92 is the high byte of the media block's first word, which reads
+# as a 48 C setpoint (the module's `volume` is the byte after it), and the classic power bit lands in
+# an unrelated word so the unit always looks off.
+#
+# Three positions differ from extended-36 in kind rather than place, and each is fixed by the values
+# the reports themselves carry:
+#   * `targetTemperature` is **°C × 2**, not °C − 16 (its device model declares whole-degree steps,
+#     so the extra bit of resolution is unused, but the encoding is halves).
+#   * `current_temperature` is likewise a half-degree count, as on the classic family.
+#   * the vertical vane answers at word 25 — inside the inserted block — where the classic vane
+#     encoding still applies (the "swinging" flag is bit 3 of the nibble).
+#
+# Deliberately omitted from the READ: horizontal swing, and the air-quality/humidity attributes.
+# `windSpeed` WAS omitted, on the grounds that this family reports a code its own device model does
+# not declare — true of the map's position (a constant 6) and not of the appliance, which answers at
+# w26.b9 with codes its model does declare. See the field below.
+# The cumulative-energy register at words 44+45 IS read (`energy_wh`, placed by the pivot like the
+# rest). Its unit is settled as watt-hours by two readings of one unit five days apart, the test
+# `test_the_209_byte_counter_is_in_watt_hours_by_its_own_two_readings`.
+# This family is NOT built from the published map, and deliberately: its vane sits five words past
+# where the map puts it, its setpoint counts half degrees rather than whole degrees offset by 16,
+# and its fan speed answers from the inserted block. Written out, those read as what they are —
+# a family with three exceptions — where a displacement plus three overrides would read as a rule
+# with more exceptions than rule.
+_EXT46_PIVOT = 25
+_EXT46_INSERT_WORDS = 10
+
+
+def _ext46_word(word: int) -> int:
+    """Where a published map word lands in the 209-byte report: the map, ten words inserted at 25.
+
+    Kept beside the model because the fields are built while the model is being constructed. A test
+    asserts it agrees with ``EXTENDED46.canonical_word`` for every word, so the pivot cannot be
+    stated twice and drift.
+    """
+    return word + (_EXT46_INSERT_WORDS if word >= _EXT46_PIVOT else 0)
+
+
+EXTENDED46 = WireModel(
+    family="extended46",
+    report_lengths=frozenset({209}),
+    # Keyed exactly as well as by length: the uPlusId is reported by the units themselves on the
+    # discovery channel, so it is available without cloud credentials.
+    uplus_ids=frozenset({"2008610800820324021200118017740000000000000000000000000000000040"}),
+    writable=True,
+    group_cmd=b"\x60\x01",
+    # Seven words, not five: the appliance's own vane and fan live in the inserted block at group-set
+    # words 6 and 7 (report w25/w26), so the frame has to reach them. The extra two words are seeded
+    # from the live report like the rest (read-modify-write), so nothing else in them is disturbed.
+    word_count=7,
+    write_base_word=20,     # report word 20 == group-set word 1, as on extended-36
+    write_fields=_EXT46_WRITE,
+    canonical_displacement=0,
+    # Ten words inserted at w25, which no bundled model describes. Two of them are read explicitly
+    # below -- the appliance's own vane and fan, which answer here rather than where the map puts
+    # them -- and everything else is taken from the map either side of the pivot.
+    canonical_insert=(_EXT46_PIVOT, _EXT46_INSERT_WORDS),
+    fields={
+        # Everything the published map describes, placed by the pivot: words below 25 where the map
+        # puts them, words from 25 up pushed along by the insert. Written out as a derivation rather
+        # than as a table, because the table was the bug: eleven fields were typed in, five that the
+        # map already placed were left out, and the switches for those five were offered and then
+        # sat unavailable for want of anything to read.
+        **canonical_fields(_ext46_word, [
+            "target_temperature", "operation_mode", "power",
+            "health", "strong", "quiet", "sleep", "lamp",
+            "current_temperature", "outdoor_temperature", "heat_capable",
+            "error_code", "last_changed_by", "energy_wh",
+        ]),
+        # The five secondary toggles, which this family could WRITE and never read back -- so the
+        # switches were offered and then sat unavailable forever, having no state to show. The same
+        # defect extended-36 had, and the audit that was owed after it finally run across every
+        # family.
+        #
+        # Position is not inferred from a resemblance: the group-set frame IS a slice of the report
+        # beginning at `write_base_word`, so a written bit's report word is `write_base_word +
+        # write_word - 1`. That correspondence is already load-bearing here for three fields whose
+        # report positions were established independently -- targetTemperature (write w1 b8 ->
+        # report w20 b8), operationMode (w2 b13 -> w21 b13) and onOffStatus (w3 b0 -> w22 b0) -- and
+        # it places all five of these in write word 3, alongside the power bit, at report word 22.
+        #
+        # Confirmed against the appliance's own cloud record rather than left as arithmetic: on a
+        # report from a running unit, all six bits of that word agree with what the manufacturer
+        # separately reported for the same attributes, including the two that were set.
+        # ⚠️ A measured departure from the map, not an oversight. The map encodes a setpoint the
+        # classic way -- degrees above 16 -- and this family sends HALF-DEGREES FROM ZERO. Taking
+        # the scaling from the map would read 24 °C as 40 °C, on a field whose position the map
+        # gets right. Position from the map, scaling from a reading: the same rule that applies to
+        # meaning applies here, and this is why the generation is field-wise rather than wholesale.
+        "target_temperature": WireField(_ext46_word(20), 8, 8, kind="int", k=0.5, c=0.0),
+        # The two fields the published map cannot place HERE, though it names them both: they answer
+        # from the inserted block, not from the words the map assigns them. Established from
+        # captures taken in stated states on one appliance, and confirmed on a second against a
+        # cloud record fresh enough to agree with its own file on everything else.
+        #
+        # The vane: 0x0C with the owner's swing switched on, a parked position (2) where the record
+        # said 2, zero where the unit was off. The map's own w20.b0 reads 0 through all of it.
+        "swing_vertical": WireField(25, 0, 4, kind="vane_v"),
+        # ★ Fan speed, restored -- and this is the third decision about it, so the evidence is in
+        # the tests on both sides rather than only the winning one.
+        #
+        # Word 21 bit 8, where every other family keeps it, reads a CONSTANT 6 in all seven captures
+        # held from two different appliances -- including between one owner's stated high and stated
+        # low. Whatever that is, it is not this appliance's fan.
+        #
+        # Word 26 bit 9 reads 1 where a capture was taken on high, 3 where taken on low, 0 with the
+        # unit off, and 1 where a fresh cloud record for that same report said windSpeed was 1.
+        #
+        # It was withdrawn once on a fourth capture that read 0 here while "the appliance's own
+        # cloud record said 1". That record was STALE -- the same frozen document as the file
+        # before it, and its setpoint disagreed with the report it was compared against (22.0 vs
+        # 24.0) in that very file. The freshness test used ("agreed with 53 attributes, disagreed
+        # with none") runs over `model_declared_fields`, which holds only inert attributes -- the
+        # voice module, probes this unit does not have, tempUnit -- so it agrees by construction and
+        # can never detect staleness. See `test_the_209_family_reads_its_fan_speed`.
+        #
+        # `enum` and not `raw`: an unlisted code yields NO reading. So the idle-unit 0 and the
+        # constant 6 both surface as absence, never as an invented speed.
+        "wind_speed": WireField(26, 9, 3, kind="enum", enum=_EXT36_FAN),
+        # Cumulative energy in watt-hours, 32 bits whose low half sits at word 45 and high half at
+        # word 44 -- the published map states this register one word past the indoor temperature,
+        # and both anchors land ten words later on this family, which puts it exactly here.
+        #
+        # Confirmed against the appliance's own cloud record rather than inferred: a report reading
+        # 777,385 was taken minutes after that record showed 773,862 for the same register, the wire
+        # figure being the newer of the two. Nothing else in the report is within three orders of
+        # magnitude of either number. The unit is watt-hours, as measured on extended-36 against an
+        # owner's own energy page.
+        #
+        # Absent when it reads zero, like every counter here: most of these appliances carry the
+        # register and never populate it, and a permanent 0 kWh in someone's energy history is worse
+        # than no sensor at all.
+    },
+)
+
+# --- the Japanese wall units (111-byte report) ----------------------------------------------------
+
+# Haier's two Japanese wall-mounted device types, `日本挂2024` and `日本挂2025` -- the AQUA `AQA-AX*`
+# and `JAA-MX*` lines. Every unit of both announces one of these two identifiers, and the family is
+# keyed on them alone: a 111-byte report from anything else falls through to the unknown-layout
+# path, exactly as before.
+#
+# ★ This is NOT the shared frame at another displacement, and that is the whole reason these units
+# were monitoring-only. Their published group-set ORDER has essentially no rank correlation with the
+# shared frame's positions, so no displacement of it could be right. The reason is that the family
+# publishes its OWN frame: the climate block is packed into four words in an order of its own, and
+# the sensors follow at words 8-9. Both maps -- the report's `Property` and the write frame's
+# `Operation[grSetDAC].variants` -- are in the manufacturer's byte map for each identifier, and for
+# all 30 settable attributes the two state the SAME word, bit and width. So the group set is report
+# words 1-4 lifted out, and a write reads back at exactly the bit it wrote.
+#
+# ★ Read side checked against ground truth this map was not built from: issue #19's report (a
+# `JAA-MX225AK`, product `AACWS2E00`), decoded here, agrees with the manufacturer's own cloud record
+# of the same unit taken in the same minute -- setpoint 21.0, room 20.0 C, humidity 60, outdoor 14,
+# cool, fan auto, power on, vanes, and the secondary toggles.
+#
+# ⚠️ The write side is the published frame, not a capture: no unit of this family has yet confirmed
+# a command (Rule 8). Its length is the published span -- four words -- on the rule both classic
+# layouts obey on hardware: the 127-byte unit's own app was captured sending six words, and a
+# five-word op was accepted by the 125-byte layout, each the span its own map publishes. The
+# appliance's reply frame and the next report say whether it landed, as on every family.
+#
+# Three things differ from the shared frame and each would be a SILENT wrong value if copied:
+#
+#   * the setpoint is °C × 2 (k 0.5), not °C − 16 -- read as the classic family it is 58 C;
+#   * the fan code is not the identity: auto is wire 0 and high is wire 2;
+#   * the left-right vane is not the identity either (wire 1 is published stop 3, "position 4").
+#     The shared rule passes a left-right stop through as its wire code, so on this family a stop
+#     would land one to two positions away from the one asked for. Only its two ends -- fixed (0)
+#     and auto (7), which do coincide -- are written; the stops are not offered.
+JAPAN_WALL_TYPEIDS = frozenset({
+    "2008610800820324021200118018500000000000000000000000000000000040",   # 日本挂2024
+    "2008610800820324021200118018504200000000000000000000000000000040",   # 日本挂2025
+})
+
+#: Wire code -> the code the model publishes, per vane axis, from the family's own `variants`.
+_JAPAN_WALL_VANE_V: Mapping[int, int] = {
+    0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 6: 5, 8: 6, 10: 7, 12: 8, 5: 12, 7: 13,
+}
+_JAPAN_WALL_VANE_H: Mapping[int, int] = {0: 0, 1: 3, 2: 4, 3: 5, 4: 6, 7: 7, 5: 8, 6: 9}
+#: The published codes that SWEEP, named by the units' own descriptions: 上下摆自动 / 上半程自动 /
+#: 下半程自动 (full, upper half, lower half) and 左右摆位置八(自动) / 左半程自动 / 右半程自动. A
+#: half-range sweep is swinging, and reading it as stationary would invite a swing-on that flattens
+#: it into a full sweep.
+_JAPAN_WALL_SWEEP_V = frozenset({8, 12, 13})
+_JAPAN_WALL_SWEEP_H = frozenset({7, 8, 9})
+#: Published STD code -> wire code.
+_JAPAN_WALL_MODE: Mapping[int, int] = {0: 0, 1: 1, 2: 2, 4: 4, 6: 6}
+_JAPAN_WALL_FAN: Mapping[int, int] = {1: 2, 2: 4, 3: 6, 4: 7, 5: 0, 6: 1, 7: 3, 8: 5}
+
+_JAPAN_WALL_WRITE = {
+    # 16..30 C, the range the units declare: wire 32..60.
+    "targetTemperature": WriteField(1, 8, 8, "celsius", scale=2.0, min_epp=32, max_epp=60),
+    # The up-down stops a unit of this family declares (2, 4, 5, 6, 7 and auto 8) are the SAME wire
+    # codes as the shared table's, so a position chosen through it lands where it says;
+    # `test_japan_wall_up_down_stops_agree_with_the_shared_table` holds that. Its two half-range
+    # sweeps (12, 13) have no shared code and are not offered.
+    "windDirectionVertical": WriteField(1, 0, 4, "passthrough", max_epp=0x0C),
+    # Fixed or sweeping only -- see the note above the family.
+    "windDirectionHorizontal": WriteField(1, 5, 3, "onoff", on_value=VANE_H_AUTO),
+    "operationMode": WriteField(2, 8, 3, "std_enum", std_to_epp=_JAPAN_WALL_MODE),
+    "onOffStatus": WriteField(2, 13, 1, "passthrough"),
+    "healthMode": WriteField(2, 15, 1, "passthrough"),
+    "silentSleepStatus": WriteField(2, 7, 1, "passthrough"),
+    "windSpeed": WriteField(4, 12, 3, "std_enum", std_to_epp=_JAPAN_WALL_FAN),
+    "rapidMode": WriteField(4, 11, 1, "passthrough"),
+    "muteStatus": WriteField(4, 10, 1, "passthrough"),
+    "screenDisplayStatus": WriteField(4, 9, 1, "passthrough"),
+}
+
+JAPAN_WALL = WireModel(
+    family="japan_wall",
+    # Keyed on the identifiers, never on the length: nothing about "111 bytes" says "this family",
+    # and a length match would hand an unrelated report this map's confident readings.
+    report_lengths=frozenset(),
+    uplus_ids=JAPAN_WALL_TYPEIDS,
+    writable=True,
+    group_cmd=b"\x60\x01",
+    word_count=4,
+    write_base_word=1,
+    write_fields=_JAPAN_WALL_WRITE,
+    position_fields=frozenset({"windDirectionVertical"}),
+    vane_codes={
+        "swing_vertical": _JAPAN_WALL_VANE_V,
+        "swing_horizontal": _JAPAN_WALL_VANE_H,
+    },
+    fields={
+        "power": WireField(2, 13, 1, kind="bool"),
+        "target_temperature": WireField(1, 8, 8, kind="int", k=0.5),
+        "current_temperature": WireField(8, 8, 8, kind="temp", k=0.5),
+        "outdoor_temperature": WireField(9, 8, 8, kind="temp", c=-64.0),
+        "operation_mode": WireField(
+            2, 8, 3, kind="enum", enum={w: str(s) for s, w in _JAPAN_WALL_MODE.items()}
+        ),
+        "wind_speed": WireField(
+            4, 12, 3, kind="enum", enum={w: str(s) for s, w in _JAPAN_WALL_FAN.items()}
+        ),
+        "swing_vertical": WireField(
+            1, 0, 4, kind="enum",
+            enum={w: s in _JAPAN_WALL_SWEEP_V for w, s in _JAPAN_WALL_VANE_V.items()},
+        ),
+        "swing_horizontal": WireField(
+            1, 5, 3, kind="enum",
+            enum={w: s in _JAPAN_WALL_SWEEP_H for w, s in _JAPAN_WALL_VANE_H.items()},
+        ),
+        "health": WireField(2, 15, 1, kind="bool"),
+        "sleep": WireField(2, 7, 1, kind="bool"),
+        "strong": WireField(4, 11, 1, kind="bool"),
+        "quiet": WireField(4, 10, 1, kind="bool"),
+        "lamp": WireField(4, 9, 1, kind="bool"),
+    },
+    # `opSrc` (who made the last change) is in the device type's map at w5 b0-1, with the same codes as
+    # every family, but none of the 30 products declares it, the cloud record of a unit does not
+    # report it, and both units seen read 0 there -- one of them in the report that followed a
+    # command of ours, so "Other" would be shown for a change Home Assistant made.
+    withheld_readings=frozenset({"last_changed_by"}),
+    # The rest of what the family's map places, offered by the device's own declaration like any
+    # other family's extras: the humidity probe and the read-only feature states. Every entry is held
+    # to the manufacturer's map for BOTH identifiers by `test_japan_wall_matches_the_published_map`,
+    # which also fails if one the readers know is missing -- a table that omits a field is how a
+    # declared reading silently never appears.
+    own_fields={
+        "indoorHumidity": WireField(8, 0, 8, kind="raw"),
+        "windAvoidance": WireField(1, 4, 1, kind="bool"),
+        "electricHeatingStatus": WireField(2, 14, 1, kind="bool"),
+        "energySavingStatus": WireField(2, 11, 1, kind="bool"),
+        "lightStatus": WireField(2, 6, 1, kind="bool"),
+        "humanSensingStatus": WireField(2, 4, 2, kind="raw"),
+        "uvSterilizationSwitch": WireField(2, 3, 1, kind="bool"),
+        "mouldProof": WireField(2, 2, 1, kind="bool"),
+        "preventHeatstroke": WireField(2, 1, 1, kind="bool"),
+        "preventSupercooling": WireField(2, 0, 1, kind="bool"),
+        "freshAirStatus": WireField(3, 15, 1, kind="bool"),
+        "echoStatus": WireField(4, 8, 1, kind="bool"),
+        "drying": WireField(4, 7, 1, kind="bool"),
+        "constDehumidificationStatus": WireField(4, 6, 1, kind="bool"),
+        "localFilterChangeFlag": WireField(5, 7, 1, kind="bool"),
+    },
+)
+
+# Every non-classic family known to the library. The classic 125/127 family is NOT here — it keeps
+# its verified inline decode + write path in uss.py.
+WIRE_MODELS: tuple[WireModel, ...] = (COMPACT12, EXTENDED36, EXTENDED46, JAPAN_WALL)
+
+
+# --- layout probing ------------------------------------------------------------------------------
+
+# The classic family's map, expressed as a WireModel purely so the prober below can try it like any
+# other. It is NOT in ``WIRE_MODELS``: the classic lengths keep their hardware-verified inline decode
+# in ``uss.py``, and an empty ``report_lengths``/``uplus_ids`` means this can never be *selected*.
+_CLASSIC_PROBE = WireModel(
+    family="classic",
+    # The map 19 words earlier, and confirmed as such: displaced -19 it reproduces all 9 of this
+    # family's mapped positions, and decodes a real 125-byte report in agreement with the classic
+    # decoder on every field the two share.
+    canonical_displacement=-19,
+    report_lengths=frozenset(),
+    fields=canonical_fields(-19, [
+        "power", "target_temperature", "current_temperature", "outdoor_temperature",
+        "heat_capable", "error_code", "last_changed_by", "operation_mode", "wind_speed",
+        "swing_vertical",
+    ]),
+    # The 127-byte member (the rental SKU) carries one word the map does not describe --
+    # `targetRentTime`, its report word 6 -- so canonical words 25 and up sit one further along than
+    # the flat -19 says. Confirmed three ways against that layout's hardware-verified offsets:
+    # indoorTemperature w25 lands at byte 104 (= STATUS_LAYOUTS[127].indoor_temp), outdoorTemperature
+    # w26 at byte 106, and the 32-bit energy counter's low word (w35) at byte 124 -- each of which
+    # the flat map misses by exactly one word. Without this, every declared attribute above the flag
+    # word (humidity, the air-quality suite) read one word early on 127-byte reports.
+    length_inserts={127: (25, 1)},
+)
+
+# The probe list. The classic and extended families are one map at two displacements, so the search
+# over displacements covers both from either entry; compact-12 is a genuinely different packing and
+# has to be its own candidate.
+PROBE_FAMILIES: tuple[WireModel, ...] = (EXTENDED46, EXTENDED36, COMPACT12, _CLASSIC_PROBE)
+
+# How the prober weighs each piece of agreement. Sensor plausibility is worth less than agreeing with
+# a value the device itself reported through another channel, because plausibility is cheap to hit by
+# chance in a report that is mostly zeros. A stated state is worth as much: someone set the unit that
+# way and wrote it down, which is evidence of the same kind — and unlike the shadow, it needs no
+# cloud. A contradiction costs more than agreement earns, because a report that is mostly zeros can
+# agree by accident but rarely disagrees by accident.
+_SCORE_SHADOW_MATCH = 4
+_SCORE_STATED_MATCH = 4
+_SCORE_STATED_MISS = -6
+_SCORE_ORDER_MATCH = 1
+# A contradiction costs far more than an agreement earns: consecutive settings agreeing is the
+# default even for a wrong map, while a swap is the device saying outright that this is not it.
+_SCORE_ORDER_MISS = -8
+_SCORE_ENUM_KNOWN = 2
+_SCORE_SENSOR_PLAUSIBLE = 1
+
+# How close a decoded room temperature must be to the one someone read off the handset. Wide enough
+# for a different sensor in a different part of the room and some minutes between the two readings.
+_STATED_INDOOR_TOLERANCE_C = 2.0
+
+# A report is mostly zeros, so a candidate whose fields all land on empty words "decodes" perfectly
+# into a cold, off, 16 C unit. The prober therefore demands a room temperature that a room could
+# actually have — an unpowered word reads 0 C and is rejected — rather than the wide band
+# `WireModel.decode` uses to guard an already-chosen family.
+_PROBE_INDOOR_C = (5.0, 45.0)
+
+# The two setpoint encodings seen in the wild. Some families put whole degrees on the wire offset by
+# 16; others count half-degrees from zero. The difference is invisible in a single report — both are
+# a plausible setpoint — so the prober tries each rather than assuming.
+_SETPOINT_ENCODINGS = (("offset16", 1.0, 16.0), ("half", 0.5, 0.0))
+
+# Shadow attribute name -> the decoded key it should agree with, and how to compare.
+_SHADOW_KEYS: Mapping[str, str] = {
+    "targetTemperature": "target_temperature",
+    "indoorTemperature": "current_temperature",
+    "operationMode": "operation_mode",
+    "windSpeed": "wind_speed",
+    "onOffStatus": "power",
+}
+
+
+@dataclass(frozen=True)
+class StatedState:
+    """What a capture was known to be in, as the person who took it described it.
+
+    This is the ground truth a new-model report already collects and nothing used: three captures in
+    stated states plus the room temperature from the handset. It is worth as much as the device's own
+    cloud shadow and costs nothing to obtain, which is what takes the cloud off the critical path for
+    adding a model.
+
+    Every field is optional; only what was stated is scored.
+
+    ``mode_group`` and ``fan_group`` are how a state gets used without knowing the model's codes,
+    which is the whole difficulty — a reporter says "cool" and "fan-only", not "1" and "6". Give the
+    captures opaque labels instead: captures with *different* labels must decode to different codes,
+    captures sharing one must decode to the same. A map that lands on an empty word reads the same
+    code in every state and fails that immediately, which is exactly the failure the prober exists
+    to catch.
+    """
+
+    power: bool | None = None
+    target_temperature: float | None = None
+    current_temperature: float | None = None      # as read off the handset, ±2 °C
+    swing_vertical: bool | None = None
+    mode_group: str | None = None
+    fan_group: str | None = None
+
+
+def _score_stated(decoded: Sequence[dict], stated: Sequence[StatedState | None]) -> int:
+    """Score decoded reports against the states they were captured in."""
+    score = 0
+    for got, want in zip(decoded, stated, strict=False):
+        if want is None:
+            continue
+        for key in ("power", "swing_vertical"):
+            expected, actual = getattr(want, key), got.get(key)
+            if expected is None or actual is None:
+                continue
+            score += _SCORE_STATED_MATCH if bool(actual) is expected else _SCORE_STATED_MISS
+        for key, tolerance in (
+            ("target_temperature", 0.51), ("current_temperature", _STATED_INDOOR_TOLERANCE_C)
+        ):
+            expected, actual = getattr(want, key), got.get(key)
+            if expected is None or actual is None:
+                continue
+            score += (
+                _SCORE_STATED_MATCH if abs(float(actual) - float(expected)) <= tolerance
+                else _SCORE_STATED_MISS
+            )
+    # The relational half: same label => same code, different labels => different codes.
+    for attr, key in (("mode_group", "operation_mode"), ("fan_group", "wind_speed")):
+        labelled = [
+            (getattr(want, attr), got.get(key))
+            for got, want in zip(decoded, stated, strict=False)
+            if want is not None and getattr(want, attr) is not None and got.get(key) is not None
+        ]
+        for i, (label, code) in enumerate(labelled):
+            for other_label, other_code in labelled[i + 1:]:
+                agrees = (str(code) == str(other_code)) is (label == other_label)
+                score += _SCORE_STATED_MATCH if agrees else _SCORE_STATED_MISS
+    return score
+
+
+def _score_order(model: WireModel, order: Sequence[str]) -> int:
+    """Score a candidate against the order the device declares its settings in.
+
+    What this catches is a **family** whose map arranges its settings differently — extended-46 puts
+    a vane five words on and its fan speed inside an inserted block, and compact-12 is not this
+    lineage at all. Against a real declaration both are refused outright, every candidate of them,
+    while every classic and extended-36 candidate passes.
+
+    What it does NOT catch is a wrong displacement, and the reason is worth stating so nobody
+    expects more of it: the search only ever moves fields *later*, so a pivot and a positive shift
+    preserve an ascending order whatever they are. Order prunes the family branch; the offset still
+    has to come from the reports and the states they were captured in.
+    """
+    ranks = {name: i for i, name in enumerate(order)}
+    placed = sorted(
+        (ranks[name], f.word, -f.bit)
+        for key, f in model.fields.items()
+        if (name := _CLIMATE_SPEC.get(key, (None,))[0]) in ranks
+    )
+    score = 0
+    for (_, word, bit), (_, next_word, next_bit) in zip(placed, placed[1:], strict=False):
+        agrees = (word, bit) <= (next_word, next_bit)
+        score += _SCORE_ORDER_MATCH if agrees else _SCORE_ORDER_MISS
+    return score
+
+
+def _shift_model(model: WireModel, pivot: int, shift: int, setpoint: tuple) -> WireModel:
+    """``model`` with every field at or above ``pivot`` moved ``shift`` words later, and its setpoint
+    read with the ``setpoint`` encoding ``(name, k, c)``.
+
+    The displacement is the one transformation that has explained every layout so far: a unit follows
+    a known family but carries extra words in the middle of the array, so the fields after the
+    insertion point are all displaced by the same amount and the ones before it do not move at all.
+    """
+    _, k, c = setpoint
+    moved = {}
+    for key, f in model.fields.items():
+        word = f.word + shift if f.word >= pivot else f.word
+        if key == model.target_key:
+            moved[key] = WireField(word, f.bit, f.length, f.kind, k, c, f.enum)
+        else:
+            moved[key] = WireField(word, f.bit, f.length, f.kind, f.k, f.c, f.enum)
+    return WireModel(
+        family=f"{model.family}+{shift}@w{pivot}" if shift else model.family,
+        report_lengths=frozenset(),
+        fields=moved,
+        indoor_key=model.indoor_key,
+        target_key=model.target_key,
+    )
+
+
+def _score(decoded: dict, shadow: Mapping[str, str] | None) -> int | None:
+    """How well a candidate layout explains a report, or ``None`` if it is refused outright.
+
+    A candidate that puts a value somewhere no such value can exist is not a low-scoring candidate,
+    it is a wrong one -- so :func:`structural_violations` vetoes rather than deducts. Scoring it
+    down instead would let a rich coincidence outrank a correct but sparse reading, which is exactly
+    how a mis-placed layout gets proposed to a reporter as the best guess.
+    """
+    if structural_violations(decoded):
+        return None
+    score = 0
+    if decoded.get("current_temperature") is not None:
+        score += _SCORE_SENSOR_PLAUSIBLE
+    if decoded.get("outdoor_temperature") is not None:
+        score += _SCORE_SENSOR_PLAUSIBLE
+    if decoded.get("operation_mode") is not None:
+        score += _SCORE_ENUM_KNOWN
+    if decoded.get("wind_speed") is not None:
+        score += _SCORE_ENUM_KNOWN
+    if not shadow:
+        return score
+    for attr, key in _SHADOW_KEYS.items():
+        reported, got = shadow.get(attr), decoded.get(key)
+        if reported is None or got is None:
+            continue
+        if key == "power":
+            match = got is (str(reported).lower() == "true")
+        elif key in ("operation_mode", "wind_speed"):
+            match = str(got) == str(reported)
+        else:
+            try:
+                match = abs(float(got) - float(reported)) < 0.51
+            except (TypeError, ValueError):
+                match = False
+        if match:
+            score += _SCORE_SHADOW_MATCH
+    return score
+
+
+def probe_layout(
+    reports: bytes | Sequence[bytes],
+    *,
+    shadow: Mapping[str, str] | None = None,
+    stated: Sequence[StatedState | None] | None = None,
+    order: Sequence[str] | None = None,
+    max_shift: int = 24,
+    limit: int = 3,
+) -> list[dict]:
+    """Rank plausible layouts for a report no registry entry claims — the first step in adding a
+    model, done from the reports themselves rather than by hand.
+
+    Every layout met so far is a known family whose fields are displaced from some word onward, so
+    the search is over ``(family, pivot, shift, setpoint encoding)``: try each family with its fields
+    at or above each ``pivot`` moved up to ``max_shift`` words later, keep the candidates that decode
+    plausibly, and rank them.
+
+    Two things separate a real match from a coincidence, and both matter because a status report is
+    mostly zeros — a map whose fields all land on empty words "decodes" into a cold, powered-off unit
+    at its minimum setpoint:
+
+    * **Several reports.** Pass every report available (they are captured in different states); a
+      candidate must decode *all* of them plausibly, and its score is the weakest one's. A map that
+      lands on empty words scores the same in every state, so varied states break the tie.
+    * **``shadow``** — the device's own attribute values, from its ``digital_model``, keyed by
+      attribute name. A candidate that reproduces values the device published through a different
+      channel is almost certainly right.
+    * **``order``** — the settings the device declares its group-set carries, in wire order, from
+      :func:`~haismart_hrdp.declared_order`. It cannot place anything on its own: displacing every
+      field alike preserves the order exactly, so it says nothing about *where* a block starts. What
+      it does is reject a **family** that arranges its settings differently: on a real declaration
+      it rules out every extended-46 and compact-12 candidate — **375 of 800** — before any of them
+      is decoded, and passes every classic and extended-36 one. It prunes the family branch, not the
+      offset: the search only moves fields later, so no pivot or shift can violate an ascending
+      order. It therefore adds to the stated states rather than replacing them.
+    * **``stated``** — what each capture was known to be in, one :class:`StatedState` per report (or
+      ``None`` for a capture nobody described). This is the ground truth a new-model report already
+      collects: three captures in stated states, plus the room temperature off the handset. It is
+      worth as much as the shadow and needs no cloud, so a model can be added from the captures
+      alone. Contradicting a stated state costs more than matching one earns.
+
+    Returns up to ``limit`` candidates, best first, each ``{"family", "pivot", "shift", "setpoint",
+    "score", "decoded"}``. An empty list means nothing fits, which is itself the useful answer: the
+    report is a layout unlike any known family rather than a displaced one.
+    """
+    blobs = [reports] if isinstance(reports, (bytes, bytearray)) else list(reports)
+    seen: set[tuple] = set()
+    out: list[dict] = []
+    for model in PROBE_FAMILIES:
+        pivots = sorted({f.word for f in model.fields.values()} | {1})
+        for pivot in pivots:
+            for shift in range(max_shift + 1):
+                for encoding in _SETPOINT_ENCODINGS:
+                    candidate = _shift_model(model, pivot, shift, encoding)
+                    # A shift below the lowest field restates the pivot=1 map; skip the duplicates so
+                    # the ranking is not filled with several spellings of one candidate.
+                    key = (
+                        encoding[0],
+                        tuple(sorted((k, f.word, f.bit) for k, f in candidate.fields.items())),
+                    )
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    scores, decodes = [], []
+                    for blob in blobs:
+                        decoded = candidate.decode(blob)
+                        indoor = (decoded or {}).get(candidate.indoor_key)
+                        if (
+                            decoded is None
+                            or decoded.get(candidate.target_key) is None
+                            or indoor is None
+                            or not _PROBE_INDOOR_C[0] <= indoor <= _PROBE_INDOOR_C[1]
+                        ):
+                            scores = []
+                            break
+                        # A veto, not a low score: a candidate placing a value where no such value
+                        # can exist is wrong, not merely unconvincing.
+                        if (one := _score(decoded, shadow)) is None:
+                            scores = []
+                            break
+                        scores.append(one)
+                        decodes.append(
+                            {k: v for k, v in decoded.items() if k not in ("layout", "writable")}
+                        )
+                    if not scores:
+                        continue
+                    # The per-report scores answer "is each of these plausible on its own"; the
+                    # stated states answer "do they agree with what the unit was actually doing",
+                    # which is a judgement over the set and so is added once.
+                    score = min(scores)
+                    if stated:
+                        score += _score_stated(decodes, stated)
+                    if order:
+                        score += _score_order(candidate, order)
+                    out.append(
+                        {
+                            "family": model.family,
+                            "pivot": pivot,
+                            "shift": shift,
+                            "setpoint": encoding[0],
+                            "score": score,
+                            "decoded": decodes,
+                        }
+                    )
+    # Ties are common and the tie-break is the whole difference between a useful proposal and a
+    # misleading one: prefer the smallest displacement, then the one that moves the FEWEST fields
+    # (the highest pivot). Several pivots produce the same score whenever the words between them
+    # carry nothing that varies, and the candidate that disturbs least of a known family is the one
+    # that is actually right — a lower pivot drags mode and fan along with the sensors and reads
+    # them from the wrong words while still scoring the same.
+    out.sort(key=lambda c: (-c["score"], c["shift"], -c["pivot"]))
+    return out[:limit]
+
+
+def select_wire_model(length: int, uplus_id: str | None = None) -> WireModel | None:
+    """The :class:`WireModel` for a report, preferring an exact uPlusId match and otherwise keying on
+    report ``length``. Returns ``None`` when nothing matches, or when the length is ambiguous across
+    families and no uPlusId disambiguates it (safer to fall back to the unknown-layout path than to
+    guess). The caller must still gate on the classic lengths owning their inline decode."""
+    if uplus_id:
+        for wm in WIRE_MODELS:
+            if uplus_id in wm.uplus_ids:
+                return wm
+    candidates = [wm for wm in WIRE_MODELS if length in wm.report_lengths]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+# The climate attributes a related-model layout is built from. Deliberately the core block and not
+# everything the map states: these are the fields the plausibility check below can actually judge,
+# and the ones a thermostat needs. Anything further would be placed on the strength of the
+# relationship alone, which is what `canonical_displacement` exists to refuse.
+#
+# ⚠️ ``swing_horizontal`` belongs here for the same reason ``swing_vertical`` does and was simply
+# missed: the left-right vane sits one word from the up-down one, in the same core block, and a unit
+# that has the axis reports it there. Leaving it out meant a related-layout appliance with a working
+# left-right vane reported its swing state as nothing at all -- and the state is what a swing control
+# is read back from, so the axis looked dead even where the family can move it. Adding it is a READ
+# only: control is gated on the write map (``supports_field``), which this does not touch.
+_RELATED_KEYS: tuple[str, ...] = (
+    "power", "target_temperature", "current_temperature", "outdoor_temperature",
+    "heat_capable", "error_code", "last_changed_by", "operation_mode", "wind_speed",
+    "swing_vertical", "swing_horizontal",
+)
+
+#: How much of an identifier two models must share before one is treated as the other's relative.
+#: The published models that are genuinely the same specification share far more than this; the
+#: leading characters below it are a product class, which is explicitly not a layout.
+_RELATED_PREFIX_MIN = 20
+
+#: Every whole-word offset a published air conditioner is known to report at. This is the shortlist
+#: for an appliance that is related to no published model closely enough to inherit one -- the
+#: window air conditioners, whose identifiers diverge at character 16, and the handful of split
+#: units that diverge at 19. Both diverge *inside* the device type, which is exactly the boundary
+#: :data:`_RELATED_PREFIX_MIN` exists to refuse, so their offset cannot be inherited and must be
+#: measured.
+#:
+#: Using it is not a new assumption. :func:`~haismart_hrdp.uss.parse_full_status` already decodes
+#: the head of *any* unrecognised report at fixed bytes 92/93/94/97 -- which is this map at -19 --
+#: and publishes power, setpoint, mode, fan and vane from it with no check of any kind. What this
+#: adds is the rest of the block and, unlike that path, a verdict: the report has to agree, and
+#: with no relative to rank the candidates it has to single one out (see :func:`decode_related`).
+PUBLISHED_DISPLACEMENTS: tuple[int, ...] = tuple(sorted(set(PROFILE_DISPLACEMENTS.values())))
+
+
+def displacement_candidates(uplus_id: str | None) -> tuple[int, ...]:
+    """Displacements used by the published models most closely related to ``uplus_id``.
+
+    A device announces an identifier whose leading characters it shares with its relatives -- the
+    same specification, a revision apart -- and every published air conditioner is the one map at a
+    whole-word offset. So the models sharing the longest prefix with an unfamiliar device name the
+    offsets its report is likely to use.
+
+    Returns them ordered and without duplicates, empty when nothing shares a meaningful prefix. It
+    is a shortlist and nothing more: in practice the closest relatives of a given device disagree,
+    one carrying the leading media block and one not, so the answer is normally two candidates and
+    the report itself has to choose between them.
+    """
+    if not uplus_id:
+        return ()
+    best = 0
+    ranked: dict[int, int] = {}
+    for profile, disp in PROFILE_DISPLACEMENTS.items():
+        shared = 0
+        # strict=False on purpose: identifiers are compared only as far as the shorter runs, and a
+        # truncated one sharing everything it has is still a relative.
+        for a, b in zip(uplus_id, profile, strict=False):
+            if a != b:
+                break
+            shared += 1
+        if shared < _RELATED_PREFIX_MIN or shared < best:
+            continue
+        if shared > best:
+            best, ranked = shared, {}
+        ranked.setdefault(disp, shared)
+    return tuple(ranked)
+
+
+# How each field of the published group-set frame is packed. Positions come from
+# :data:`~haismart_hrdp.canonical_map.CANONICAL_WRITE`, which is the frame itself; what lives here is
+# only what the frame does not state -- how a caller's classic-shaped value becomes the wire value,
+# and the ranges narrower than the bit width. These are the same kinds the two hardware-confirmed
+# families use, and the frame does not displace between families, so they are family-independent.
+#
+# Deliberately a SUBSET of the frame's 39 attributes: these are the settings this project has a
+# control for. An attribute nobody can command is not made writable merely because it is positioned.
+_FRAME_WRITE_SPEC: Mapping[str, Mapping[str, object]] = {
+    "targetTemperature": {"kind": "passthrough", "min_epp": 0, "max_epp": 14},   # 16..30 C
+    "windDirectionVertical": {"kind": "passthrough", "max_epp": 0x0C},
+    # Identity, and every code the published catalogue carries -- including 5, the window units'
+    # 节能模式(窗机). The set of codes a given appliance may be SENT is not this map's job: the
+    # climate entity builds its mode list from the device's own declared enum, so a unit that does
+    # not publish a code is never asked to accept it. What this map must not do is refuse a code
+    # the device itself declares.
+    "operationMode": {"kind": "std_enum",
+                      "std_to_epp": {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}},
+    # Identity, and every code the three-bit field can hold. Which of them a given appliance may be
+    # SENT is not this map's job -- the climate entity builds its fan list from the device's own
+    # declared enum, so a unit that does not publish a speed is never asked to accept it. What this
+    # must not do is refuse a speed the device itself declares.
+    "windSpeed": {"kind": "std_enum",
+                  "std_to_epp": {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7}},
+    "onOffStatus": {"kind": "passthrough", "max_epp": 1},
+    "healthMode": {"kind": "passthrough", "max_epp": 1},
+    "rapidMode": {"kind": "passthrough", "max_epp": 1},
+    "muteStatus": {"kind": "passthrough", "max_epp": 1},
+    "silentSleepStatus": {"kind": "passthrough", "max_epp": 1},
+    "screenDisplayStatus": {"kind": "passthrough", "max_epp": 1},
+    "windDirectionHorizontal": {"kind": "passthrough", "max_epp": 0x07},
+    "selfCleaningStatus": {"kind": "passthrough", "max_epp": 1},
+    # The panel's frame-positioned control surface, so a related layout offers the same controls a
+    # registered grSetDAC family does (still gated by the product's own group-set order and the
+    # bit-reuse guard, below). Bools 0/1; the two enums their raw 0..3.
+    **{
+        name: {"kind": "passthrough",
+               "max_epp": (1 if name in PANEL_BOOL_CONTROLS
+                           else (1 << CANONICAL_WRITE[name].length) - 1)}
+        for name in (*PANEL_BOOL_CONTROLS, *PANEL_ENUM_CONTROLS)
+        if name in CANONICAL_WRITE
+    },
+    **{name: {"kind": "passthrough", "max_epp": 1} for name in PANEL_EXTRA_POSITIONS},
+    # ── 0d12 central-cabinet enum single-parameters, from Haier's own device config ──────────────
+    # NON-identity (std != epp), so each needs an explicit std_enum. tempUnit is in CANONICAL_WRITE,
+    # so the block above would synthesise a passthrough for it; these entries come AFTER it and
+    # therefore win. Writing the raw std where the epp is meant would set the wrong unit or overflow.
+    # tempUnit: display unit, std 1 °C / 2 °F -> epp 0 / 1 (config eppCmd 5D07, 19 products declare).
+    "tempUnit": {"kind": "std_enum", "std_to_epp": {1: 0, 2: 1}},
+    # Four-sided cassette louvres: std stop -> the config's non-linear epp code. Stops 0..6 are
+    # fixed / positions 1-5 / auto; std 7 (epp 5) is 健康气流, the health-airflow stop the 52 candy
+    # cabinets declare. (The 商空 family numbers that same stop std 10 -> epp 5; its cabinets are
+    # unobserved and its divergent windSpeed encoding is tracked in the register oracle, so its
+    # stop-10 is not added to this shared map -- a 商空 unit simply is not offered the health stop.)
+    # Offered provisionally, read back from the inserted block (INSERTED_PARAM_POSITIONS).
+    **{
+        f"4SidesWindDirection{i}": {
+            "kind": "std_enum",
+            "std_to_epp": {0: 0, 1: 2, 2: 4, 3: 6, 4: 8, 5: 10, 6: 12, 7: 5},
+        }
+        for i in (1, 2, 3, 4)
+    },
+}
+
+
+#: Attributes whose write is confirmed on the per-attribute (``value_param``) channel ONLY, and so
+#: must not be offered through the group-set even where a product's order carries them.
+#:
+#: ``tempUnit`` is the case. Haier's device config gives its value encoding (std 1/2 -> epp 0/1) for
+#: the central-cabinet single-parameter channel, and it happens to sit in ``CANONICAL_WRITE`` -- so
+#: without this guard it would join the group-set frame and surface a °C/°F select on the ~22
+#: non-central products whose order lists it, an unverified group-set write on families this
+#: config expansion never touched. Membership on the group-set is order-corroborated for POSITION,
+#: but the value encoding here was measured on the central cabinets alone, so the control is kept to
+#: the channel it was measured on. (The four-way louvres need no entry: they are not in
+#: ``CANONICAL_WRITE`` and reach no product through the group-set at all.)
+VALUE_PARAM_ONLY: frozenset[str] = frozenset({"tempUnit"})
+
+
+def frame_write_fields(
+    order: Sequence[str] | None, uplus_id: str | None = None
+) -> dict[str, WriteField]:
+    """The group-set fields a product can be commanded on, from the frame it publishes.
+
+    Four gates, and each removes a different way of being wrong:
+
+    * **the frame** -- a field is packed where `CANONICAL_WRITE` says, which is one frame across
+      every published air-conditioner device type with no displacement between families;
+    * **the product's own group-set list** (``order``) -- a setting this product does not carry is
+      not offered, so nothing is written into a word its appliance uses for something else;
+    * **:func:`~haismart_hrdp.family_write.displaced_write_fields`** -- a handful of families keep a
+      *different attribute* at one of the frame's positions (a twin-tower cabinet's left-hand vane
+      and fan, and sterilization where the frame puts self-clean). Those are refused outright: a
+      group-set is packed by position, so the wrong function would run rather than the write failing;
+    * **:func:`~haismart_hrdp.wire_order.consistent_with_frame`** -- the order is positional (word
+      ascending, bit descending), so it can also contradict the frame for an attribute under its
+      *own name*: every twin-tower family lists the appliance's vane, fan and horizontal vane in
+      its appended tail, past the words the shared frame reaches, which the reuse table cannot see
+      because nothing else was ever placed at those slots. A field the product's own order places
+      elsewhere is not offered; an order the frame cannot be reconciled with at all offers nothing.
+
+    Returns ``{}`` when ``order`` is unknown, which keeps a layout read-only rather than commanding
+    an appliance whose own published contract has not been seen.
+    """
+    from .family_write import ALIASES, displaced_at, displaced_write_fields, tail_positions
+    from .wire_order import consistent_with_frame
+
+    if not order:
+        return {}
+    refused = displaced_write_fields(uplus_id)
+    tail = tail_positions(uplus_id)
+    spelled_as = dict(ALIASES) | {v: k for k, v in ALIASES.items()}
+
+    def position(name: str) -> tuple[int, int, int] | None:
+        # The family's own append region wins: where it is listed, the shared frame's slot belongs
+        # to another attribute entirely (its left tower), which is why the field is refused there.
+        if name in tail:
+            return tail[name]
+        cf = CANONICAL_WRITE.get(name) or CANONICAL_WRITE.get(spelled_as.get(name, ""))
+        if cf is not None:
+            return (cf.word, cf.bit, cf.length)
+        return PANEL_EXTRA_POSITIONS.get(name) or PANEL_EXTRA_POSITIONS.get(
+            spelled_as.get(name, "")
+        )
+
+    known = {}
+    for name in order:
+        # An appended field's frame slot is not where this family writes it, so it is no evidence
+        # about the order and must not be offered to the backbone check as an anchor.
+        if name in tail:
+            continue
+        pos = position(name)
+        if pos is not None:
+            known[name] = pos[:2]
+    corroborated = consistent_with_frame(order, known)
+    if corroborated is None:
+        return {}
+
+    carried = set(order)
+    out: dict[str, WriteField] = {}
+    for name, spec in _FRAME_WRITE_SPEC.items():
+        if name in VALUE_PARAM_ONLY:
+            # A confirmed only on the per-attribute channel is not offered through the group-set,
+            # even where the product's order carries it: its value encoding was established from the
+            # single-parameter config alone, and packing it into the shared frame would be an
+            # unverified write on families that never entered this expansion. See VALUE_PARAM_ONLY.
+            continue
+        spelled = name if name in carried else spelled_as.get(name, name)
+        if spelled not in carried:
+            continue
+        pos = position(name)
+        if pos is None:
+            continue
+        # A reuse is a fact about a POSITION, not a name (v0.50.1). A field this family appends is
+        # written somewhere the shared frame never reaches, so the name-keyed refusal -- which
+        # exists to protect the *frame's* slot -- must not follow it there.
+        if name in tail:
+            if displaced_at(uplus_id, name, *pos):
+                continue
+        elif name in refused:
+            continue
+        if spelled in known and spelled not in corroborated:
+            continue
+        out[name] = WriteField(*pos, **spec)  # type: ignore[arg-type]
+    return out
+
+
+#: Per-attribute write commands, keyed by the four uPlusId characters that name a device class, for
+#: classes that publish **no group command at all**.
+#:
+#: ``0d12`` -- the central cabinets -- declare every attribute ``writeType: I`` (individually
+#: settable), and their firmware **refuses** ``6001``: the group set is genuinely unavailable here
+#: rather than merely undeclared, so this is not an optimisation but the only way to command one.
+#: The ids below were observed on the wire of an appliance carrying this exact identifier, and the
+#: value encodings need no translation because they are the published map's already -- mode
+#: ``0/1/2/4/6``, fan ``1/2/3/5``, setpoint ``°C − 16``, booleans ``0``/``1``.
+#:
+#: ⚠️ The two vane ids this generation also defines are deliberately absent -- see
+#: :data:`PROVISIONAL_SINGLE_PARAM_IDS`, offered on terms the appliance itself settles.
+SINGLE_PARAM_IDS: Mapping[str, Mapping[str, int]] = {
+    "0d12": {
+        "onOffStatus": 0x01,
+        "targetTemperature": 0x02,
+        "operationMode": 0x04,
+        "windSpeed": 0x05,
+        "windDirectionVertical": 0x03,
+        "windDirectionHorizontal": 0x0C,
+        "healthMode": 0x0B,
+        "muteStatus": 0x19,
+        "rapidMode": 0x1A,
+        # Display unit (°C/°F). Confirmed the same way as the nine above -- Haier's own device
+        # config gives it eppCmd 5D07 -- and, unlike them, it needs a std<->epp translation
+        # (std 1/2 -> epp 0/1); see :data:`_FRAME_WRITE_SPEC`. 19 of the 152 catalogued 0d12
+        # products declare it, and its read sits in the climate block (w22.b13, config w3), so it
+        # is placed by the same displacement as the rest rather than provisionally.
+        "tempUnit": 0x07,
+    },
+}
+
+
+#: Single-parameter ids derived rather than observed, offered only where the appliance can confirm
+#: them itself. A decision about an id is a measurement, and this is the form a measurement takes
+#: when the observation has to come from hardware nobody here owns: write it, then read the same
+#: attribute back from its own position in the report. It took or it did not; if it did not, the
+#: caller retires that control permanently.
+#:
+#: ⓘ It has carried the two central-cabinet vane ids before (nothing of the class had ever been
+#: watched accepting them -- the one appliance whose traffic was recorded has no vane; an owner ran
+#: them, both axes moved, and they graduated to :data:`SINGLE_PARAM_IDS` above). It carries one now:
+#:
+#: **``humanSensingStatus`` = ``0x23`` -- presence airflow (off/avoid/follow/on).** The id is
+#: Haier's OWN: the manufacturer's device config for both central-cabinet families
+#: (``…0d1205464544…`` and ``…0d122151860b57…``) gives ``humanSensingStatus`` the write command
+#: ``5D23`` (the config's per-attribute ``eppCmd``; the nine ids this project confirmed on hardware
+#: all match that same config). It is still offered provisionally -- written, then read back from
+#: ``humanSensingStatus``'s own place in the report (w23.b6/2) -- only because the WRITE has not yet
+#: been exercised on a cabinet, not because the number is a guess. A unit that refuses it, or has no
+#: sensor, retires the control for good on the first use.
+#:
+#: ⚠️ ``0x08`` was WRONG. It was derived by elimination (the id an appliance "without the sensor
+#: refuses") before Haier's config was in hand; the config shows ``0x08`` is ``halfDegreeSettingStatus``
+#: and presence is ``0x23``. A control keyed on ``0x08`` toggled half-degree, not presence -- it fails
+#: safe (the read-back does not move, so it self-withdraws), but it was the wrong register. The 5Dxx
+#: numbering is board-specific and IS in each family's config; see ``catalogue/configfiles/``.
+#:
+#: **``4SidesWindDirection1..4`` = ``0x0F/0E/11/10`` -- the four-way cassette louvres.** 52 of the
+#: 152 catalogued 0d12 products declare them (``operationType: I``, individually settable), and the
+#: config gives each its own eppCmd. They are provisional for a different reason than presence: the
+#: WRITE id is as solid as the nine confirmed ones, but their READ-BACK position -- the config's
+#: word 6, inside the report's inserted block (:data:`INSERTED_PARAM_POSITIONS`) -- has never been
+#: seen populated on the wire (no four-way cassette diagnostics exists yet; the one 0d12 unit
+#: captured is a single-flow cassette that leaves word 6 at zero). So each is written via its config
+#: id and read back from word 6; a cabinet that actually moves its louvre confirms both the id and
+#: the position on first use, and one that does not retires the control. ⚠️ An earlier note placed
+#: these at w23 reusing ``windDirectionHorizontal``'s bits -- a pre-config derivation Haier's own
+#: config (word 6, independent of ``windDirectionHorizontal`` at word 4) supersedes.
+PROVISIONAL_SINGLE_PARAM_IDS: Mapping[str, Mapping[str, int]] = {
+    "0d12": {
+        "humanSensingStatus": 0x23,
+        "4SidesWindDirection1": 0x0F,
+        "4SidesWindDirection2": 0x0E,
+        "4SidesWindDirection3": 0x11,
+        "4SidesWindDirection4": 0x10,
+    },
+}
+
+
+#: Where an enum single-parameter reads back in a representation that is NOT its raw wire code, as
+#: ``{raw epp -> Haier STD}``. :func:`value_param_write_fields` gives these controls an ``enum`` read
+#: so the select entity, and the model's declared-code narrowing, both see the STD value the write
+#: side speaks -- the raw epp would disagree for a non-identity map (tempUnit's epp 0/1 vs std 1/2;
+#: the cassette louvres' epp 0/2/4… vs std 0/1/2…). Identity enums (mode, fan, presence) are absent:
+#: they read raw and the climate/vane entities translate for themselves, so touching their read
+#: here would feed those entities a STD code where they expect the wire code.
+VALUE_PARAM_READ_ENUM: Mapping[str, Mapping[int, int]] = {
+    "tempUnit": {0: 1, 1: 2},
+    **{
+        # inverse of the write map above, including epp 5 -> std 7 (健康气流, health airflow)
+        f"4SidesWindDirection{i}": {0: 0, 2: 1, 4: 2, 6: 3, 8: 4, 10: 5, 12: 6, 5: 7}
+        for i in (1, 2, 3, 4)
+    },
+}
+
+
+#: Single-parameter controls whose read-back sits inside the report's inserted block -- the words a
+#: displaced family carries that the published map does not describe -- as ``{class: {name: (report
+#: word, bit, length)}}``. The displacement formula in :func:`value_param_write_fields` cannot reach
+#: these: a canonical word maps either before the pivot (report < 6) or, once past it, to report
+#: word 10 and up, so the inserted words 6..9 have no canonical pre-image. They are placed at the
+#: literal report word Haier's config gives instead (config word == report word on this class, the
+#: same identity the nine confirmed ids satisfy), and only where the report actually carries the
+#: block (its length implies an insert). The four-way cassette louvres are the only case today.
+INSERTED_PARAM_POSITIONS: Mapping[str, Mapping[str, tuple[int, int, int]]] = {
+    "0d12": {
+        "4SidesWindDirection3": (6, 0, 4),
+        "4SidesWindDirection4": (6, 4, 4),
+        "4SidesWindDirection1": (6, 8, 4),
+        "4SidesWindDirection2": (6, 12, 4),
+    },
+}
+
+
+def uplus_class(uplus_id: str | None) -> str:
+    """The four identifier characters that name a device class, or ``""``.
+
+    ⚠️ **Not** :func:`device_type_class`, which returns the five-character *deviceType* form
+    (``0d012``). Every per-class table in this project is keyed on THIS four-character slice
+    (``0d12``); mixing the two silently matches nothing, which reads as "the feature is absent".
+    """
+    return uplus_id[16:20].lower() if uplus_id and len(uplus_id) >= 20 else ""
+
+
+def value_param_write_fields(
+    displacement: int,
+    uplus_id: str | None,
+    *,
+    insert: tuple[int, int] | None = None,
+) -> dict[str, ValueParam]:
+    """The single-parameter controls this appliance's device class publishes, positioned for reads.
+
+    Membership comes from :data:`SINGLE_PARAM_IDS`; the read-back position comes from the published
+    map at ``displacement`` -- the same offset the report itself was decoded at, so a control is only
+    offered where its state can also be read. An attribute the map cannot place is dropped rather
+    than offered write-only, which is the rule this project applies everywhere: a control that cannot
+    be read back is worse than a missing one.
+
+    ``insert`` is the ``(pivot, count)`` of a block the report carries and the published map does not
+    describe, for a family that displaces the map piecewise. Most ids published for this channel sit
+    BELOW the pivot and are placed by the displacement alone. A few live INSIDE the block itself
+    (:data:`INSERTED_PARAM_POSITIONS` -- the four-way cassette louvres), which the displacement
+    cannot reach: they are placed at the literal report word the config gives, and only where the
+    report actually carries the block (``insert`` is not ``None``). A control the map cannot place is
+    dropped rather than offered write-only -- a control that cannot be read back is worse than a
+    missing one.
+
+    An enum whose read-back is not its raw wire code (:data:`VALUE_PARAM_READ_ENUM`) is given an
+    ``enum`` read so the value it shows is the STD code the write side and the model both speak.
+    """
+    cls = uplus_class(uplus_id)
+    ids = dict(SINGLE_PARAM_IDS.get(cls) or {})
+    unconfirmed = dict(PROVISIONAL_SINGLE_PARAM_IDS.get(cls) or {})
+    if not ids and not unconfirmed:
+        return {}
+    inserted = INSERTED_PARAM_POSITIONS.get(cls) or {}
+    out: dict[str, ValueParam] = {}
+    for name, pid in {**ids, **unconfirmed}.items():
+        spec = _FRAME_WRITE_SPEC.get(name)
+        if spec is None:
+            continue
+        if name in inserted:
+            # Inside the report's inserted block. The block begins at report word
+            # ``RELATED_INSERT_PIVOT + displacement`` and the config numbers this word the same, so
+            # its literal report word is used directly -- but only when the report carries the block.
+            if insert is None:
+                continue
+            word, bit, length = inserted[name]
+        else:
+            c = CANONICAL.get(name)
+            if c is None:
+                continue
+            word = c.word + displacement
+            if insert is not None and c.word >= insert[0]:
+                word += insert[1]
+            bit, length = c.bit, c.length
+        if word < 1:
+            continue
+        read_enum = VALUE_PARAM_READ_ENUM.get(name)
+        read = (
+            WireField(word, bit, length, kind="enum", enum=read_enum)
+            if read_enum is not None
+            else WireField(word, bit, length, kind="raw")
+        )
+        out[name] = ValueParam(
+            provisional=name in unconfirmed,
+            param_id=pid,
+            # The payload is a full 16 bits whatever the attribute's packed width is, so the value
+            # bound has to come from the attribute's own spec rather than from a bit field.
+            spec=WriteField(0, 0, 16, **spec),  # type: ignore[arg-type]
+            read=read,
+        )
+    return out
+
+
+#: The one word an inserted block has ever begun at. Both families that carry words the published map
+#: does not describe pivot HERE -- the classic 127-byte rental SKU (one word, ``targetRentTime``) and
+#: extended-46 (ten). It is not a free parameter fitted per report: it is the boundary between the
+#: settable climate block and the sensor block, and a family that carries extra words carries them
+#: between the two. Searching over pivots as well as counts would be fitting, and fitting places
+#: every attribute somewhere plausible and wrong.
+RELATED_INSERT_PIVOT = 25
+
+#: The report length a displacement yields with **no** inserted block, for lineages whose report
+#: stops where the published map stops. Where that holds, the insert count is not a matter of
+#: corroboration at all -- it is arithmetic on the frame length, which §5.2.2 of the vendor's
+#: standard makes an explicit field: ``insert = (length - base) / 2``.
+#:
+#: ★ The classic family is the proof and the calibration: **125 B is the base and its 127-byte
+#: rental member is the +1 case**, which is exactly what `_CLASSIC_PROBE.length_inserts` already
+#: says. A 133-byte report is therefore +4, which is what `acType` independently chose on the one
+#: cabinet able to answer, and what prior art measured as `control_packet_size: 18` on another.
+#:
+#: ⚠️ **Only for lineages with no trailing undescribed words.** Displacement 0 is deliberately
+#: absent: extended-46's 209-byte report carries words past everything the map describes, so its
+#: length implies +22 where the true insert is +10. A base listed here is a claim that the report
+#: ends where the map does, and it must be measured before being added.
+#: ⚠️⚠️ **Keyed on the device CLASS, not on the displacement alone.** Two unrelated maps both produce
+#: a 133-byte report -- the central cabinet, and a second layout recorded in `report-layouts.md`
+#: ("133 B — two different layouts share this length") with a 4-bit setpoint at w1.b12 and its
+#: sensors at w5/w6. A rule keyed on length alone would hand that family this one's placement and
+#: decode it wrongly, which is the exact failure that section warns about: *a decoder that keys on
+#: length alone picks between them by coin toss; the appliance's own identifier picks correctly*.
+#: So the identifier gates the arithmetic, and a class is listed here only once its report has been
+#: measured to end where the published map ends.
+RELATED_INSERT_BASE_LENGTH: Mapping[str, tuple[int, int]] = {
+    # device class -> (canonical displacement, the report length with no inserted block)
+    "0d12": (-19, 125),
+}
+
+
+def _canonical_placement(
+    displacement: int, insert: tuple[int, int] | None
+) -> Callable[[int], int]:
+    """Where map word ``w`` lands, for a family displaced by ``displacement`` with ``insert``."""
+    if insert is None:
+        return lambda w: w + displacement
+    pivot, count = insert
+    return lambda w: w + displacement + (count if w >= pivot else 0)
+
+
+def related_family_name(displacement: int, insert: tuple[int, int] | None = None) -> str:
+    """The name a related layout reports itself by, and that :func:`related_model_named` parses back.
+
+    ``related-19`` for a flat offset; ``related-19+4@25`` when the report carries an inserted block.
+    The name has to carry the insert because it is the ONLY thing the decode hands its caller, and a
+    caller that rebuilt the flat model from a name that meant an inserted one would read the report
+    correctly and then command it through positions four words out.
+    """
+    base = f"related{displacement:+d}"
+    return base if insert is None else f"{base}+{insert[1]}@{insert[0]}"
+
+
+#: Device classes whose related layout has been checked FIELD FOR FIELD against the appliance's own
+#: cloud-reported values, not merely on the core block -- the standard ``canonical_displacement``
+#: exists to require. Only these get it set, so an unverified family still places nothing beyond the
+#: core readings.
+#:
+#: ``0d12``: six diagnostics from **four different cabinets**, each carrying a contemporaneous cloud
+#: shadow, give **40 agreements and 0 real differences** across power, setpoint, room temperature,
+#: mode, fan speed and **both vane axes**. (The two apparent temperature differences are the room
+#: crossing 24/25 between the two fetches; our value tracks the wire byte in both, and the cloud errs
+#: in OPPOSITE directions -- which a wrong scale or offset could not produce.) Corroborated further
+#: by the insert count being forced by the report's own length, and by prior art's independently
+#: measured ``control_packet_size: 18``.
+RELATED_DISPLACEMENT_CONFIRMED: frozenset[str] = frozenset({"0d12"})
+
+
+def related_wire_model(
+    length: int,
+    displacement: int,
+    *,
+    order: Sequence[str] | None = None,
+    uplus_id: str | None = None,
+    insert: tuple[int, int] | None = None,
+) -> WireModel:
+    """A layout for reports of ``length``, taken from the published map at ``displacement``.
+
+    **Control is offered when the appliance's own group-set list is known**, and not otherwise. That
+    is a change from the original read-only rule, and the reason it is safe now is that the two
+    things the old rule was waiting for have both been established from published data rather than
+    from a capture:
+
+    * the group-set frame is **one frame** across every published air-conditioner device type -- same
+      attributes, same words, same bits, and **no displacement between families**; and
+    * the report word the frame's first word lands on is **``20 + displacement``** -- the climate
+      block begins at map word 20 and the group-set is those words lifted out, so the base word is
+      the definition restated rather than a constant anyone fitted. Checked against all three
+      hardware-confirmed families and exact each time.
+
+    The displacement itself is not assumed: it is whichever candidate the report agreed with, which
+    is the same evidence the read path already required before publishing a single value.
+
+    ``canonical_displacement`` stays unset **unless this class is in**
+    :data:`RELATED_DISPLACEMENT_CONFIRMED`. That flag gates the *further* attributes a device
+    declares, which rest on the offset being checked field-for-field against a real report rather
+    than only on the core block -- so it is granted per class, against a measurement, and never by
+    default.
+
+    Memoised: `decode_related` rebuilds every candidate for every report, and a layout depends on
+    nothing but these arguments. The one handed out is shared, so its mappings are read-only.
+    """
+    key = (length, displacement, None if order is None else tuple(order), uplus_id, insert)
+    # Checked here, not by catching TypeError around the call: that would also swallow a TypeError
+    # from inside the build -- a real bug -- and build everything a second time to re-raise it.
+    if not _hashable(key):
+        return _build_related_wire_model(*key)   # an unhashable order entry: build, uncached
+    return _related_wire_model_cached(*key)
+
+
+def _hashable(value: object) -> bool:
+    try:
+        hash(value)
+    except TypeError:
+        return False
+    return True
+
+
+@lru_cache(maxsize=1024)
+def _related_wire_model_cached(
+    length: int,
+    displacement: int,
+    order: tuple[str, ...] | None,
+    uplus_id: str | None,
+    insert: tuple[int, int] | None,
+) -> WireModel:
+    wm = _build_related_wire_model(length, displacement, order, uplus_id, insert)
+    return replace(
+        wm,
+        fields=MappingProxyType(dict(wm.fields)),
+        write_fields=MappingProxyType(dict(wm.write_fields)),
+        value_param_fields=MappingProxyType(dict(wm.value_param_fields)),
+    )
+
+
+def _build_related_wire_model(
+    length: int,
+    displacement: int,
+    order: Sequence[str] | None,
+    uplus_id: str | None,
+    insert: tuple[int, int] | None,
+) -> WireModel:
+    write = frame_write_fields(order, uplus_id)
+    params = value_param_write_fields(displacement, uplus_id, insert=insert)
+    place = _canonical_placement(displacement, insert)
+    # A group-set is packed as ONE contiguous word block sliced straight out of the report
+    # (`baseline_words`), so it cannot span a block the report carries and the map does not describe:
+    # every word from the pivot on would be seeded from the wrong place and written back there. The
+    # frame covers canonical words 20..19+word_count, so it crosses an insert once it reaches the
+    # pivot. Refuse the group-set in that case rather than pack it wrong -- the appliance keeps its
+    # reads and any per-attribute channel, which is the safe direction. No family reaches this today
+    # (the one class with an insert publishes no group-set order at all), and that is exactly why it
+    # is written down now rather than discovered by a wrong write later.
+    if insert is not None and write:
+        reach = max([5, *(f.word for f in write.values())])
+        if 19 + reach >= insert[0]:
+            write = {}
+    confirmed = uplus_class(uplus_id) in RELATED_DISPLACEMENT_CONFIRMED
+    return WireModel(
+        family=related_family_name(displacement, insert),
+        report_lengths=frozenset({length}),
+        fields=canonical_fields(place, list(_RELATED_KEYS)),
+        canonical_displacement=displacement if confirmed else None,
+        canonical_insert=insert if confirmed else None,
+        # Either mechanism makes an appliance commandable. A class that publishes no group-set order
+        # gets no ``group_cmd`` and no ``write_fields``, so the group-set encoder still refuses it --
+        # what it gets instead is one op per attribute.
+        writable=bool(write or params),
+        value_param_fields=params,
+        group_cmd=b"\x60\x01" if write else None,
+        # The frame reaches five words; a family that writes its appliance's own vane and fan in
+        # the append region needs the op to run far enough to carry them. `word_count = 5` stopping
+        # the frame before word 6 is exactly what made extended-46's vane unreachable (v0.47.0).
+        word_count=max([5, *(f.word for f in write.values())]) if write else 0,
+        write_base_word=20 + displacement,
+        write_fields=write,
+        position_fields=frozenset(
+            {"windDirectionVertical", "windDirectionHorizontal"} & set(write)
+        ),
+    )
+
+
+def related_wire_models(
+    length: int,
+    uplus_id: str | None,
+    *,
+    order: Sequence[str] | None = None,
+) -> tuple[WireModel, ...]:
+    """Candidate layouts for a report no registered family claims.
+
+    The closest published relatives' offsets, best-related first -- or, when the appliance names
+    itself but nothing is related closely enough to rank, every offset a published model reports at
+    (:data:`PUBLISHED_DISPLACEMENTS`). ⚠️ In that second case the order carries **no evidence**, so a
+    caller must not simply take the first that fits; :func:`decode_related` requires the report to
+    single one out instead. :func:`related_shortlist_is_ranked` says which case a uPlusId is in.
+
+    The unranked case needs one thing a ranked one does not: the appliance must have **named
+    itself**. One that has not is left on the partial decode, whose ``layout: unknown`` flag is how
+    an unsupported model gets reported and then supported -- and that flag must not be spent on a
+    report we cannot even attribute to a model.
+
+    ⚠️ **It deliberately does NOT also require the product to publish a group-set order.** v0.52.0
+    did require one, and that was a category error: a group-set order is a statement about the
+    **write** frame, and the first thing established about these appliances is that *the read frame
+    and the write frame are different frames*. It is not evidence about a report's layout, and
+    requiring it excluded 187 central-air cabinets whose attributes this very map already places --
+    an appliance that answers on the LAN like any other, and that only the vendor's own app has to
+    operate through the cloud, for want of a byte map we have.
+
+    What actually corroborates a read displacement is the **report**: all three anchors present,
+    each plausible, and exactly one offset that manages it. That gate is unchanged, and it is
+    strictly more than the partial decode this falls through to -- which reads the same map's first
+    words at fixed positions with no check at all.
+
+    Control is unaffected, because the order already gates control: :func:`frame_write_fields`
+    returns nothing without one, so a product publishing no frame gets a **read-only** layout --
+    the correct outcome, and not a reason to refuse to read it.
+    """
+    ranked = displacement_candidates(uplus_id)
+    candidates: Sequence[int] = ranked or (PUBLISHED_DISPLACEMENTS if uplus_id else ())
+    return tuple(
+        related_wire_model(length, d, order=order, uplus_id=uplus_id) for d in candidates
+    )
+
+
+def related_insert_models(
+    length: int,
+    uplus_id: str | None,
+    *,
+    order: Sequence[str] | None = None,
+) -> tuple[WireModel, ...]:
+    """Candidate layouts for a report that carries words the published map does not describe.
+
+    Some appliances report a block of extra words between the settable climate block and the sensor
+    block, pushing every sensor along by that many words. The classic family already has one member
+    like this (the 127-byte rental SKU, one word) and extended-46 another (ten), and both pivot at
+    :data:`RELATED_INSERT_PIVOT` -- so the pivot is taken as known and only the COUNT is searched.
+
+    ⚠️ These are strictly a fallback for a report no flat offset fits, and :func:`decode_related`
+    only reaches them in that case. That is not a preference, it is what keeps the change safe: an
+    inserted layout can read a report the flat one also reads, so offering both would turn an
+    appliance that resolves today into one with two fits and therefore none.
+
+    ⚠️⚠️ And the counts are NOT self-separating. Measured on the three reports attached to issue #12,
+    **three different counts place the core block plausibly** -- the true one reads a 25 °C room and
+    a 31 °C outdoor, one reads 1 °C and -14 °C, and one reads 47.5 °C with no outdoor reading at all.
+    The "exactly one candidate fits" rule that settles a flat displacement therefore does NOT settle
+    a count, because a wrong count lands the sensors on other real fields rather than off the end of
+    the report. Corroboration by something outside the report is required, and that is what
+    :func:`insert_corroborated_by_actype` supplies.
+    """
+    disp = displacement_candidates(uplus_id) or (PUBLISHED_DISPLACEMENTS if uplus_id else ())
+    words = (length - _ATTR_BASE) // 2
+    out: list[WireModel] = []
+    for d in disp:
+        # An insert only moves things further down the report, so the largest count worth trying is
+        # the one that puts the last key the layout needs on the report's final word. Bounded by the
+        # report itself rather than by a constant nobody can justify.
+        highest = max(CANONICAL[_CLIMATE_SPEC[k][0]].word for k in _RELATED_KEYS)
+        for count in range(1, max(0, words - (highest + d)) + 1):
+            out.append(
+                related_wire_model(
+                    length, d, order=order, uplus_id=uplus_id,
+                    insert=(RELATED_INSERT_PIVOT, count),
+                )
+            )
+    return tuple(out)
+
+
+#: The highest fault code the published alarm table defines. ``errCode`` is the alarm's position plus
+#: one, matched against all 51 entries with zero mismatches, so a report claiming a higher code is
+#: not reporting a fault -- it is being read at the wrong place.
+_MAX_ERR_CODE = 51
+
+
+def structural_violations(decoded: Mapping) -> tuple[str, ...]:
+    """Published value spaces a correctly-placed report cannot fall outside of.
+
+    These are the **legal-range** half of the structural invariants this project has recorded: a
+    field that cannot hold the value read out of it says the layout is wrong, whatever else it
+    scores. They are deliberately NOT the plausibility bands elsewhere in this module. A band asks
+    "does this look like a room temperature"; these ask "does this value exist at all", which is a
+    question the published data answers rather than the reader's expectations.
+
+    ⚠️ **The distinction is load-bearing, and the tempting version of this is a trap.** The recorded
+    invariant list also contains *"``errCode`` is 0 and the alarm frame is all-zero on a healthy
+    unit"*. As a cross-frame consistency check that is sound; as a test on a status report alone it
+    assumes the appliance is healthy, and would reject the CORRECT layout for anyone whose air
+    conditioner is actually reporting a fault -- the one owner most in need of a working decode. So
+    the range is checked and the health is not.
+
+    Returns the violations, empty when the report is consistent with every space we can check.
+    """
+    out: list[str] = []
+    err = decoded.get("error_code")
+    if isinstance(err, int) and err > _MAX_ERR_CODE:
+        out.append(f"error_code={err} exceeds the {_MAX_ERR_CODE} codes the alarm table defines")
+    return tuple(out)
+
+
+def insert_corroborated_by_outdoor(decoded: Mapping, declares_outdoor: bool) -> bool:
+    """Whether a candidate places the outdoor reading an appliance that HAS one must report.
+
+    ``acType`` can only ever confirm a cooling-only unit: its informative value is ``1``, and a
+    candidate read at the wrong offset lands on one of the many zero bytes a report carries, which
+    decodes as "heat pump". A reading is the other way round -- at the true placement it is a real
+    temperature, and at a wrong one it is absent or out of band -- so it discriminates in the
+    direction ``acType`` cannot.
+
+    ⚠️ **Gated on the declaration, because some air conditioners genuinely have no outdoor probe.**
+    Measured over every report this project holds: **7 carry a room reading and no outdoor one, and
+    every one of the 7 comes from a product whose model does not declare the probe** -- there is no
+    counter-example, no appliance that declares an outdoor sensor and fails to report one. So this
+    costs nothing where it applies and says nothing where it does not.
+    """
+    if not declares_outdoor:
+        return True
+    return decoded.get("outdoor_temperature") is not None
+
+
+def insert_corroborated_by_actype(decoded: Mapping, declared_modes: Collection[int]) -> bool:
+    """Whether a candidate layout's ``acType`` bit agrees with the modes the device declares.
+
+    **This is the gate that separates one insert count from another, and it is not a plausibility
+    band.** It is not a new test either: it is a structural invariant this project had already
+    written down -- *"``acType`` is 1 bit, and it must agree with whether the model list contains
+    heat"* -- under the standing verdict that a candidate layout violating it is wrong whatever else
+    it scores. What was missing was not the idea but the wiring.
+
+    It is two independent published facts being required to agree: ``acType`` is a bit the
+    appliance sets in every report, one word past the room temperature, and the device's own model
+    lists the operating modes it supports. A unit that declares a heat mode is a heat pump and its
+    ``acType`` says so; a unit that does not is cooling-only and its ``acType`` says that. A count
+    that lands ``acType`` on some other field has no reason to agree, and on the reports this was
+    built from it does not: of the three counts that place the core block plausibly, only the true
+    one reads back the cooling-only unit it is.
+
+    Two facts about the same appliance from two sources, and the layout has to satisfy both. That is
+    a far stronger test than "the numbers look sensible", which is what let the other two counts
+    through, and it needs no judgement about what a room temperature ought to be.
+
+    ⚠️ Returns ``False`` when the device declares no modes at all: with nothing to corroborate
+    against, an insert is a guess, and the appliance keeps the flat behaviour it has today rather
+    than gaining a layout nothing checked.
+
+    ⛔ **:func:`structural_violations` is deliberately NOT applied here, and the reason is worth
+    keeping.** It vetoes candidates that are impossible, which is sound on its own -- but on this
+    path the safety comes from AMBIGUITY: two survivors mean the report cannot choose, and the
+    appliance keeps its partial decode. Removing an impossible candidate can leave a merely-wrong one
+    as the sole survivor and thereby get it accepted. Measured on the reports this was built from:
+    with the veto applied and a heat-declaring model, the one candidate left standing is the wrong
+    one, where without it two stand and the layout is refused. So the veto belongs where a human
+    reads the ranking (:func:`probe_layout`), not where a single survivor is acted on.
+
+    ⓘ **Two further invariants would decide the same question without a model**, and are recorded
+    rather than used: on the reports this was built from, ``errCode`` reads a value no alarm position
+    reaches at one wrong count, and ``indoorHumidity`` exceeds 100 at the other. Either alone
+    eliminates one candidate. ⚠️ If they are ever wired up, use the LEGAL-RANGE form -- a code that
+    cannot exist, a percentage above 100 -- and never *"errCode is zero because a healthy unit reads
+    zero"*, which assumes the appliance is healthy and would refuse the true layout on a faulty one.
+    """
+    if not declared_modes:
+        return False
+    heat_capable = decoded.get("heat_capable")
+    if heat_capable is None:
+        return False
+    return bool(heat_capable) == (_HEAT_MODE in declared_modes)
+
+
+#: ``operationMode``'s heat code, in the STD space every published model uses. A model listing it is
+#: a heat pump; one that does not is cooling-only.
+_HEAT_MODE = 4
+
+
+def related_shortlist_is_ranked(uplus_id: str | None) -> bool:
+    """Whether :func:`related_wire_models` ordered its candidates on evidence for ``uplus_id``.
+
+    True when at least one published model shares enough of the identifier to be treated as a
+    relative, so the shortlist runs closest-first and the first fit is the best-supported answer.
+    False when the shortlist is the unranked published set.
+    """
+    return bool(displacement_candidates(uplus_id))
+
+
+#: What a related layout must actually produce before it is believed. The plausibility check alone
+#: cannot do this job: the candidate that is wrong by nineteen words reads *past the end* of a
+#: shorter report, so every field comes back absent, and a decode holding no readings at all passes
+#: a check on the readings it does not have. Absence is not agreement -- so require the block a
+#: thermostat is made of to be present before the layout counts as identified.
+_RELATED_REQUIRED = ("power", "target_temperature", "current_temperature")
+
+
+def _parse_related_name(family: str) -> tuple[int, tuple[int, int] | None] | None:
+    """``"related-19+4@25"`` -> ``(-19, (25, 4))``; ``"related0"`` -> ``(0, None)``; else ``None``.
+
+    The layout name is the serialisation of the placement rule, and two callers now read it back --
+    :func:`related_model_named` to rebuild the model, and :func:`decode_related` to check the length
+    arithmetic. One parser, so a malformed name is rejected the same way in both.
+    """
+    if not family.startswith("related"):
+        return None
+    rest = family[len("related"):]
+    insert: tuple[int, int] | None = None
+    if "+" in rest[1:]:
+        head, _, tail = rest[1:].partition("+")
+        rest = rest[0] + head
+        count, sep, pivot = tail.partition("@")
+        if not sep:
+            return None
+        try:
+            insert = (int(pivot), int(count))
+        except ValueError:
+            return None
+    try:
+        return int(rest), insert
+    except ValueError:
+        return None
+
+
+def related_model_named(
+    family: str,
+    length: int,
+    *,
+    order: Sequence[str] | None = None,
+    uplus_id: str | None = None,
+) -> WireModel | None:
+    """Rebuild the related layout a decode reported, by the name it put in ``layout``.
+
+    :func:`decode_related` picks a displacement by trying each candidate and keeping the one the
+    report agreed with, and it returns that choice only as a name (``related-19``). A caller that
+    needs the *model* -- to know which settings it may command, and to pack them -- would otherwise
+    have to repeat the search. Parsing the name back is exact: it is generated from the displacement
+    and nothing else.
+
+    ``None`` for any name that is not one of ours, so an unrecognised layout cannot become writable.
+
+    ⚠️ A name carrying an inserted block (``related-19+4@25``) must rebuild WITH that block. Parsing
+    only the leading offset would return a model that reads four words short of where this report
+    keeps its sensors, and then command the appliance from it -- so an unparseable suffix returns
+    ``None`` rather than falling back to the flat layout.
+    """
+    if not family.startswith("related"):
+        return None
+    rest = family[len("related"):]
+    insert: tuple[int, int] | None = None
+    if "+" in rest[1:]:
+        # `rest` opens with the offset's own sign, so look for the insert's `+` past that character.
+        head, _, tail = rest[1:].partition("+")
+        rest = rest[0] + head
+        count, sep, pivot = tail.partition("@")
+        if not sep:
+            return None
+        try:
+            insert = (int(pivot), int(count))
+        except ValueError:
+            return None
+    try:
+        displacement = int(rest)
+    except ValueError:
+        return None
+    return related_wire_model(
+        length, displacement, order=order, uplus_id=uplus_id, insert=insert
+    )
+
+
+def decode_related(
+    data: bytes,
+    uplus_id: str | None,
+    profile=None,
+    *,
+    order: Sequence[str] | None = None,
+    declared_modes: Collection[int] | None = None,
+    declares_outdoor: bool | None = None,
+) -> dict | None:
+    """Decode ``data`` with the layout of the closest published relative that the report agrees with.
+
+    Tries each candidate offset in turn and keeps the one that both places the core readings and
+    finds them plausible. ``None`` when none fits, which leaves the caller on the partial decode it
+    would have used anyway -- an unfamiliar appliance is never made worse off by this.
+
+    **How the winner is chosen depends on whether the shortlist means anything.** With a relative,
+    the candidates are ranked by how much of the identifier they share, so the first that fits is
+    the best-supported answer and later ones are worse candidates for the same report. With no
+    relative the shortlist is just every published offset in numeric order, which is not evidence
+    about *this* appliance -- so the report has to pick one out on its own, and two offsets that
+    both fit is an unresolved question rather than a coin toss. Two rarely both fit: the offsets
+    are nineteen words apart, so on a short report the wrong one reads past the end and places
+    nothing (a window air conditioner's 109-byte report is 8 words long, and the climate block
+    starts at map word 20).
+    """
+    ranked = related_shortlist_is_ranked(uplus_id)
+    fits = []
+    for wm in related_wire_models(len(data), uplus_id, order=order):
+        decoded = wm.decode(data, profile)
+        if decoded is None or not all(k in decoded for k in _RELATED_REQUIRED):
+            continue
+        if ranked:
+            return decoded
+        fits.append(decoded)
+    if fits:
+        return fits[0] if len(fits) == 1 else None
+
+    # Nothing placed the core block at any flat offset. Before falling through to the partial
+    # decode, ask whether this report carries a block the published map does not describe -- which
+    # is not a new kind of appliance but one this project already maps twice (the 127-byte classic
+    # member, extended-46). The failure looks exactly like it did for issue #12's central cabinet:
+    # the setpoint, mode, fan and power all read correctly at -19 while the room temperature landed
+    # inside the undescribed block and read zero, so the layout was rejected on the one field the
+    # extra words had moved.
+    #
+    # ⚠️ Reached ONLY when no flat offset fits, so an appliance that resolves today is untouched.
+    # ⚠️ And gated on corroboration, never on the count standing alone: three counts place issue
+    # #12's reports plausibly and only one is right.
+    if declared_modes is None:
+        return None
+    # ⚠️ An EMPTY declaration is "we know nothing", the same as no declaration -- the length gate
+    # must decline it too, or an appliance that declares nothing gets a layout after all.
+    if not declared_modes:
+        return None
+    # ★ Arithmetic, tried before the corroboration search. Where the lineage's report stops where the
+    # published map stops, the frame length fixes the count outright: `insert = (length - base) / 2`
+    # (:data:`RELATED_INSERT_BASE_LENGTH`). That needs no `acType`, so it answers for the heat-pump
+    # cabinets the flag is structurally silent about -- see `CANONICAL_WIRE_MAP.md` §AO.
+    # built once: both searches below walk the same candidates
+    insert_models = related_insert_models(len(data), uplus_id, order=order)
+    by_length = []
+    for wm in insert_models:
+        # ⚠️ These models carry no `canonical_displacement`/`canonical_insert` -- the layout NAME is
+        # the serialisation of both (see `related_model_named`), so read it from there rather than
+        # from attributes that are None here.
+        spec = _parse_related_name(wm.family)
+        if spec is None:
+            continue
+        displacement, insert = spec
+        known = RELATED_INSERT_BASE_LENGTH.get((uplus_id or "")[16:20])
+        if known is None or insert is None:
+            continue
+        want_displacement, base = known
+        if displacement != want_displacement or base + 2 * insert[1] != len(data):
+            continue
+        decoded = wm.decode(data, profile)
+        if decoded is not None and all(k in decoded for k in _RELATED_REQUIRED):
+            by_length.append(decoded)
+    if len(by_length) == 1:
+        return by_length[0]
+
+    inserted = [
+        decoded
+        for wm in insert_models
+        if (decoded := wm.decode(data, profile)) is not None
+        and all(k in decoded for k in _RELATED_REQUIRED)
+        and insert_corroborated_by_actype(decoded, declared_modes)
+        and insert_corroborated_by_outdoor(decoded, bool(declares_outdoor))
+    ]
+    return inserted[0] if len(inserted) == 1 else None
+
+
+def device_type_class(uplus_id: str | None) -> str | None:
+    """The five-character device-type class a uPlusId belongs to, or ``None``.
+
+    A device type is written either as five characters (a whole product class -- split air
+    conditioners, cabinet air conditioners, and so on) or as eight (one particular product). The
+    class half is carried in the uPlusId and can be read straight out of it:
+
+        class = uplus_id[16:18] + "0" + uplus_id[18:20]
+
+    e.g. ``…0324` `0212` `0011801…`` -> ``02012``. This holds for every published model that states
+    a device type, bar one that declares a placeholder.
+
+    ⚠️ The remaining three characters of an eight-character device type are **not** in the uPlusId,
+    so a device's specific identity cannot be computed from it -- only looked up. And a class is
+    **not** a layout: devices sharing one class are known to report in different wire families, so
+    this must never be used to choose a decoder. It is an identifier, for reporting and lookup.
+    """
+    if not uplus_id or len(uplus_id) < 20:
+        return None
+    head = uplus_id[16:20]
+    if not head.isalnum():
+        return None
+    return f"{head[:2]}0{head[2:]}".lower()

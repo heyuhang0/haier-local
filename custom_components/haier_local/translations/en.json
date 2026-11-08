@@ -1,0 +1,454 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Haier Local",
+        "description": "Connect to the washer over its local uSS protocol on TCP 56800. localKey accepts the 32-hex key or a pasted local_key.json.",
+        "data": {
+          "host": "LAN address",
+          "local_key": "localKey (32 hex or local_key.json)",
+          "device_id": "Device ID (optional)",
+          "name": "Name",
+          "scan_interval": "Poll interval (seconds)"
+        }
+      },
+      "confirm": {
+        "title": "Unverified model",
+        "description": "Detected uPlusId {uplus_id}, which is not the model verified by this integration (Casarte CE AB13LWTUWCU1). Continue anyway?",
+        "data": {
+          "confirm": "I understand this model is unverified"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not decrypt a status report. Check the address and localKey.",
+      "invalid_key": "localKey must be 32 hexadecimal characters (or a local_key.json document).",
+      "device_id_required": "UDISCOVERY did not report a device ID. Enter the Wi-Fi module's MAC address.",
+      "unsupported_class": "This appliance is not a class-0501 washer. This integration only supports class 0501.",
+      "confirm_required": "Tick the box to continue with an unverified model."
+    },
+    "abort": {
+      "already_configured": "This washer is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Haier Local options",
+        "description": "Update the address, localKey or poll interval.",
+        "data": {
+          "host": "LAN address",
+          "local_key": "localKey (32 hex or local_key.json)",
+          "scan_interval": "Poll interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not decrypt a status report with these settings.",
+      "invalid_key": "localKey must be 32 hexadecimal characters (or a local_key.json document)."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "remaining_time": {
+        "name": "Remaining time"
+      },
+      "phase": {
+        "name": "Phase",
+        "state": {
+          "standby": "Standby / not started",
+          "weighing": "Weighing",
+          "weight_prompt": "Weight prompt",
+          "wash_fill": "Wash fill",
+          "wash_heating": "Wash heating",
+          "washing": "Washing",
+          "wash_drain": "Wash drain",
+          "intermediate_spin": "Intermediate spin",
+          "rinse_fill": "Rinse fill",
+          "rinsing": "Rinsing",
+          "rinse_drain": "Rinse drain",
+          "final_spin": "Final spin",
+          "drying": "Drying",
+          "cooling": "Cooling",
+          "finished": "Finished",
+          "scheduled": "Scheduled",
+          "post_wash_tumbling": "Post-wash tumbling",
+          "post_wash_drying": "Post-wash drying",
+          "post_wash_drying_done": "Post-wash drying finished",
+          "post_wash_tumbling_done": "Post-wash tumbling finished",
+          "care": "Care",
+          "prewash_fill": "Prewash fill",
+          "prewash": "Prewash",
+          "prewash_heating": "Prewash heating",
+          "prewash_drain": "Prewash drain",
+          "air_dry": "Air dry",
+          "fabric_check": "Fabric check"
+        }
+      },
+      "program": {
+        "name": "Program",
+        "state": {
+          "duvet": "Duvet",
+          "quick": "Quick",
+          "rinse_spin": "Rinse + Spin",
+          "spin": "Spin",
+          "denim": "Denim",
+          "underwear": "Underwear",
+          "baby_care": "Baby care",
+          "cotton": "Cotton",
+          "synthetic": "Synthetic",
+          "curtain": "Curtain",
+          "shirt": "Shirt",
+          "delicate": "Delicate",
+          "wool": "Wool",
+          "home_textiles": "Home textiles",
+          "sportswear": "Sportswear",
+          "instant": "Instant wash",
+          "silk": "Silk",
+          "dry_only": "Dry only",
+          "strong": "Strong",
+          "card_wash": "Card wash",
+          "jacket": "Jacket",
+          "smart": "Smart",
+          "super_air_wash": "Super air wash",
+          "mixed": "Mixed",
+          "woolen": "Woolen",
+          "drum_clean": "Drum clean"
+        }
+      },
+      "running_mode": {
+        "name": "Running mode",
+        "state": {
+          "running": "Running",
+          "paused": "Paused"
+        }
+      },
+      "message": {
+        "name": "Message",
+        "state": {
+          "no_message": "No message",
+          "laundry_finished": "Laundry finished",
+          "drying_finished": "Drying finished",
+          "liquid_detergent_empty": "Liquid detergent empty",
+          "softener_empty": "Softener empty",
+          "drying_rack": "Drying rack instructions",
+          "close_drawer": "Close the detergent drawer",
+          "weighing_done": "Weighing done; add detergent",
+          "drum_too_hot": "Drum too hot; door locked",
+          "water_level_high": "Water level too high; door locked",
+          "too_much_foam": "Too much foam; defoaming",
+          "disinfectant_empty": "Disinfectant empty",
+          "anion_done": "Anion treatment finished",
+          "detergent_softener_empty": "Detergent and softener empty",
+          "clean_drain_filter": "Clean the drain filter",
+          "clean_dryer_filter": "Clean the dryer filter",
+          "run_drum_clean": "Run the drum clean program",
+          "door_opened_remote_disabled": "Door opened; remote control disabled",
+          "clean_drain_filter_cycle": "Clean the drain filter (cycle reached)",
+          "dry_cleaning_reminder": "Dry-cleaning reminder"
+        }
+      },
+      "wash_temp": {
+        "name": "Wash temperature"
+      },
+      "spin_speed": {
+        "name": "Spin speed"
+      },
+      "remaining_main_wash": {
+        "name": "Remaining main wash"
+      },
+      "remaining_rinse": {
+        "name": "Remaining rinses"
+      },
+      "current_water": {
+        "name": "Current water"
+      },
+      "total_water": {
+        "name": "Total water"
+      },
+      "current_energy": {
+        "name": "Current energy"
+      },
+      "total_energy": {
+        "name": "Total energy"
+      },
+      "current_cycle": {
+        "name": "Current cycles"
+      },
+      "total_cycles": {
+        "name": "Total cycles"
+      },
+      "remaining_standby": {
+        "name": "Remaining standby"
+      },
+      "detergent_level": {
+        "name": "Detergent level",
+        "state": {
+          "unknown": "Unknown",
+          "present": "Present",
+          "empty": "Empty"
+        }
+      },
+      "softener_level": {
+        "name": "Softener level",
+        "state": {
+          "unknown": "Unknown",
+          "present": "Present",
+          "empty": "Empty"
+        }
+      },
+      "dispersant_level": {
+        "name": "Booster level",
+        "state": {
+          "unknown": "Unknown",
+          "present": "Present",
+          "empty": "Empty"
+        }
+      },
+      "dry_mode": {
+        "name": "Dry mode",
+        "state": {
+          "no_dry": "No drying",
+          "strong": "Strong",
+          "gentle": "Gentle",
+          "iron": "Iron",
+          "dry_120": "120 min",
+          "dry_90": "90 min",
+          "dry_60": "60 min",
+          "dry_30": "30 min",
+          "dry_150": "150 min",
+          "dry_180": "180 min",
+          "smart": "Smart",
+          "dry_210": "210 min",
+          "reserved_1": "Reserved 1",
+          "reserved_2": "Reserved 2"
+        }
+      },
+      "dry_time": {
+        "name": "Dry time"
+      },
+      "dry_level": {
+        "name": "Dry level",
+        "state": {
+          "strong": "Strong",
+          "medium": "Medium",
+          "gentle": "Gentle",
+          "no_heat": "No heat",
+          "performance": "Performance",
+          "quick": "Quick"
+        }
+      },
+      "detergent_type": {
+        "name": "Detergent type",
+        "state": {
+          "regular": "Regular detergent",
+          "concentrated": "Concentrated detergent"
+        }
+      },
+      "detergent_ratio": {
+        "name": "Detergent ratio"
+      },
+      "dirt_level": {
+        "name": "Dirt level",
+        "state": {
+          "not_set": "Not set",
+          "auto": "Auto",
+          "light": "Light",
+          "medium": "Medium",
+          "heavy": "Heavy"
+        }
+      },
+      "stain_type": {
+        "name": "Stain type",
+        "state": {
+          "not_set": "Not set",
+          "wine": "Wine",
+          "grass": "Grass",
+          "soil": "Soil",
+          "blood": "Blood",
+          "milk": "Milk",
+          "cooking_oil": "Cooking oil",
+          "tea": "Tea",
+          "coffee": "Coffee",
+          "chocolate": "Chocolate",
+          "lip_gloss": "Lip gloss",
+          "curry": "Curry",
+          "milk_tea": "Milk tea",
+          "chili_oil": "Chili oil",
+          "blue_ink": "Blue ink",
+          "watercolor_pen": "Watercolor pen",
+          "shoe_cream": "Shoe cream",
+          "oil_pastel": "Oil pastel",
+          "blueberry": "Blueberry",
+          "sweat": "Sweat",
+          "egg": "Egg",
+          "ketchup": "Ketchup",
+          "baby_food": "Baby food",
+          "soy_sauce": "Soy sauce",
+          "bean_paste": "Bean paste",
+          "chili_sauce": "Chili sauce",
+          "fruit": "Fruit"
+        }
+      },
+      "fabric": {
+        "name": "Fabric",
+        "state": {
+          "not_selected": "Not selected",
+          "cotton": "Cotton",
+          "shirt": "Shirt",
+          "duvet": "Duvet",
+          "large": "Large items",
+          "delicate": "Delicate",
+          "synthetic": "Synthetic",
+          "kids": "Kids",
+          "wool": "Wool",
+          "denim": "Denim",
+          "underwear": "Underwear",
+          "towel": "Towel",
+          "sportswear": "Sportswear",
+          "outdoor": "Outdoor",
+          "curtain": "Curtain",
+          "mixed": "Mixed",
+          "hot_wash": "Hot wash",
+          "air_wash": "Air wash",
+          "drum_clean": "Drum clean",
+          "quick": "Quick",
+          "quick29": "Quick 29",
+          "cradle": "Cradle care",
+          "baby_care": "Baby care",
+          "instant": "Instant wash",
+          "silk": "Silk",
+          "memory": "Memory",
+          "color_guard": "Color guard",
+          "hand_wash": "Hand wash",
+          "rinse_only": "Rinse only",
+          "spin_only": "Spin only",
+          "dry_only": "Dry only"
+        }
+      },
+      "haier_detergent_weight": {
+        "name": "Detergent dose"
+      },
+      "haier_softener_weight": {
+        "name": "Softener dose"
+      },
+      "detergent_b_ratio": {
+        "name": "Detergent B ratio"
+      },
+      "dry_type": {
+        "name": "Dry type",
+        "state": {
+          "timed": "Timed",
+          "standard": "Standard",
+          "iron": "Iron",
+          "hanger": "Hanger",
+          "sun": "Sun"
+        }
+      },
+      "air_wash_time": {
+        "name": "Air wash time"
+      },
+      "air_wash_level": {
+        "name": "Air wash level",
+        "state": {
+          "not_set": "Not set",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "reserved_1": "Reserved 1",
+          "reserved_2": "Reserved 2",
+          "reserved_3": "Reserved 3"
+        }
+      },
+      "cloud_prog_id": {
+        "name": "Cloud program ID"
+      },
+      "cloud_prog_src": {
+        "name": "Cloud program source",
+        "state": {
+          "unknown": "Unknown",
+          "panel": "Panel",
+          "app": "App",
+          "voice_module": "Voice module",
+          "speaker": "Speaker",
+          "fridge": "Fridge",
+          "tv": "TV"
+        }
+      },
+      "weight_set": {
+        "name": "Set clothes weight"
+      },
+      "weight_actual": {
+        "name": "Measured clothes weight"
+      },
+      "wash_speed": {
+        "name": "Wash speed"
+      },
+      "raw_state": {
+        "name": "Raw state"
+      },
+      "feature_flags": {
+        "name": "Feature flags"
+      }
+    },
+    "binary_sensor": {
+      "power": {
+        "name": "Power"
+      },
+      "running": {
+        "name": "Running"
+      },
+      "door": {
+        "name": "Door"
+      },
+      "door_lock": {
+        "name": "Door lock"
+      },
+      "remote_control": {
+        "name": "Remote control"
+      },
+      "child_lock": {
+        "name": "Child lock"
+      },
+      "problem": {
+        "name": "Problem"
+      },
+      "program_started": {
+        "name": "Program started"
+      },
+      "dry_status": {
+        "name": "Drying"
+      },
+      "drain_problem": {
+        "name": "Drain problem"
+      },
+      "inlet_problem": {
+        "name": "Inlet problem"
+      },
+      "spin_problem": {
+        "name": "Spin problem"
+      },
+      "wash_problem": {
+        "name": "Wash problem"
+      },
+      "dry_problem": {
+        "name": "Dry problem"
+      },
+      "detergent_b_status": {
+        "name": "Detergent B dosing"
+      },
+      "dry_prog_flag": {
+        "name": "Dry program flag"
+      },
+      "dry_cleaning_needed": {
+        "name": "Dry cleaning needed"
+      },
+      "def_set_allowed": {
+        "name": "Default settings allowed"
+      },
+      "standby_extended": {
+        "name": "Standby extended"
+      }
+    }
+  }
+}

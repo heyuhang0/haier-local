@@ -1,0 +1,32 @@
+# Secrets — never commit
+.env
+.env.local
+.haier_token
+local_key.json
+washer_status.json
+phone-all
+washer-mqtt
+
+# Build artefacts
+haier_local.tar.gz
+dist/
+
+# One-time research scratch (cloned upstreams, APK, extracted files)
+research/
+*.apk
+*.pcap
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+*.log

@@ -1,0 +1,454 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "海尔本地设备",
+        "description": "通过本地 uSS 协议（TCP 56800）连接洗衣机。localKey 可以填 32 位十六进制，或直接粘贴 local_key.json。",
+        "data": {
+          "host": "局域网地址",
+          "local_key": "localKey（32 位十六进制或 local_key.json）",
+          "device_id": "设备 ID（可选）",
+          "name": "名称",
+          "scan_interval": "轮询间隔（秒）"
+        }
+      },
+      "confirm": {
+        "title": "未验证型号",
+        "description": "检测到 uPlusId {uplus_id}，不是本集成验证过的型号（Casarte CE AB13LWTUWCU1）。仍要继续吗？",
+        "data": {
+          "confirm": "我了解该型号未经完整验证"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法解密状态报文，请检查地址和 localKey。",
+      "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。",
+      "device_id_required": "UDISCOVERY 没有返回设备 ID，请填写 Wi-Fi 模块的 MAC 地址。",
+      "unsupported_class": "该设备不是 class 0501 洗衣机；本集成目前只支持 class 0501。",
+      "confirm_required": "请勾选确认后再继续。"
+    },
+    "abort": {
+      "already_configured": "这台洗衣机已经配置过了。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "海尔本地设备选项",
+        "description": "修改地址、localKey 或轮询间隔。",
+        "data": {
+          "host": "局域网地址",
+          "local_key": "localKey（32 位十六进制或 local_key.json）",
+          "scan_interval": "轮询间隔（秒）"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "用这些设置无法解密状态报文。",
+      "invalid_key": "localKey 必须是 32 位十六进制（或 local_key.json 文档）。"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "remaining_time": {
+        "name": "剩余时间"
+      },
+      "phase": {
+        "name": "洗涤阶段",
+        "state": {
+          "standby": "待机/未启动",
+          "weighing": "称重",
+          "weight_prompt": "重量提示",
+          "wash_fill": "洗涤进水",
+          "wash_heating": "洗涤加热",
+          "washing": "洗涤",
+          "wash_drain": "洗涤排水",
+          "intermediate_spin": "中间脱水",
+          "rinse_fill": "漂洗进水",
+          "rinsing": "漂洗",
+          "rinse_drain": "漂洗排水",
+          "final_spin": "最终脱水",
+          "drying": "烘干",
+          "cooling": "冷却",
+          "finished": "结束",
+          "scheduled": "预约运行中",
+          "post_wash_tumbling": "洗衣程序运行完抖散中",
+          "post_wash_drying": "洗衣程序运行完烘干中",
+          "post_wash_drying_done": "洗衣程序运行完烘干结束",
+          "post_wash_tumbling_done": "洗衣程序运行完抖散结束",
+          "care": "护理中",
+          "prewash_fill": "预洗进水",
+          "prewash": "预洗",
+          "prewash_heating": "预洗加热",
+          "prewash_drain": "预洗排水",
+          "air_dry": "风干",
+          "fabric_check": "夹布检测"
+        }
+      },
+      "program": {
+        "name": "洗衣程序",
+        "state": {
+          "duvet": "羽绒",
+          "quick": "快速",
+          "rinse_spin": "漂+脱",
+          "spin": "单脱水",
+          "denim": "牛仔",
+          "underwear": "内衣净",
+          "baby_care": "爱婴洗",
+          "cotton": "棉麻",
+          "synthetic": "化纤",
+          "curtain": "窗帘",
+          "shirt": "衬衣",
+          "delicate": "轻柔",
+          "wool": "羊毛",
+          "home_textiles": "家纺",
+          "sportswear": "运动服",
+          "instant": "即时洗",
+          "silk": "丝绸",
+          "dry_only": "单烘干",
+          "strong": "强力洗",
+          "card_wash": "卡片洗",
+          "jacket": "冲锋衣",
+          "smart": "智慧",
+          "super_air_wash": "超级空气洗",
+          "mixed": "混合",
+          "woolen": "毛呢",
+          "drum_clean": "筒自洁"
+        }
+      },
+      "running_mode": {
+        "name": "运行状态",
+        "state": {
+          "running": "启动",
+          "paused": "暂停"
+        }
+      },
+      "message": {
+        "name": "提示信息",
+        "state": {
+          "no_message": "无",
+          "laundry_finished": "衣服已洗完",
+          "drying_finished": "衣服已洗干",
+          "liquid_detergent_empty": "液体洗涤剂用完",
+          "softener_empty": "柔顺剂用完",
+          "drying_rack": "架干燥使用说明",
+          "close_drawer": "请关闭抽屉门",
+          "weighing_done": "称重完成，请在分配器盒内加入适量洗衣粉",
+          "drum_too_hot": "筒内温度过高，不能开门",
+          "water_level_high": "筒内水位过高，不能开门",
+          "too_much_foam": "泡沫过多正进行消泡处理",
+          "disinfectant_empty": "消毒剂用完",
+          "anion_done": "负离子已完成",
+          "detergent_softener_empty": "液体洗涤剂、柔顺剂用完",
+          "clean_drain_filter": "排水过滤器需要清洗",
+          "clean_dryer_filter": "烘干过滤器需要清洗",
+          "run_drum_clean": "请使用筒自洁程序，进行筒内清洁",
+          "door_opened_remote_disabled": "门被打开，远程控制功能失效",
+          "clean_drain_filter_cycle": "程序已运行达到指定周期，请清理排水过滤器",
+          "dry_cleaning_reminder": "干洗叫单提醒"
+        }
+      },
+      "wash_temp": {
+        "name": "洗涤水温"
+      },
+      "spin_speed": {
+        "name": "脱水转速"
+      },
+      "remaining_main_wash": {
+        "name": "剩余主洗时间"
+      },
+      "remaining_rinse": {
+        "name": "剩余漂洗次数"
+      },
+      "current_water": {
+        "name": "本次用水量"
+      },
+      "total_water": {
+        "name": "累计用水量"
+      },
+      "current_energy": {
+        "name": "本次用电量"
+      },
+      "total_energy": {
+        "name": "累计用电量"
+      },
+      "current_cycle": {
+        "name": "周期内洗涤次数"
+      },
+      "total_cycles": {
+        "name": "累计洗涤次数"
+      },
+      "remaining_standby": {
+        "name": "剩余待机时间"
+      },
+      "detergent_level": {
+        "name": "洗涤剂余量",
+        "state": {
+          "unknown": "未知",
+          "present": "有",
+          "empty": "无"
+        }
+      },
+      "softener_level": {
+        "name": "柔顺剂余量",
+        "state": {
+          "unknown": "未知",
+          "present": "有",
+          "empty": "无"
+        }
+      },
+      "dispersant_level": {
+        "name": "助洗剂余量",
+        "state": {
+          "unknown": "未知",
+          "present": "有",
+          "empty": "无"
+        }
+      },
+      "dry_mode": {
+        "name": "烘干程序",
+        "state": {
+          "no_dry": "无烘干过程",
+          "strong": "强烘",
+          "gentle": "弱烘",
+          "iron": "熨烫",
+          "dry_120": "120 分钟烘干",
+          "dry_90": "90 分钟烘干",
+          "dry_60": "60 分钟烘干",
+          "dry_30": "30 分钟烘干",
+          "dry_150": "150 分钟烘干",
+          "dry_180": "180 分钟烘干",
+          "smart": "智能烘干",
+          "dry_210": "210 分钟烘干",
+          "reserved_1": "预留档位1",
+          "reserved_2": "预留档位2"
+        }
+      },
+      "dry_time": {
+        "name": "烘干时间"
+      },
+      "dry_level": {
+        "name": "烘干强度",
+        "state": {
+          "strong": "强",
+          "medium": "中",
+          "gentle": "弱",
+          "no_heat": "不加热",
+          "performance": "性能",
+          "quick": "快速"
+        }
+      },
+      "detergent_type": {
+        "name": "洗涤剂类型",
+        "state": {
+          "regular": "普通洗涤剂",
+          "concentrated": "浓缩洗涤剂"
+        }
+      },
+      "detergent_ratio": {
+        "name": "洗涤剂投放比例"
+      },
+      "dirt_level": {
+        "name": "脏污度",
+        "state": {
+          "not_set": "不设定脏污度",
+          "auto": "自动测定",
+          "light": "轻度脏污",
+          "medium": "中度脏污",
+          "heavy": "重度脏污"
+        }
+      },
+      "stain_type": {
+        "name": "特渍种类",
+        "state": {
+          "not_set": "不设定",
+          "wine": "酒渍",
+          "grass": "草渍",
+          "soil": "泥土渍",
+          "blood": "血渍",
+          "milk": "奶渍",
+          "cooking_oil": "烹饪油",
+          "tea": "茶渍",
+          "coffee": "咖啡",
+          "chocolate": "巧克力渍",
+          "lip_gloss": "唇彩",
+          "curry": "咖喱渍",
+          "milk_tea": "奶茶",
+          "chili_oil": "辣椒油",
+          "blue_ink": "蓝墨水",
+          "watercolor_pen": "水彩笔",
+          "shoe_cream": "鞋油",
+          "oil_pastel": "油画棒",
+          "blueberry": "蓝莓",
+          "sweat": "汗渍",
+          "egg": "蛋渍",
+          "ketchup": "番茄酱",
+          "baby_food": "婴儿食物",
+          "soy_sauce": "酱油渍",
+          "bean_paste": "豆瓣酱",
+          "chili_sauce": "辣椒酱",
+          "fruit": "果渍"
+        }
+      },
+      "fabric": {
+        "name": "衣物材质",
+        "state": {
+          "not_selected": "未选择或未识别",
+          "cotton": "棉麻",
+          "shirt": "衬衣",
+          "duvet": "羽绒",
+          "large": "大件洗",
+          "delicate": "轻柔",
+          "synthetic": "化纤",
+          "kids": "童装",
+          "wool": "羊毛",
+          "denim": "牛仔",
+          "underwear": "内衣",
+          "towel": "毛巾",
+          "sportswear": "运动服",
+          "outdoor": "户外服",
+          "curtain": "窗帘",
+          "mixed": "混合",
+          "hot_wash": "烫烫净",
+          "air_wash": "空气洗",
+          "drum_clean": "筒自洁",
+          "quick": "快洗",
+          "quick29": "快洗29",
+          "cradle": "摇篮柔洗",
+          "baby_care": "爱婴洗",
+          "instant": "即时洗",
+          "silk": "真丝",
+          "memory": "记忆洗",
+          "color_guard": "护色洗",
+          "hand_wash": "手洗",
+          "rinse_only": "单漂洗",
+          "spin_only": "单脱水",
+          "dry_only": "单烘干"
+        }
+      },
+      "haier_detergent_weight": {
+        "name": "洗涤剂投放量"
+      },
+      "haier_softener_weight": {
+        "name": "柔顺剂投放量"
+      },
+      "detergent_b_ratio": {
+        "name": "洗涤剂B投放比例"
+      },
+      "dry_type": {
+        "name": "烘干方式",
+        "state": {
+          "timed": "定时烘干",
+          "standard": "标准",
+          "iron": "熨烫",
+          "hanger": "衣架",
+          "sun": "太阳"
+        }
+      },
+      "air_wash_time": {
+        "name": "空气洗时间"
+      },
+      "air_wash_level": {
+        "name": "空气洗温度档位",
+        "state": {
+          "not_set": "未设定",
+          "low": "低温",
+          "medium": "中温",
+          "high": "高温",
+          "reserved_1": "预留档位1",
+          "reserved_2": "预留档位2",
+          "reserved_3": "预留档位3"
+        }
+      },
+      "cloud_prog_id": {
+        "name": "云程序编号"
+      },
+      "cloud_prog_src": {
+        "name": "云程序启动来源",
+        "state": {
+          "unknown": "未知",
+          "panel": "本机",
+          "app": "APP",
+          "voice_module": "语音模块",
+          "speaker": "音箱",
+          "fridge": "冰箱",
+          "tv": "TV"
+        }
+      },
+      "weight_set": {
+        "name": "设定衣物重量"
+      },
+      "weight_actual": {
+        "name": "实测衣物重量"
+      },
+      "wash_speed": {
+        "name": "设定洗涤转速"
+      },
+      "raw_state": {
+        "name": "原始状态"
+      },
+      "feature_flags": {
+        "name": "功能开关"
+      }
+    },
+    "binary_sensor": {
+      "power": {
+        "name": "电源"
+      },
+      "running": {
+        "name": "运行中"
+      },
+      "door": {
+        "name": "筒门"
+      },
+      "door_lock": {
+        "name": "门锁"
+      },
+      "remote_control": {
+        "name": "远程控制"
+      },
+      "child_lock": {
+        "name": "童锁"
+      },
+      "problem": {
+        "name": "故障"
+      },
+      "program_started": {
+        "name": "程序已运行"
+      },
+      "dry_status": {
+        "name": "烘干中"
+      },
+      "drain_problem": {
+        "name": "排水系统异常"
+      },
+      "inlet_problem": {
+        "name": "进水系统异常"
+      },
+      "spin_problem": {
+        "name": "脱水系统异常"
+      },
+      "wash_problem": {
+        "name": "洗涤系统异常"
+      },
+      "dry_problem": {
+        "name": "烘干系统异常"
+      },
+      "detergent_b_status": {
+        "name": "洗涤剂B投放"
+      },
+      "dry_prog_flag": {
+        "name": "烘干程序标志"
+      },
+      "dry_cleaning_needed": {
+        "name": "需要干洗"
+      },
+      "def_set_allowed": {
+        "name": "允许设置默认参数"
+      },
+      "standby_extended": {
+        "name": "延时待机"
+      }
+    }
+  }
+}

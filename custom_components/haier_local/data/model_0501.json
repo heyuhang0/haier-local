@@ -1,0 +1,6962 @@
+{
+  "typeid": "201c51890c31c308050100218006664300000000000000000000000000000040",
+  "source_typeid": "201c51890c31c30805010021800239584d000000000000000000000000000140",
+  "cls": "0501",
+  "fields": [
+    [
+      "laundryCycle",
+      1,
+      8,
+      8,
+      2,
+      "6D01",
+      "5D03",
+      true,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 27,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 28,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 24
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 25
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 26
+        },
+        {
+          "eppValue": 25,
+          "stdValue": 27
+        },
+        {
+          "eppValue": 26,
+          "stdValue": 28
+        },
+        {
+          "eppValue": 29,
+          "stdValue": 29
+        },
+        {
+          "eppValue": 30,
+          "stdValue": 30
+        },
+        {
+          "eppValue": 31,
+          "stdValue": 31
+        },
+        {
+          "eppValue": 32,
+          "stdValue": 32
+        },
+        {
+          "eppValue": 33,
+          "stdValue": 33
+        },
+        {
+          "eppValue": 34,
+          "stdValue": 34
+        },
+        {
+          "eppValue": 35,
+          "stdValue": 35
+        },
+        {
+          "eppValue": 36,
+          "stdValue": 36
+        },
+        {
+          "eppValue": 37,
+          "stdValue": 37
+        },
+        {
+          "eppValue": 38,
+          "stdValue": 38
+        },
+        {
+          "eppValue": 39,
+          "stdValue": 39
+        },
+        {
+          "eppValue": 40,
+          "stdValue": 40
+        },
+        {
+          "eppValue": 41,
+          "stdValue": 41
+        },
+        {
+          "eppValue": 42,
+          "stdValue": 42
+        },
+        {
+          "eppValue": 43,
+          "stdValue": 43
+        },
+        {
+          "eppValue": 44,
+          "stdValue": 44
+        },
+        {
+          "eppValue": 45,
+          "stdValue": 45
+        },
+        {
+          "eppValue": 46,
+          "stdValue": 46
+        },
+        {
+          "eppValue": 47,
+          "stdValue": 47
+        },
+        {
+          "eppValue": 48,
+          "stdValue": 48
+        },
+        {
+          "eppValue": 49,
+          "stdValue": 49
+        },
+        {
+          "eppValue": 50,
+          "stdValue": 50
+        },
+        {
+          "eppValue": 51,
+          "stdValue": 51
+        },
+        {
+          "eppValue": 52,
+          "stdValue": 52
+        },
+        {
+          "eppValue": 53,
+          "stdValue": 53
+        },
+        {
+          "eppValue": 54,
+          "stdValue": 54
+        },
+        {
+          "eppValue": 55,
+          "stdValue": 55
+        },
+        {
+          "eppValue": 56,
+          "stdValue": 56
+        },
+        {
+          "eppValue": 57,
+          "stdValue": 57
+        },
+        {
+          "eppValue": 58,
+          "stdValue": 58
+        },
+        {
+          "eppValue": 59,
+          "stdValue": 59
+        },
+        {
+          "eppValue": 60,
+          "stdValue": 60
+        },
+        {
+          "eppValue": 61,
+          "stdValue": 61
+        },
+        {
+          "eppValue": 62,
+          "stdValue": 62
+        },
+        {
+          "eppValue": 63,
+          "stdValue": 63
+        },
+        {
+          "eppValue": 64,
+          "stdValue": 64
+        },
+        {
+          "eppValue": 65,
+          "stdValue": 65
+        },
+        {
+          "eppValue": 66,
+          "stdValue": 66
+        },
+        {
+          "eppValue": 67,
+          "stdValue": 67
+        },
+        {
+          "eppValue": 68,
+          "stdValue": 68
+        },
+        {
+          "eppValue": 69,
+          "stdValue": 69
+        },
+        {
+          "eppValue": 70,
+          "stdValue": 70
+        },
+        {
+          "eppValue": 71,
+          "stdValue": 71
+        },
+        {
+          "eppValue": 72,
+          "stdValue": 72
+        },
+        {
+          "eppValue": 73,
+          "stdValue": 73
+        },
+        {
+          "eppValue": 74,
+          "stdValue": 74
+        },
+        {
+          "eppValue": 75,
+          "stdValue": 75
+        },
+        {
+          "eppValue": 76,
+          "stdValue": 76
+        },
+        {
+          "eppValue": 77,
+          "stdValue": 77
+        },
+        {
+          "eppValue": 78,
+          "stdValue": 78
+        },
+        {
+          "eppValue": 79,
+          "stdValue": 79
+        },
+        {
+          "eppValue": 82,
+          "stdValue": 82
+        },
+        {
+          "eppValue": 83,
+          "stdValue": 83
+        },
+        {
+          "eppValue": 84,
+          "stdValue": 84
+        },
+        {
+          "eppValue": 85,
+          "stdValue": 85
+        },
+        {
+          "eppValue": 86,
+          "stdValue": 86
+        },
+        {
+          "eppValue": 87,
+          "stdValue": 87
+        },
+        {
+          "eppValue": 88,
+          "stdValue": 88
+        },
+        {
+          "eppValue": 89,
+          "stdValue": 89
+        },
+        {
+          "eppValue": 90,
+          "stdValue": 90
+        },
+        {
+          "eppValue": 91,
+          "stdValue": 91
+        },
+        {
+          "eppValue": 92,
+          "stdValue": 92
+        }
+      ]
+    ],
+    [
+      "dryMode",
+      1,
+      0,
+      8,
+      2,
+      "6D01",
+      "5D1C",
+      true,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        }
+      ]
+    ],
+    [
+      "autoDetergentStatus",
+      2,
+      15,
+      1,
+      2,
+      "6D01",
+      "5D06",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "buzzerDisabledCurrent",
+      2,
+      14,
+      1,
+      2,
+      "6D01",
+      "5D0B",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "autoDisinfectantStatus",
+      2,
+      13,
+      1,
+      2,
+      "6D01",
+      "5D16",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "strongStatus",
+      2,
+      12,
+      1,
+      2,
+      "6D01",
+      "5D15",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "voiceStatus",
+      2,
+      11,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "steamWashStatus",
+      2,
+      10,
+      1,
+      2,
+      "6D01",
+      "5D02",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "intelligenceStatus",
+      2,
+      9,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "buzzerDisabled",
+      2,
+      8,
+      1,
+      2,
+      "6D01",
+      "5D23",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "detergentBStatus",
+      2,
+      7,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "uvSterilizationStatus",
+      2,
+      6,
+      1,
+      2,
+      "6D01",
+      "5D0D",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "defSetAllowed",
+      2,
+      5,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "antiAllergyStatus",
+      2,
+      4,
+      1,
+      2,
+      "6D01",
+      "5D0C",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "childLockStatus",
+      2,
+      3,
+      1,
+      2,
+      "6D01",
+      "5D22",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "resnStatus",
+      2,
+      2,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "purifiedWashStatus",
+      2,
+      1,
+      1,
+      2,
+      "6D01",
+      "5D0A",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "autoSoftenerStatus",
+      2,
+      0,
+      1,
+      2,
+      "6D01",
+      "5D09",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "cyclePhase",
+      3,
+      8,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 24
+        }
+      ]
+    ],
+    [
+      "runningMode",
+      3,
+      7,
+      1,
+      2,
+      "6D01",
+      "5D21",
+      true,
+      "int",
+      [
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 0,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "laundryCycleStatus",
+      3,
+      6,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "doorLockStatus",
+      3,
+      5,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "standbyTimeExtended",
+      3,
+      4,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "forceDelete",
+      3,
+      2,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "remoteCtrValid",
+      3,
+      1,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "onOffStatus",
+      3,
+      0,
+      1,
+      2,
+      "6D01",
+      "5D01",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "testCmdReceiveStatus",
+      4,
+      13,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "dryCleaningNeeded",
+      4,
+      11,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "dryStatus",
+      4,
+      10,
+      1,
+      2,
+      "6D01",
+      "5D25",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "loosenStatus",
+      4,
+      9,
+      1,
+      2,
+      "6D01",
+      "5D26",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "doorStatus",
+      4,
+      8,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 1,
+          "stdValue": false
+        },
+        {
+          "eppValue": 0,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "remainingTimeHH",
+      4,
+      0,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 24,
+        "minValue": 0,
+        "step": 1,
+        "unit": "h"
+      }
+    ],
+    [
+      "remainingTimeMM",
+      5,
+      8,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 59,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "message",
+      5,
+      0,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 20
+        }
+      ]
+    ],
+    [
+      "currentWashCycle",
+      6,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "totalWashCycle",
+      7,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "currentWaterUsed",
+      8,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": "L"
+      }
+    ],
+    [
+      "totalWaterUsed",
+      10,
+      0,
+      32,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 4294967295,
+        "minValue": 0,
+        "step": 1,
+        "unit": "L"
+      }
+    ],
+    [
+      "currentElectricityUsed",
+      11,
+      0,
+      16,
+      6,
+      "6D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 0.01,
+        "maxValue": 655.35,
+        "minValue": 0.0,
+        "step": 0.01,
+        "unit": "kwh"
+      }
+    ],
+    [
+      "totalElectricityUsed",
+      13,
+      0,
+      32,
+      6,
+      "6D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 0.01,
+        "maxValue": 42949672.0,
+        "minValue": 0.0,
+        "step": 0.01,
+        "unit": "kwh"
+      }
+    ],
+    [
+      "remainingSoftenerStatus",
+      14,
+      14,
+      2,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "remainingDetergentStatus",
+      14,
+      12,
+      2,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "remainingDispersantStatus",
+      14,
+      10,
+      2,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "clothesAnionStatus",
+      14,
+      9,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "shoesAnionStatus",
+      14,
+      8,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "remainingRinseTimes",
+      14,
+      0,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 10,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "weight",
+      15,
+      8,
+      8,
+      6,
+      "6D01",
+      "5D05",
+      true,
+      "double",
+      {
+        "c": 0.0,
+        "k": 1.0,
+        "maxValue": 25.0,
+        "minValue": 0.0,
+        "step": 1.0,
+        "unit": null
+      }
+    ],
+    [
+      "detergentType",
+      15,
+      0,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "washTemp",
+      16,
+      8,
+      8,
+      1,
+      "6D01",
+      "5D07",
+      true,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 100,
+        "minValue": 0,
+        "step": 1,
+        "unit": "℃"
+      }
+    ],
+    [
+      "remainingMainWashTime",
+      16,
+      0,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 180,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "dirtyLevel",
+      17,
+      8,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        }
+      ]
+    ],
+    [
+      "creaseResistSoakStatus",
+      17,
+      7,
+      1,
+      2,
+      "6D01",
+      "5D14",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "nightWashStatus",
+      17,
+      6,
+      1,
+      2,
+      "6D01",
+      "5D13",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "soakWashStatus",
+      17,
+      5,
+      1,
+      2,
+      "6D01",
+      "5D12",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "speedUpStatus",
+      17,
+      4,
+      1,
+      2,
+      "6D01",
+      "5D17",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "energySavingStatus",
+      17,
+      3,
+      1,
+      2,
+      "6D01",
+      "5D18",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "permanentPressStatus",
+      17,
+      1,
+      1,
+      2,
+      "6D01",
+      "5D0F",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "highWaterLevelStatus",
+      17,
+      0,
+      1,
+      2,
+      "6D01",
+      "5D0E",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "stainType",
+      18,
+      8,
+      8,
+      2,
+      "6D01",
+      "5D11",
+      true,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 24
+        },
+        {
+          "eppValue": 25,
+          "stdValue": 25
+        },
+        {
+          "eppValue": 26,
+          "stdValue": 26
+        }
+      ]
+    ],
+    [
+      "remainingStandbyTime",
+      19,
+      8,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "spinSpeed",
+      19,
+      0,
+      8,
+      1,
+      "6D01",
+      "5D19",
+      true,
+      "int",
+      {
+        "c": 0,
+        "k": 10,
+        "maxValue": 1600,
+        "minValue": 0,
+        "step": 10,
+        "unit": "RPM"
+      }
+    ],
+    [
+      "haier_DetergentWeight",
+      20,
+      8,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "g"
+      }
+    ],
+    [
+      "haier_SoftenerWeight",
+      20,
+      0,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "g"
+      }
+    ],
+    [
+      "washSpeed",
+      21,
+      8,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "RPM"
+      }
+    ],
+    [
+      "actualWeight",
+      21,
+      0,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "kg"
+      }
+    ],
+    [
+      "detergentPercent",
+      22,
+      8,
+      8,
+      1,
+      "6D01",
+      "5D29",
+      true,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "%"
+      }
+    ],
+    [
+      "airWashTempLevel",
+      22,
+      0,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        }
+      ]
+    ],
+    [
+      "airWashTime",
+      23,
+      8,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "texture",
+      23,
+      0,
+      8,
+      2,
+      "6D01",
+      "5D43",
+      true,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 26,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 32,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 24
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 25
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 26
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 27
+        },
+        {
+          "eppValue": 25,
+          "stdValue": 28
+        },
+        {
+          "eppValue": 27,
+          "stdValue": 29
+        },
+        {
+          "eppValue": 28,
+          "stdValue": 30
+        },
+        {
+          "eppValue": 29,
+          "stdValue": 31
+        },
+        {
+          "eppValue": 30,
+          "stdValue": 32
+        },
+        {
+          "eppValue": 31,
+          "stdValue": 33
+        },
+        {
+          "eppValue": 33,
+          "stdValue": 34
+        },
+        {
+          "eppValue": 34,
+          "stdValue": 35
+        },
+        {
+          "eppValue": 35,
+          "stdValue": 36
+        },
+        {
+          "eppValue": 36,
+          "stdValue": 37
+        },
+        {
+          "eppValue": 37,
+          "stdValue": 38
+        },
+        {
+          "eppValue": 38,
+          "stdValue": 39
+        },
+        {
+          "eppValue": 40,
+          "stdValue": 41
+        },
+        {
+          "eppValue": 41,
+          "stdValue": 42
+        },
+        {
+          "eppValue": 42,
+          "stdValue": 43
+        },
+        {
+          "eppValue": 43,
+          "stdValue": 44
+        },
+        {
+          "eppValue": 44,
+          "stdValue": 45
+        },
+        {
+          "eppValue": 45,
+          "stdValue": 46
+        },
+        {
+          "eppValue": 46,
+          "stdValue": 47
+        },
+        {
+          "eppValue": 47,
+          "stdValue": 48
+        },
+        {
+          "eppValue": 48,
+          "stdValue": 49
+        },
+        {
+          "eppValue": 49,
+          "stdValue": 50
+        },
+        {
+          "eppValue": 50,
+          "stdValue": 51
+        },
+        {
+          "eppValue": 51,
+          "stdValue": 52
+        },
+        {
+          "eppValue": 52,
+          "stdValue": 53
+        },
+        {
+          "eppValue": 53,
+          "stdValue": 54
+        },
+        {
+          "eppValue": 54,
+          "stdValue": 55
+        },
+        {
+          "eppValue": 55,
+          "stdValue": 56
+        },
+        {
+          "eppValue": 56,
+          "stdValue": 57
+        },
+        {
+          "eppValue": 57,
+          "stdValue": 58
+        },
+        {
+          "eppValue": 58,
+          "stdValue": 59
+        },
+        {
+          "eppValue": 59,
+          "stdValue": 60
+        },
+        {
+          "eppValue": 60,
+          "stdValue": 61
+        },
+        {
+          "eppValue": 61,
+          "stdValue": 62
+        },
+        {
+          "eppValue": 62,
+          "stdValue": 63
+        },
+        {
+          "eppValue": 63,
+          "stdValue": 64
+        },
+        {
+          "eppValue": 64,
+          "stdValue": 65
+        },
+        {
+          "eppValue": 65,
+          "stdValue": 66
+        },
+        {
+          "eppValue": 66,
+          "stdValue": 67
+        },
+        {
+          "eppValue": 88,
+          "stdValue": 68
+        },
+        {
+          "eppValue": 70,
+          "stdValue": 71
+        },
+        {
+          "eppValue": 71,
+          "stdValue": 72
+        },
+        {
+          "eppValue": 72,
+          "stdValue": 73
+        },
+        {
+          "eppValue": 73,
+          "stdValue": 74
+        },
+        {
+          "eppValue": 74,
+          "stdValue": 75
+        },
+        {
+          "eppValue": 75,
+          "stdValue": 76
+        },
+        {
+          "eppValue": 76,
+          "stdValue": 77
+        },
+        {
+          "eppValue": 77,
+          "stdValue": 78
+        },
+        {
+          "eppValue": 78,
+          "stdValue": 79
+        },
+        {
+          "eppValue": 79,
+          "stdValue": 80
+        },
+        {
+          "eppValue": 80,
+          "stdValue": 81
+        },
+        {
+          "eppValue": 81,
+          "stdValue": 82
+        },
+        {
+          "eppValue": 82,
+          "stdValue": 83
+        },
+        {
+          "eppValue": 83,
+          "stdValue": 84
+        },
+        {
+          "eppValue": 84,
+          "stdValue": 85
+        },
+        {
+          "eppValue": 85,
+          "stdValue": 86
+        },
+        {
+          "eppValue": 86,
+          "stdValue": 87
+        },
+        {
+          "eppValue": 87,
+          "stdValue": 88
+        },
+        {
+          "eppValue": 89,
+          "stdValue": 89
+        },
+        {
+          "eppValue": 90,
+          "stdValue": 90
+        },
+        {
+          "eppValue": 91,
+          "stdValue": 91
+        },
+        {
+          "eppValue": 92,
+          "stdValue": 92
+        },
+        {
+          "eppValue": 93,
+          "stdValue": 93
+        },
+        {
+          "eppValue": 94,
+          "stdValue": 94
+        },
+        {
+          "eppValue": 95,
+          "stdValue": 95
+        },
+        {
+          "eppValue": 96,
+          "stdValue": 96
+        },
+        {
+          "eppValue": 39,
+          "stdValue": 128
+        },
+        {
+          "eppValue": 67,
+          "stdValue": 129
+        },
+        {
+          "eppValue": 68,
+          "stdValue": 130
+        },
+        {
+          "eppValue": 69,
+          "stdValue": 131
+        }
+      ]
+    ],
+    [
+      "voiceModuleDataDef",
+      24,
+      8,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 129,
+          "stdValue": 129
+        },
+        {
+          "eppValue": 130,
+          "stdValue": 130
+        }
+      ]
+    ],
+    [
+      "voiceModuleOnOffStatus",
+      24,
+      0,
+      1,
+      2,
+      "6D01",
+      "5D40",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "voiceModuleVolume",
+      25,
+      8,
+      8,
+      1,
+      "6D01",
+      "5D41",
+      true,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 100,
+        "minValue": 0,
+        "step": 1,
+        "unit": "%"
+      }
+    ],
+    [
+      "voiceModuleWakeUp",
+      25,
+      0,
+      1,
+      2,
+      "6D01",
+      "5D42",
+      true,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "voiceModuleWakeStatus",
+      26,
+      8,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "detergentBPercent",
+      26,
+      0,
+      8,
+      1,
+      "6D01",
+      "5D44",
+      true,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "%"
+      }
+    ],
+    [
+      "drySysDiagResult",
+      27,
+      4,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "spinSysDiagResult",
+      27,
+      3,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "drainSysDiagResult",
+      27,
+      2,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "washSysDiagResult",
+      27,
+      1,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "inWaterSysDiagResult",
+      27,
+      0,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "clothesRecogStatus",
+      28,
+      8,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesRecogResult",
+      28,
+      0,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesRecogNum",
+      29,
+      8,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesIdIndex",
+      29,
+      0,
+      8,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesInfoHW",
+      30,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesInfoMW",
+      31,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesInfoLW",
+      32,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "cloudProgSrc",
+      33,
+      8,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        }
+      ]
+    ],
+    [
+      "washerDryLevel",
+      33,
+      0,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 5
+        }
+      ]
+    ],
+    [
+      "cloudProgId",
+      34,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65534,
+        "minValue": 0,
+        "step": 1,
+        "unit": ""
+      }
+    ],
+    [
+      "localProgName1",
+      44,
+      0,
+      160,
+      13,
+      "6D01",
+      null,
+      false,
+      "string",
+      null
+    ],
+    [
+      "localProgName2",
+      54,
+      0,
+      160,
+      13,
+      "6D01",
+      null,
+      false,
+      "string",
+      null
+    ],
+    [
+      "dryProgFlag",
+      55,
+      8,
+      1,
+      2,
+      "6D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 1,
+          "stdValue": true
+        },
+        {
+          "eppValue": 0,
+          "stdValue": false
+        }
+      ]
+    ],
+    [
+      "dryType",
+      55,
+      0,
+      8,
+      2,
+      "6D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        }
+      ]
+    ],
+    [
+      "dryTime",
+      56,
+      0,
+      16,
+      1,
+      "6D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 600,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "laundryCycle",
+      1,
+      8,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 27,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 28,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 24
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 25
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 26
+        },
+        {
+          "eppValue": 25,
+          "stdValue": 27
+        },
+        {
+          "eppValue": 26,
+          "stdValue": 28
+        },
+        {
+          "eppValue": 29,
+          "stdValue": 29
+        },
+        {
+          "eppValue": 30,
+          "stdValue": 30
+        },
+        {
+          "eppValue": 31,
+          "stdValue": 31
+        },
+        {
+          "eppValue": 32,
+          "stdValue": 32
+        },
+        {
+          "eppValue": 33,
+          "stdValue": 33
+        },
+        {
+          "eppValue": 34,
+          "stdValue": 34
+        },
+        {
+          "eppValue": 35,
+          "stdValue": 35
+        },
+        {
+          "eppValue": 36,
+          "stdValue": 36
+        },
+        {
+          "eppValue": 37,
+          "stdValue": 37
+        },
+        {
+          "eppValue": 38,
+          "stdValue": 38
+        },
+        {
+          "eppValue": 39,
+          "stdValue": 39
+        },
+        {
+          "eppValue": 40,
+          "stdValue": 40
+        },
+        {
+          "eppValue": 41,
+          "stdValue": 41
+        },
+        {
+          "eppValue": 42,
+          "stdValue": 42
+        },
+        {
+          "eppValue": 43,
+          "stdValue": 43
+        },
+        {
+          "eppValue": 44,
+          "stdValue": 44
+        },
+        {
+          "eppValue": 45,
+          "stdValue": 45
+        },
+        {
+          "eppValue": 46,
+          "stdValue": 46
+        },
+        {
+          "eppValue": 47,
+          "stdValue": 47
+        },
+        {
+          "eppValue": 48,
+          "stdValue": 48
+        },
+        {
+          "eppValue": 49,
+          "stdValue": 49
+        },
+        {
+          "eppValue": 50,
+          "stdValue": 50
+        },
+        {
+          "eppValue": 51,
+          "stdValue": 51
+        },
+        {
+          "eppValue": 52,
+          "stdValue": 52
+        },
+        {
+          "eppValue": 53,
+          "stdValue": 53
+        },
+        {
+          "eppValue": 54,
+          "stdValue": 54
+        },
+        {
+          "eppValue": 55,
+          "stdValue": 55
+        },
+        {
+          "eppValue": 56,
+          "stdValue": 56
+        },
+        {
+          "eppValue": 57,
+          "stdValue": 57
+        },
+        {
+          "eppValue": 58,
+          "stdValue": 58
+        },
+        {
+          "eppValue": 59,
+          "stdValue": 59
+        },
+        {
+          "eppValue": 60,
+          "stdValue": 60
+        },
+        {
+          "eppValue": 61,
+          "stdValue": 61
+        },
+        {
+          "eppValue": 62,
+          "stdValue": 62
+        },
+        {
+          "eppValue": 63,
+          "stdValue": 63
+        },
+        {
+          "eppValue": 64,
+          "stdValue": 64
+        },
+        {
+          "eppValue": 65,
+          "stdValue": 65
+        },
+        {
+          "eppValue": 66,
+          "stdValue": 66
+        },
+        {
+          "eppValue": 67,
+          "stdValue": 67
+        },
+        {
+          "eppValue": 68,
+          "stdValue": 68
+        },
+        {
+          "eppValue": 69,
+          "stdValue": 69
+        },
+        {
+          "eppValue": 70,
+          "stdValue": 70
+        },
+        {
+          "eppValue": 71,
+          "stdValue": 71
+        },
+        {
+          "eppValue": 72,
+          "stdValue": 72
+        },
+        {
+          "eppValue": 73,
+          "stdValue": 73
+        },
+        {
+          "eppValue": 74,
+          "stdValue": 74
+        },
+        {
+          "eppValue": 75,
+          "stdValue": 75
+        },
+        {
+          "eppValue": 76,
+          "stdValue": 76
+        },
+        {
+          "eppValue": 77,
+          "stdValue": 77
+        },
+        {
+          "eppValue": 78,
+          "stdValue": 78
+        },
+        {
+          "eppValue": 79,
+          "stdValue": 79
+        },
+        {
+          "eppValue": 82,
+          "stdValue": 82
+        },
+        {
+          "eppValue": 83,
+          "stdValue": 83
+        },
+        {
+          "eppValue": 84,
+          "stdValue": 84
+        },
+        {
+          "eppValue": 85,
+          "stdValue": 85
+        },
+        {
+          "eppValue": 86,
+          "stdValue": 86
+        },
+        {
+          "eppValue": 87,
+          "stdValue": 87
+        },
+        {
+          "eppValue": 88,
+          "stdValue": 88
+        },
+        {
+          "eppValue": 89,
+          "stdValue": 89
+        },
+        {
+          "eppValue": 90,
+          "stdValue": 90
+        },
+        {
+          "eppValue": 91,
+          "stdValue": 91
+        },
+        {
+          "eppValue": 92,
+          "stdValue": 92
+        }
+      ]
+    ],
+    [
+      "dryMode",
+      1,
+      0,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        }
+      ]
+    ],
+    [
+      "autoDetergentStatus",
+      2,
+      15,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "buzzerDisabledCurrent",
+      2,
+      14,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "autoDisinfectantStatus",
+      2,
+      13,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "strongStatus",
+      2,
+      12,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "voiceStatus",
+      2,
+      11,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "steamWashStatus",
+      2,
+      10,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "intelligenceStatus",
+      2,
+      9,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "buzzerDisabled",
+      2,
+      8,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "detergentBStatus",
+      2,
+      7,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "uvSterilizationStatus",
+      2,
+      6,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "defSetAllowed",
+      2,
+      5,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "antiAllergyStatus",
+      2,
+      4,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "childLockStatus",
+      2,
+      3,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "resnStatus",
+      2,
+      2,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "purifiedWashStatus",
+      2,
+      1,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "autoSoftenerStatus",
+      2,
+      0,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "cyclePhase",
+      3,
+      8,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 24
+        }
+      ]
+    ],
+    [
+      "runningMode",
+      3,
+      7,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 0,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "laundryCycleStatus",
+      3,
+      6,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "doorLockStatus",
+      3,
+      5,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "standbyTimeExtended",
+      3,
+      4,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "forceDelete",
+      3,
+      2,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "remoteCtrValid",
+      3,
+      1,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "onOffStatus",
+      3,
+      0,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "testCmdReceiveStatus",
+      4,
+      13,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "dryCleaningNeeded",
+      4,
+      11,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "dryStatus",
+      4,
+      10,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "loosenStatus",
+      4,
+      9,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "doorStatus",
+      4,
+      8,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 1,
+          "stdValue": false
+        },
+        {
+          "eppValue": 0,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "remainingTimeHH",
+      4,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 24,
+        "minValue": 0,
+        "step": 1,
+        "unit": "h"
+      }
+    ],
+    [
+      "remainingTimeMM",
+      5,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 59,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "message",
+      5,
+      0,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 20
+        }
+      ]
+    ],
+    [
+      "currentWashCycle",
+      6,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "totalWashCycle",
+      7,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "currentWaterUsed",
+      8,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": "L"
+      }
+    ],
+    [
+      "totalWaterUsed",
+      10,
+      0,
+      32,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 4294967295,
+        "minValue": 0,
+        "step": 1,
+        "unit": "L"
+      }
+    ],
+    [
+      "currentElectricityUsed",
+      11,
+      0,
+      16,
+      6,
+      "7D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 0.01,
+        "maxValue": 655.35,
+        "minValue": 0.0,
+        "step": 0.01,
+        "unit": "kwh"
+      }
+    ],
+    [
+      "totalElectricityUsed",
+      13,
+      0,
+      32,
+      6,
+      "7D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 0.01,
+        "maxValue": 42949672.0,
+        "minValue": 0.0,
+        "step": 0.01,
+        "unit": "kwh"
+      }
+    ],
+    [
+      "remainingSoftenerStatus",
+      14,
+      14,
+      2,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "remainingDetergentStatus",
+      14,
+      12,
+      2,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "remainingDispersantStatus",
+      14,
+      10,
+      2,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "clothesAnionStatus",
+      14,
+      9,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "shoesAnionStatus",
+      14,
+      8,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "remainingRinseTimes",
+      14,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 10,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "weight",
+      15,
+      8,
+      8,
+      6,
+      "7D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 1.0,
+        "maxValue": 25.0,
+        "minValue": 0.0,
+        "step": 1.0,
+        "unit": null
+      }
+    ],
+    [
+      "detergentType",
+      15,
+      0,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 2
+        }
+      ]
+    ],
+    [
+      "washTemp",
+      16,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 100,
+        "minValue": 0,
+        "step": 1,
+        "unit": "℃"
+      }
+    ],
+    [
+      "remainingMainWashTime",
+      16,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 180,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "dirtyLevel",
+      17,
+      8,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        }
+      ]
+    ],
+    [
+      "creaseResistSoakStatus",
+      17,
+      7,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "nightWashStatus",
+      17,
+      6,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "soakWashStatus",
+      17,
+      5,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "speedUpStatus",
+      17,
+      4,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "energySavingStatus",
+      17,
+      3,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "permanentPressStatus",
+      17,
+      1,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "highWaterLevelStatus",
+      17,
+      0,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "stainType",
+      18,
+      8,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 12
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 24
+        },
+        {
+          "eppValue": 25,
+          "stdValue": 25
+        },
+        {
+          "eppValue": 26,
+          "stdValue": 26
+        }
+      ]
+    ],
+    [
+      "remainingStandbyTime",
+      19,
+      8,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "spinSpeed",
+      19,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 10,
+        "maxValue": 1600,
+        "minValue": 0,
+        "step": 10,
+        "unit": "RPM"
+      }
+    ],
+    [
+      "haier_DetergentWeight",
+      20,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "g"
+      }
+    ],
+    [
+      "haier_SoftenerWeight",
+      20,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "g"
+      }
+    ],
+    [
+      "washSpeed",
+      21,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "RPM"
+      }
+    ],
+    [
+      "actualWeight",
+      21,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "kg"
+      }
+    ],
+    [
+      "detergentPercent",
+      22,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "%"
+      }
+    ],
+    [
+      "airWashTempLevel",
+      22,
+      0,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        }
+      ]
+    ],
+    [
+      "airWashTime",
+      23,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ],
+    [
+      "texture",
+      23,
+      0,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 17,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 8,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 6
+        },
+        {
+          "eppValue": 7,
+          "stdValue": 7
+        },
+        {
+          "eppValue": 10,
+          "stdValue": 8
+        },
+        {
+          "eppValue": 11,
+          "stdValue": 9
+        },
+        {
+          "eppValue": 14,
+          "stdValue": 10
+        },
+        {
+          "eppValue": 26,
+          "stdValue": 11
+        },
+        {
+          "eppValue": 18,
+          "stdValue": 13
+        },
+        {
+          "eppValue": 32,
+          "stdValue": 14
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 15
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 16
+        },
+        {
+          "eppValue": 9,
+          "stdValue": 17
+        },
+        {
+          "eppValue": 12,
+          "stdValue": 18
+        },
+        {
+          "eppValue": 13,
+          "stdValue": 19
+        },
+        {
+          "eppValue": 15,
+          "stdValue": 20
+        },
+        {
+          "eppValue": 16,
+          "stdValue": 21
+        },
+        {
+          "eppValue": 19,
+          "stdValue": 22
+        },
+        {
+          "eppValue": 20,
+          "stdValue": 23
+        },
+        {
+          "eppValue": 21,
+          "stdValue": 24
+        },
+        {
+          "eppValue": 22,
+          "stdValue": 25
+        },
+        {
+          "eppValue": 23,
+          "stdValue": 26
+        },
+        {
+          "eppValue": 24,
+          "stdValue": 27
+        },
+        {
+          "eppValue": 25,
+          "stdValue": 28
+        },
+        {
+          "eppValue": 27,
+          "stdValue": 29
+        },
+        {
+          "eppValue": 28,
+          "stdValue": 30
+        },
+        {
+          "eppValue": 29,
+          "stdValue": 31
+        },
+        {
+          "eppValue": 30,
+          "stdValue": 32
+        },
+        {
+          "eppValue": 31,
+          "stdValue": 33
+        },
+        {
+          "eppValue": 33,
+          "stdValue": 34
+        },
+        {
+          "eppValue": 34,
+          "stdValue": 35
+        },
+        {
+          "eppValue": 35,
+          "stdValue": 36
+        },
+        {
+          "eppValue": 36,
+          "stdValue": 37
+        },
+        {
+          "eppValue": 37,
+          "stdValue": 38
+        },
+        {
+          "eppValue": 38,
+          "stdValue": 39
+        },
+        {
+          "eppValue": 40,
+          "stdValue": 41
+        },
+        {
+          "eppValue": 41,
+          "stdValue": 42
+        },
+        {
+          "eppValue": 42,
+          "stdValue": 43
+        },
+        {
+          "eppValue": 43,
+          "stdValue": 44
+        },
+        {
+          "eppValue": 44,
+          "stdValue": 45
+        },
+        {
+          "eppValue": 45,
+          "stdValue": 46
+        },
+        {
+          "eppValue": 46,
+          "stdValue": 47
+        },
+        {
+          "eppValue": 47,
+          "stdValue": 48
+        },
+        {
+          "eppValue": 48,
+          "stdValue": 49
+        },
+        {
+          "eppValue": 49,
+          "stdValue": 50
+        },
+        {
+          "eppValue": 50,
+          "stdValue": 51
+        },
+        {
+          "eppValue": 51,
+          "stdValue": 52
+        },
+        {
+          "eppValue": 52,
+          "stdValue": 53
+        },
+        {
+          "eppValue": 53,
+          "stdValue": 54
+        },
+        {
+          "eppValue": 54,
+          "stdValue": 55
+        },
+        {
+          "eppValue": 55,
+          "stdValue": 56
+        },
+        {
+          "eppValue": 56,
+          "stdValue": 57
+        },
+        {
+          "eppValue": 57,
+          "stdValue": 58
+        },
+        {
+          "eppValue": 58,
+          "stdValue": 59
+        },
+        {
+          "eppValue": 59,
+          "stdValue": 60
+        },
+        {
+          "eppValue": 60,
+          "stdValue": 61
+        },
+        {
+          "eppValue": 61,
+          "stdValue": 62
+        },
+        {
+          "eppValue": 62,
+          "stdValue": 63
+        },
+        {
+          "eppValue": 63,
+          "stdValue": 64
+        },
+        {
+          "eppValue": 64,
+          "stdValue": 65
+        },
+        {
+          "eppValue": 65,
+          "stdValue": 66
+        },
+        {
+          "eppValue": 66,
+          "stdValue": 67
+        },
+        {
+          "eppValue": 88,
+          "stdValue": 68
+        },
+        {
+          "eppValue": 70,
+          "stdValue": 71
+        },
+        {
+          "eppValue": 71,
+          "stdValue": 72
+        },
+        {
+          "eppValue": 72,
+          "stdValue": 73
+        },
+        {
+          "eppValue": 73,
+          "stdValue": 74
+        },
+        {
+          "eppValue": 74,
+          "stdValue": 75
+        },
+        {
+          "eppValue": 75,
+          "stdValue": 76
+        },
+        {
+          "eppValue": 76,
+          "stdValue": 77
+        },
+        {
+          "eppValue": 77,
+          "stdValue": 78
+        },
+        {
+          "eppValue": 78,
+          "stdValue": 79
+        },
+        {
+          "eppValue": 79,
+          "stdValue": 80
+        },
+        {
+          "eppValue": 80,
+          "stdValue": 81
+        },
+        {
+          "eppValue": 81,
+          "stdValue": 82
+        },
+        {
+          "eppValue": 82,
+          "stdValue": 83
+        },
+        {
+          "eppValue": 83,
+          "stdValue": 84
+        },
+        {
+          "eppValue": 84,
+          "stdValue": 85
+        },
+        {
+          "eppValue": 85,
+          "stdValue": 86
+        },
+        {
+          "eppValue": 86,
+          "stdValue": 87
+        },
+        {
+          "eppValue": 87,
+          "stdValue": 88
+        },
+        {
+          "eppValue": 89,
+          "stdValue": 89
+        },
+        {
+          "eppValue": 90,
+          "stdValue": 90
+        },
+        {
+          "eppValue": 91,
+          "stdValue": 91
+        },
+        {
+          "eppValue": 92,
+          "stdValue": 92
+        },
+        {
+          "eppValue": 93,
+          "stdValue": 93
+        },
+        {
+          "eppValue": 94,
+          "stdValue": 94
+        },
+        {
+          "eppValue": 95,
+          "stdValue": 95
+        },
+        {
+          "eppValue": 96,
+          "stdValue": 96
+        },
+        {
+          "eppValue": 39,
+          "stdValue": 128
+        },
+        {
+          "eppValue": 67,
+          "stdValue": 129
+        },
+        {
+          "eppValue": 68,
+          "stdValue": 130
+        },
+        {
+          "eppValue": 69,
+          "stdValue": 131
+        }
+      ]
+    ],
+    [
+      "voiceModuleDataDef",
+      24,
+      8,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 129,
+          "stdValue": 129
+        },
+        {
+          "eppValue": 130,
+          "stdValue": 130
+        }
+      ]
+    ],
+    [
+      "voiceModuleOnOffStatus",
+      24,
+      0,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "voiceModuleVolume",
+      25,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 100,
+        "minValue": 0,
+        "step": 1,
+        "unit": "%"
+      }
+    ],
+    [
+      "voiceModuleWakeUp",
+      25,
+      0,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "voiceModuleWakeStatus",
+      26,
+      8,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "detergentBPercent",
+      26,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "%"
+      }
+    ],
+    [
+      "drySysDiagResult",
+      27,
+      4,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "spinSysDiagResult",
+      27,
+      3,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "drainSysDiagResult",
+      27,
+      2,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "washSysDiagResult",
+      27,
+      1,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "inWaterSysDiagResult",
+      27,
+      0,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "detergentADValue",
+      28,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "remainWashTemperature",
+      29,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 100,
+        "minValue": 0,
+        "step": 1,
+        "unit": "℃"
+      }
+    ],
+    [
+      "dryTemperatureIn",
+      30,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 150,
+        "minValue": 0,
+        "step": 1,
+        "unit": "℃"
+      }
+    ],
+    [
+      "dryTemperatureOut",
+      30,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 150,
+        "minValue": 0,
+        "step": 1,
+        "unit": "℃"
+      }
+    ],
+    [
+      "motorTemperature",
+      31,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": "℃"
+      }
+    ],
+    [
+      "dirtyADValue",
+      31,
+      0,
+      8,
+      6,
+      "7D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 1.0,
+        "maxValue": 255.0,
+        "minValue": 0.0,
+        "step": 1.0,
+        "unit": null
+      }
+    ],
+    [
+      "rigidityADValue",
+      32,
+      8,
+      8,
+      6,
+      "7D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 1.0,
+        "maxValue": 255.0,
+        "minValue": 0.0,
+        "step": 1.0,
+        "unit": null
+      }
+    ],
+    [
+      "mainRelayPowerStatus",
+      32,
+      7,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "waterHeaterStripPowerStatus",
+      32,
+      6,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "dryHeaterStrip1PowerStatus",
+      32,
+      5,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "mainWashValvePowerStatus",
+      32,
+      4,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "softenValvePowerStatus",
+      32,
+      3,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "condenserValvePowerStatus",
+      32,
+      2,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "doorPowerStatus",
+      32,
+      1,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "drainingPumpPowerStatus",
+      32,
+      0,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "detergentValvePowerStatus",
+      33,
+      15,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "disinfectantValvePowerStatus",
+      33,
+      14,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "flushValvePowerStatus",
+      33,
+      13,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "ozoneFanPowerStatus",
+      33,
+      12,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "ozoneGeneratorAPowerStatus",
+      33,
+      11,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "ozoneGeneratorBPowerStatus",
+      33,
+      10,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "fanPowerStatus",
+      33,
+      9,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "preWashValvePowerStatus",
+      33,
+      8,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "LoadstateC",
+      33,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "spinBalance",
+      34,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": "g"
+      }
+    ],
+    [
+      "bubbleDetectionValue",
+      35,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "purifiedWaterFlux",
+      36,
+      0,
+      16,
+      6,
+      "7D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 0.01,
+        "maxValue": 655.35,
+        "minValue": 0.0,
+        "step": 0.01,
+        "unit": "L/min"
+      }
+    ],
+    [
+      "current",
+      37,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 30000,
+        "minValue": 0,
+        "step": 1,
+        "unit": "mA"
+      }
+    ],
+    [
+      "voltage",
+      38,
+      0,
+      16,
+      6,
+      "7D01",
+      null,
+      false,
+      "double",
+      {
+        "c": 0.0,
+        "k": 0.1,
+        "maxValue": 500.0,
+        "minValue": 0.0,
+        "step": 0.1,
+        "unit": "V"
+      }
+    ],
+    [
+      "clothesRecogStatus",
+      39,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesRecogResult",
+      39,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesRecogNum",
+      40,
+      8,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesIdIndex",
+      40,
+      0,
+      8,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 255,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesInfoHW",
+      41,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesInfoMW",
+      42,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "clothesInfoLW",
+      43,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65535,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "cloudProgSrc",
+      44,
+      8,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 5,
+          "stdValue": 5
+        },
+        {
+          "eppValue": 6,
+          "stdValue": 6
+        }
+      ]
+    ],
+    [
+      "washerDryLevel",
+      44,
+      0,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 4
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 5
+        }
+      ]
+    ],
+    [
+      "cloudProgId",
+      45,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 65534,
+        "minValue": 0,
+        "step": 1,
+        "unit": null
+      }
+    ],
+    [
+      "localProgName1",
+      55,
+      0,
+      160,
+      13,
+      "7D01",
+      null,
+      false,
+      "string",
+      null
+    ],
+    [
+      "localProgName2",
+      65,
+      0,
+      160,
+      13,
+      "7D01",
+      null,
+      false,
+      "string",
+      null
+    ],
+    [
+      "dryProgFlag",
+      66,
+      8,
+      1,
+      2,
+      "7D01",
+      null,
+      false,
+      "bool",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": false
+        },
+        {
+          "eppValue": 1,
+          "stdValue": true
+        }
+      ]
+    ],
+    [
+      "dryType",
+      66,
+      0,
+      8,
+      2,
+      "7D01",
+      null,
+      false,
+      "int",
+      [
+        {
+          "eppValue": 0,
+          "stdValue": 0
+        },
+        {
+          "eppValue": 1,
+          "stdValue": 1
+        },
+        {
+          "eppValue": 2,
+          "stdValue": 2
+        },
+        {
+          "eppValue": 3,
+          "stdValue": 3
+        },
+        {
+          "eppValue": 4,
+          "stdValue": 4
+        }
+      ]
+    ],
+    [
+      "dryTime",
+      67,
+      0,
+      16,
+      1,
+      "7D01",
+      null,
+      false,
+      "int",
+      {
+        "c": 0,
+        "k": 1,
+        "maxValue": 600,
+        "minValue": 0,
+        "step": 1,
+        "unit": "min"
+      }
+    ]
+  ],
+  "alarms": [
+    [
+      "fanErr",
+      2
+    ],
+    [
+      "waterHeatingErr",
+      3
+    ],
+    [
+      "hallErr",
+      4
+    ],
+    [
+      "rpmErr",
+      5
+    ],
+    [
+      "voltageHighAlarm",
+      6
+    ],
+    [
+      "voltageLowAlarm",
+      7
+    ],
+    [
+      "dataBackup1",
+      8
+    ],
+    [
+      "ddMotorNTCErr",
+      9
+    ],
+    [
+      "motorStatorHighTempProtection",
+      10
+    ],
+    [
+      "currentSensingCircuitErr",
+      11
+    ],
+    [
+      "overcurrentAlarm",
+      12
+    ],
+    [
+      "ipmErr",
+      13
+    ],
+    [
+      "phaseBreakProtection",
+      14
+    ],
+    [
+      "launchFailed",
+      15
+    ],
+    [
+      "noPowerOnSignal",
+      16
+    ],
+    [
+      "heaterRelayErr",
+      17
+    ],
+    [
+      "heaterErr",
+      18
+    ],
+    [
+      "tempSensorErr",
+      19
+    ],
+    [
+      "inAirSensorErr",
+      20
+    ],
+    [
+      "condenserSensorErr",
+      21
+    ],
+    [
+      "doorLockFail",
+      22
+    ],
+    [
+      "doorUnlockFail",
+      23
+    ],
+    [
+      "motorDriverCommErr",
+      24
+    ],
+    [
+      "powerDriverCommErr",
+      25
+    ],
+    [
+      "displayBoardCommErr",
+      26
+    ],
+    [
+      "mainRelayAdhesion",
+      27
+    ],
+    [
+      "waterLevelSensorErr",
+      28
+    ],
+    [
+      "inWaterErr",
+      29
+    ],
+    [
+      "drainErr",
+      30
+    ],
+    [
+      "waterOverHighAlarm",
+      31
+    ],
+    [
+      "dryWaterLevelAlarm",
+      32
+    ],
+    [
+      "dryHeatingAlarm",
+      33
+    ],
+    [
+      "waterOverLowAlarm",
+      34
+    ],
+    [
+      "waterLevelAlarm",
+      35
+    ],
+    [
+      "spinUnbalanceAlarm",
+      36
+    ],
+    [
+      "weightErr",
+      37
+    ],
+    [
+      "dryOverweightAlarm",
+      38
+    ],
+    [
+      "mainEEPROMErr",
+      39
+    ],
+    [
+      "tempOverHighAlarm",
+      40
+    ],
+    [
+      "otherAlarm",
+      41
+    ],
+    [
+      "washFinishAlarm",
+      42
+    ],
+    [
+      "dryDriverCommErr",
+      43
+    ],
+    [
+      "waterLeakageAlarm",
+      44
+    ],
+    [
+      "purificationReductionWarning",
+      45
+    ],
+    [
+      "purificationReductionAlarm",
+      46
+    ],
+    [
+      "purificationDriverCommErr",
+      47
+    ],
+    [
+      "muCommErr",
+      48
+    ],
+    [
+      "busCommErr",
+      49
+    ],
+    [
+      "wpCommErr",
+      50
+    ],
+    [
+      "clutchMotorErr",
+      51
+    ],
+    [
+      "swSelfTestErr",
+      52
+    ],
+    [
+      "autoFlowmeterErr",
+      53
+    ],
+    [
+      "fanDriverCommErr",
+      54
+    ],
+    [
+      "rfidCommErr",
+      55
+    ],
+    [
+      "proxSensorErr",
+      60
+    ],
+    [
+      "wifiCfgFailed",
+      61
+    ],
+    [
+      "wallLimitSwitchAlarm",
+      62
+    ],
+    [
+      "eccentricityAlarm",
+      63
+    ],
+    [
+      "detergentInValveErr",
+      64
+    ],
+    [
+      "softenerInValveErr",
+      65
+    ],
+    [
+      "innerDrainErr",
+      66
+    ]
+  ]
+}
