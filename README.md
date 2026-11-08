@@ -69,7 +69,7 @@ reader and the integration use the same fixed device profile.
 
 ## Capabilities
 
-This version is read-only. It exposes the primary controls/status, diagnostic
+This version is read-only. It exposes primary status values, diagnostic
 values and a grouped raw state; see the device page for the entity inventory.
 One uSS session is allowed at a time.
 
@@ -81,7 +81,7 @@ python -m pytest
 ```
 
 The tests cover enum behavior, alarm labels, translation coverage, and the
-device profile files. They do not boot Home Assistant; runtime setup/options
+raw-field whitelist. They do not boot Home Assistant; runtime setup/options
 flows are not covered by CI yet.
 
 Entity names and enum labels are generated from `specs.py` and `enum_defs.py`:
@@ -93,7 +93,7 @@ python3 -I tools/generate_component_translations.py
 ## Documentation
 
 - [`docs/protocol.md`](docs/protocol.md) — uSS, localKey, decoding and evidence
-- [`docs/maintenance.md`](docs/maintenance.md) — vendor, translation/cloud refresh and verification procedures
+- [`docs/maintenance.md`](docs/maintenance.md) — vendor, translation and verification procedures
 - [`docs/devices/`](docs/devices/) — device-specific profiles and results
 - [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) — vendored/adapted code and
   licenses

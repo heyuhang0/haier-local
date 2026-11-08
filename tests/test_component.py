@@ -22,8 +22,6 @@ decoder = importlib.import_module("haier_local.decoder")
 const = importlib.import_module("haier_local.const")
 profile = importlib.import_module("haier_local.profile")
 
-sys.path.insert(0, str(ROOT / "tools"))
-from refresh_digital_model import select_attributes  # noqa: E402
 
 
 def _translations(name: str) -> dict:
@@ -94,10 +92,9 @@ def test_enum_helpers() -> None:
     assert len(enum_defs.options_for("phase")) == len(enum_defs.ENUM_DEFS["phase"])
 
 
-def test_spec_sources_exist_in_digital_model() -> None:
-    fields = set(decoder.digital_model())
+def test_spec_sources_exist_in_raw_state_fields() -> None:
+    fields = set(specs.RAW_STATE_FIELDS)
     assert len(fields) == 93
-    assert len(specs.RAW_STATE_FIELDS) == 93
     for spec in (*specs.ALL_SENSORS, *specs.ALL_BINARY):
         if spec.source is not None:
             assert spec.source in fields, spec.key
@@ -112,7 +109,6 @@ def test_manifest_and_project_metadata() -> None:
     assert manifest["iot_class"] == "local_polling"
     assert manifest["version"] == const.VERSION
     device = profile.CASARTE_CE_AB13LWTUWCU1
-    assert device.digital_model_file.is_file()
     assert len(device.uplus_id) > 32
     assert not device.uplus_id.startswith("0x")
 
@@ -134,31 +130,17 @@ def test_washer_alarm_labels_are_not_air_conditioner_labels() -> None:
     assert alarms["_alarm_labels"] == ["doorLockFail"]
 
 
-def test_cloud_selection_uses_declared_device_names() -> None:
-    attributes = [
-        {"name": "declared_a", "value": 1},
-        {"name": "declared_b", "value": 2},
-        {"name": "class_only", "value": 3},
-    ]
-    selected, missing = select_attributes(attributes, {"declared_a", "declared_b"})
-    assert [item["name"] for item in selected] == ["declared_a", "declared_b"]
-    assert missing == []
-
-    _selected, missing = select_attributes(attributes, {"declared_a", "absent"})
-    assert missing == ["absent"]
-
-
 def test_decoder_value_helpers() -> None:
-    assert decoder.remaining_minutes({}) is None
-    assert decoder.remaining_minutes({"remainingTimeHH": 1, "remainingTimeMM": 8}) == 68
-    assert decoder.remaining_minutes({"remainingTimeHH": 0, "remainingTimeMM": 5}) == 5
+    assert specs.remaining_minutes({}) is None
+    assert specs.remaining_minutes({"remainingTimeHH": 1, "remainingTimeMM": 8}) == 68
+    assert specs.remaining_minutes({"remainingTimeHH": 0, "remainingTimeMM": 5}) == 5
 
-    assert decoder.is_running({"cyclePhase": 0}) is False
-    assert decoder.is_running({"cyclePhase": 14}) is False
-    assert decoder.is_running({"cyclePhase": 18}) is False
-    assert decoder.is_running({"cyclePhase": 19}) is False
-    assert decoder.is_running({"cyclePhase": 5}) is True
-    assert decoder.is_running({}) is None
+    assert specs.is_running({"cyclePhase": 0}) is False
+    assert specs.is_running({"cyclePhase": 14}) is False
+    assert specs.is_running({"cyclePhase": 18}) is False
+    assert specs.is_running({"cyclePhase": 19}) is False
+    assert specs.is_running({"cyclePhase": 5}) is True
+    assert specs.is_running({}) is None
 
     assert specs.as_bool(None) is None
     assert specs.as_bool(True) is True

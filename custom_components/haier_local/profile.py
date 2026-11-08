@@ -2,9 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
-
-DATA_DIR = Path(__file__).resolve().parent / "data"
 
 
 @dataclass(frozen=True)
@@ -13,7 +10,6 @@ class DeviceProfile:
     model: str
     uplus_id: str
     map_typeid: str
-    digital_model_file: Path
 
 
 CASARTE_CE_AB13LWTUWCU1 = DeviceProfile(
@@ -25,5 +21,4 @@ CASARTE_CE_AB13LWTUWCU1 = DeviceProfile(
     map_typeid=(
         "201c51890c31c30805010021800239584d000000000000000000000000000140"
     ),
-    digital_model_file=DATA_DIR / "digital_model.json",
 )

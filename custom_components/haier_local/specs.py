@@ -4,8 +4,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from . import decoder
-
 
 def as_bool(raw) -> bool | None:
     if raw is None:
@@ -15,6 +13,24 @@ def as_bool(raw) -> bool | None:
     if isinstance(raw, str):
         return raw.strip().lower() in ("true", "1", "on", "yes", "开", "是")
     return bool(raw)
+
+
+def remaining_minutes(state: dict) -> int | None:
+    hours = state.get("remainingTimeHH")
+    minutes = state.get("remainingTimeMM")
+    if hours is None and minutes is None:
+        return None
+    return int(hours or 0) * 60 + int(minutes or 0)
+
+
+def is_running(state: dict) -> bool | None:
+    phase = state.get("cyclePhase")
+    if phase is None:
+        return None
+    try:
+        return int(phase) not in {0, 14, 18, 19}
+    except (TypeError, ValueError):
+        return None
 
 
 def _value(source: str):
@@ -63,7 +79,7 @@ class BinarySpec:
 
 PRIMARY_SENSORS: tuple[SensorSpec, ...] = (
     SensorSpec("remaining_time", "Remaining time", "剩余时间",
-               value_fn=decoder.remaining_minutes, unit="min",
+               value_fn=remaining_minutes, unit="min",
                icon="mdi:timer-outline", device_class="duration",
                state_class="measurement"),
     SensorSpec("phase", "Phase", "洗涤阶段", source="cyclePhase",
@@ -104,7 +120,7 @@ PRIMARY_SENSORS: tuple[SensorSpec, ...] = (
 PRIMARY_BINARY: tuple[BinarySpec, ...] = (
     BinarySpec("power", "Power", "电源", source="onOffStatus",
                device_class="power", icon="mdi:power", value_fn=_bool("onOffStatus")),
-    BinarySpec("running", "Running", "运行中", value_fn=decoder.is_running,
+    BinarySpec("running", "Running", "运行中", value_fn=is_running,
                device_class="running", icon="mdi:washing-machine"),
     BinarySpec("door", "Door", "筒门", source="doorStatus",
                device_class="door", icon="mdi:door", value_fn=_bool("doorStatus")),
@@ -292,4 +308,99 @@ FEATURE_FLAGS: tuple[tuple[str, str, str], ...] = (
 ALL_SENSORS = PRIMARY_SENSORS + DIAGNOSTIC_SENSORS + DISABLED_SENSORS
 ALL_BINARY = PRIMARY_BINARY + DIAGNOSTIC_BINARY + DISABLED_BINARY
 
-RAW_STATE_FIELDS = tuple(sorted(decoder.digital_model()))
+# The 93 attributes this profile exposes in the grouped Raw state entity.
+RAW_STATE_FIELDS = (
+    "actualWeight",
+    "airWashTempLevel",
+    "airWashTime",
+    "antiAllergyStatus",
+    "autoDetergentStatus",
+    "autoDisinfectantStatus",
+    "autoSoftenerStatus",
+    "buzzerDisabled",
+    "buzzerDisabledCurrent",
+    "childLockStatus",
+    "clothesAnionStatus",
+    "clothesIdIndex",
+    "clothesInfoHW",
+    "clothesInfoLW",
+    "clothesInfoMW",
+    "clothesRecogNum",
+    "clothesRecogResult",
+    "clothesRecogStatus",
+    "cloudProgId",
+    "cloudProgSrc",
+    "creaseResistSoakStatus",
+    "currentElectricityUsed",
+    "currentWashCycle",
+    "currentWaterUsed",
+    "cyclePhase",
+    "defSetAllowed",
+    "detergentBPercent",
+    "detergentBStatus",
+    "detergentPercent",
+    "detergentType",
+    "dirtyLevel",
+    "doorLockStatus",
+    "doorStatus",
+    "drainSysDiagResult",
+    "dryCleaningNeeded",
+    "dryMode",
+    "dryProgFlag",
+    "dryStatus",
+    "drySysDiagResult",
+    "dryTime",
+    "dryType",
+    "energySavingStatus",
+    "forceDelete",
+    "haier_DetergentWeight",
+    "haier_SoftenerWeight",
+    "highWaterLevelStatus",
+    "inWaterSysDiagResult",
+    "intelligenceStatus",
+    "laundryCycle",
+    "laundryCycleStatus",
+    "loosenStatus",
+    "message",
+    "nightWashStatus",
+    "onOffStatus",
+    "permanentPressStatus",
+    "purifiedWashStatus",
+    "remainingDetergentStatus",
+    "remainingDispersantStatus",
+    "remainingMainWashTime",
+    "remainingRinseTimes",
+    "remainingSoftenerStatus",
+    "remainingStandbyTime",
+    "remainingTimeHH",
+    "remainingTimeMM",
+    "remoteCtrValid",
+    "resnStatus",
+    "runningMode",
+    "shoesAnionStatus",
+    "soakWashStatus",
+    "speedUpStatus",
+    "spinSpeed",
+    "spinSysDiagResult",
+    "stainType",
+    "standbyTimeExtended",
+    "steamWashStatus",
+    "strongStatus",
+    "testCmdReceiveStatus",
+    "texture",
+    "totalElectricityUsed",
+    "totalWashCycle",
+    "totalWaterUsed",
+    "uvSterilizationStatus",
+    "voiceModuleDataDef",
+    "voiceModuleOnOffStatus",
+    "voiceModuleVolume",
+    "voiceModuleWakeStatus",
+    "voiceModuleWakeUp",
+    "voiceStatus",
+    "washSpeed",
+    "washSysDiagResult",
+    "washTemp",
+    "washerDryLevel",
+    "weight",
+)

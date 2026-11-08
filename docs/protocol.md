@@ -90,14 +90,14 @@ Two practical details:
 - The 219-field class-0501 map is loaded from the vendored
   `vendor/haier_local_hrdp/device_models.json.gz`, selected by
   `profile.map_typeid`; there is no separate checked-in copy.
-- The 93 attributes exposed for this unit and their cloud descriptions are in
-  `custom_components/haier_local/data/digital_model.json`.
+- The 93 attributes exposed by `Raw state` are an explicit whitelist in
+  `custom_components/haier_local/specs.py`.
 
 ## Reconstruction
 
 See [`maintenance.md`](maintenance.md) for updating the vendored catalogue,
-refreshing `data/digital_model.json`, and regenerating translations. The map
-itself is not regenerated: the profile pins the catalogue id.
+and regenerating translations. The map itself is not regenerated: the profile
+pins the catalogue id.
 
 One local session is allowed at a time; this is a device constraint, not an
 integration setting.

@@ -4,7 +4,6 @@ No cloud, no Home Assistant types: the coordinator runs this in an executor.
 """
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -23,15 +22,6 @@ if _MODEL is None:
     raise RuntimeError(
         f"device map {CASARTE_CE_AB13LWTUWCU1.map_typeid} is not in the vendored catalogue"
     )
-_DIGITAL = {
-    a["name"]: a
-    for a in json.loads(CASARTE_CE_AB13LWTUWCU1.digital_model_file.read_text())
-    if a.get("name")
-}
-
-
-def digital_model() -> dict[str, dict]:
-    return _DIGITAL
 
 
 def discover_device(host: str):
@@ -39,18 +29,36 @@ def discover_device(host: str):
     return _udiscovery_query(host, timeout=2.0)
 
 
-def read_state(host: str, device_id: str, local_key: str) -> dict:
-    """One read-only uSS session, decoded with the class 0501 map."""
-    blobs = read_status(host, device_id, local_key, timeout=4.0)
-    if not blobs:
-        raise RuntimeError("no decrypted status report (wrong key or device unreachable)")
-    decoded = [_MODEL.decode(blob, status_cmd="6D01") for blob in blobs if len(blob) > 20]
+def decode_reports(
+    blobs: list[bytes],
+    *,
+    status_cmd: str = "6D01",
+    only: frozenset[str] | None = None,
+) -> dict:
+    """Decode a uSS status burst with the profile's fixed map.
+
+    The integration and the standalone reader both call this function, so a
+    successful reader run exercises the same decode path as setup.
+    """
+    decoded = [
+        _MODEL.decode(blob, status_cmd=status_cmd, only=only)
+        for blob in blobs
+        if len(blob) > 20
+    ]
     state = max(decoded, key=len) if decoded else {}
     if not state:
         raise RuntimeError("decrypted report but no class-0501 fields placed")
     state["_blob_lengths"] = [len(blob) for blob in blobs]
     state.update(parse_alarms(blobs))
     return state
+
+
+def read_state(host: str, device_id: str, local_key: str) -> dict:
+    """One read-only uSS session, decoded with the class 0501 map."""
+    blobs = read_status(host, device_id, local_key, timeout=4.0)
+    if not blobs:
+        raise RuntimeError("no decrypted status report (wrong key or device unreachable)")
+    return decode_reports(blobs)
 
 
 def parse_alarms(blobs: list[bytes]) -> dict:
@@ -78,21 +86,3 @@ def parse_alarms(blobs: list[bytes]) -> dict:
         "_alarm_codes": alarm_codes,
         "_alarm_labels": alarm_labels,
     }
-
-
-def remaining_minutes(state: dict) -> int | None:
-    hours = state.get("remainingTimeHH")
-    minutes = state.get("remainingTimeMM")
-    if hours is None and minutes is None:
-        return None
-    return int(hours or 0) * 60 + int(minutes or 0)
-
-
-def is_running(state: dict) -> bool | None:
-    phase = state.get("cyclePhase")
-    if phase is None:
-        return None
-    try:
-        return int(phase) not in {0, 14, 18, 19}
-    except (TypeError, ValueError):
-        return None

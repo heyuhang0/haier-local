@@ -20,17 +20,19 @@ The vendored packages are snapshots of
   `custom_components/haismart/vendor/haismart_extractor/`.
 
 ```bash
-git clone https://github.com/enapt/haismart-local
-cd haismart-local
+REPO="$PWD"
+git clone https://github.com/enapt/haismart-local /tmp/haismart-local
+cd /tmp/haismart-local
 git checkout <upstream-commit>
-rm -rf ../haier-local/custom_components/haier_local/vendor/haier_local_hrdp
+rm -rf "$REPO/custom_components/haier_local/vendor/haier_local_hrdp"
 cp -r custom_components/haismart/vendor/haismart_hrdp \
-  ../haier-local/custom_components/haier_local/vendor/haier_local_hrdp
-rm -rf ../haier-local/tools/vendor/haismart_extractor
+  "$REPO/custom_components/haier_local/vendor/haier_local_hrdp"
+rm -rf "$REPO/tools/vendor/haismart_extractor"
 cp -r custom_components/haismart/vendor/haismart_extractor \
-  ../haier-local/tools/vendor/haismart_extractor
-cp LICENSE ../haier-local/custom_components/haier_local/vendor/haier_local_hrdp/LICENSE
-cp LICENSE ../haier-local/tools/vendor/haismart_extractor/LICENSE
+  "$REPO/tools/vendor/haismart_extractor"
+cp LICENSE "$REPO/custom_components/haier_local/vendor/haier_local_hrdp/LICENSE"
+cp LICENSE "$REPO/tools/vendor/haismart_extractor/LICENSE"
+cd "$REPO"
 ```
 
 The profile's `map_typeid` is loaded directly from
@@ -56,22 +58,6 @@ python3 -I tools/generate_component_translations.py
 
 Run the tests afterward; they check that the generated entity keys and states
 cover the specs.
-
-## Refresh cloud descriptions
-
-`tools/refresh_digital_model.py` keeps the device-declared attributes in
-`custom_components/haier_local/data/digital_model.json`, filtered against the
-profile's class map. It requires the access token and key from the one-time
-setup:
-
-```bash
-python3 -I tools/china_key.py --mqtt-probe
-python3 -I tools/refresh_digital_model.py
-```
-
-The second command contacts Haier's cloud; it is not part of normal local
-operation. It fails if any currently declared attribute is absent from the
-cloud response.
 
 ## Validate
 

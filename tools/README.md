@@ -7,23 +7,20 @@ Install their dependency with `pip install -r requirements.txt`.
 
 - `read_washer.py` — read-only status using the same fixed profile map as the
   integration.
-- `refresh_digital_model.py` — refresh the device-declared cloud descriptions
-  (requires the saved token/key).
 - `generate_component_translations.py` — regenerate entity/enum translations
   from specs.
 
 ## Key helper
 
-`china_key.py` is the one-time localKey fetcher. The path verified on the
-supported device is the mainland gateway:
+`china_key.py` is the one-time localKey fetcher. One successful run used the
+mainland gateway endpoint `39.107.46.61:56262` with SNI `gw.haier.net`; that
+observation does not establish which broker, authentication mode, topic or
+request shape is necessary. The helper still searches those variants.
 
 ```bash
 python3 -I tools/china_key.py \
   --mqtt-probe --mqtt-brokers 39.107.46.61:56262:legacy
 ```
 
-The helper also contains candidate brokers, topic shapes and request variants
-used during discovery. They are experiments, not guaranteed compatibility
-paths; use `--mqtt-probe` with the broker above when repeating the verified
-procedure. The README command uses the default broker list, whose first entry
-is this verified gateway.
+Constrain the broker list with this command to keep a retry focused; the code
+does not claim the remaining search space is verified.

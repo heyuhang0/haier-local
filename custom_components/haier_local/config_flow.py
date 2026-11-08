@@ -95,7 +95,7 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     info = await self.hass.async_add_executor_job(
                         decoder.discover_device, host
                     )
-                except Exception:  # noqa: BLE001 - discovery is best-effort
+                except Exception:  # noqa: BLE001 - report discovery as a setup error
                     info = None
                 if info is None:
                     errors["base"] = "discovery_required"

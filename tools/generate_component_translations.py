@@ -7,6 +7,7 @@ script only replaces the ``entity`` section.
 from __future__ import annotations
 
 import argparse
+import copy
 import importlib
 import json
 import sys
@@ -55,7 +56,7 @@ def _load(path: Path) -> dict:
 
 def _rendered() -> dict[Path, str]:
     strings = _load(COMPONENT / "strings.json")
-    en = _load(COMPONENT / "translations/en.json")
+    en = copy.deepcopy(strings)
     zh = _load(COMPONENT / "translations/zh-Hans.json")
     strings["entity"] = _entity_blocks("en")
     en["entity"] = _entity_blocks("en")

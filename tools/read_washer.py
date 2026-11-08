@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Read the supported washer locally and decode it with the integration's map.
 
-This uses the same fixed class-0501 profile as the Home Assistant integration,
-not a map-guessing heuristic.  It is read-only and fully offline once
+It loads the same fixed class-0501 profile and calls the same decode function as
+the Home Assistant integration. It is read-only and fully offline once
 ``local_key.json`` exists.
 
 Usage:
@@ -12,37 +12,24 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import os
 import sys
+import types
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent.parent
-VENDOR = PROJECT / "custom_components/haier_local/vendor"
+COMPONENT = PROJECT / "custom_components/haier_local"
+VENDOR = COMPONENT / "vendor"
 sys.path.insert(0, str(VENDOR))
 
-from haier_local_hrdp.device_model import model_for  # noqa: E402
 from haier_local_hrdp.uss import read_status  # noqa: E402
 
-_profile_spec = importlib.util.spec_from_file_location(
-    "haier_local_profile",
-    PROJECT / "custom_components/haier_local/profile.py",
-)
-_profile = importlib.util.module_from_spec(_profile_spec)
-sys.modules["haier_local_profile"] = _profile
-assert _profile_spec.loader is not None
-_profile_spec.loader.exec_module(_profile)
-CASARTE_CE_AB13LWTUWCU1 = _profile.CASARTE_CE_AB13LWTUWCU1
-
-
-def load_model():
-    model = model_for(CASARTE_CE_AB13LWTUWCU1.map_typeid)
-    if model is None:
-        raise SystemExit(
-            f"map {CASARTE_CE_AB13LWTUWCU1.map_typeid} is not in the vendored catalogue"
-        )
-    return model
+# Load decoder.py without executing the HA-dependent package __init__.
+_pkg = types.ModuleType("haier_local")
+_pkg.__path__ = [str(COMPONENT)]
+sys.modules["haier_local"] = _pkg
+from haier_local.decoder import decode_reports  # noqa: E402
 
 
 def main() -> int:
@@ -77,17 +64,11 @@ def main() -> int:
     if args.raw_out:
         Path(args.raw_out).write_bytes(full)
         print(f"  raw report written to {args.raw_out}")
-    model = load_model()
-    decoded = model.decode(
-        full, status_cmd=args.status_cmd,
+    decoded = decode_reports(
+        blobs, status_cmd=args.status_cmd,
         only=frozenset(declared) if declared else None,
     )
-    print(f"  map {model.typeid} ({len(model.fields)} fields); "
-          f"decoded {len(decoded)} attributes")
-    if not decoded:
-        print("the report did not decode with the configured profile")
-        return 2
-
+    print(f"  decoded {len(decoded)} attributes")
     for name in sorted(decoded):
         print(f"  {name:42} {decoded[name]}")
     Path(args.out).write_text(json.dumps(decoded, indent=2, ensure_ascii=False, default=str))

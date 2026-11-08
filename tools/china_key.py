@@ -72,7 +72,6 @@ APP_SOURCES = {
 REFRESH_URL = "https://zj.haier.net/api-gw/oauthserver/account/v1/refreshToken"
 LOGIN_URL = "https://zj.haier.net/api-gw/oauthserver/account/v1/login"
 DEVICES_URL = "https://uws.haier.net/uds/v1/protected/deviceinfos"
-DIGITAL_URL = "https://uws.haier.net/shadow/v1/devdigitalmodels"
 PACKAGE = "com.haier.uhome.uplus"
 # App-side endpoint that returns the MQTT broker connection info (from the APK).
 MQTT_INFO_URLS = [
@@ -182,20 +181,6 @@ def get_devices(access_token: str, client_id: str, app_source: str) -> list[dict
     return content.get("deviceinfos") or []
 
 
-def get_digital_model(access_token: str, client_id: str, app_source: str,
-                      device_id: str) -> list[dict]:
-    app_id, app_key = APP_SOURCES[app_source]
-    payload = {"deviceInfoList": [{"deviceId": device_id}]}
-    body = json.dumps(payload)
-    headers = _headers(app_id, app_key, client_id, access_token, body, DIGITAL_URL)
-    content = _assert_ok(
-        _http_json(DIGITAL_URL, method="POST", payload=payload, headers=headers),
-        "digital model",
-    )
-    detail = (content.get("detailInfo") or {}).get(device_id)
-    if not detail:
-        return []
-    return json.loads(detail).get("attributes") or []
 
 
 _SECRET_WORDS = ("password", "passwd", "pwd", "secret", "token", "accesstoken",
@@ -752,14 +737,6 @@ def main() -> int:
             return result
         print("no MQTT broker returned a key")
         return 4
-
-    try:
-        attributes = get_digital_model(access_token, client_id, app_source, args.device_id)
-        names = [a.get("name") for a in attributes if a.get("name")]
-        print(f"  digital model: {len(attributes)} attributes; "
-              f"sample={names[:12]}")
-    except Exception as exc:  # noqa: BLE001 - informational only
-        print(f"  digital model unavailable: {type(exc).__name__}: {exc}")
 
     print("querying MQTT broker info...")
     get_mqtt_info(access_token, client_id, app_source)
