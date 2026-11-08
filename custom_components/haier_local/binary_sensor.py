@@ -35,7 +35,6 @@ def _device_info(entry: ConfigEntry) -> DeviceInfo:
 
 class WasherBinarySensor(CoordinatorEntity[WasherCoordinator], BinarySensorEntity):
     _attr_has_entity_name = True
-    _attr_name = None
 
     def __init__(self, coordinator: WasherCoordinator, entry: ConfigEntry,
                  description: BinarySpec) -> None:

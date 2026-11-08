@@ -41,6 +41,8 @@ def test_sensor_entities_satisfy_ha_description_contract() -> None:
         entity = WasherSensor(_coordinator(), _Entry(), spec)
         assert entity.entity_registry_visible_default is True
         assert entity.entity_registry_enabled_default is spec.enabled_default
+        assert entity.translation_key == spec.key
+        assert not hasattr(entity, "_attr_name")
         assert entity.suggested_unit_of_measurement is None
         assert entity.force_update is False
         assert entity.translation_placeholders == {}
@@ -53,6 +55,8 @@ def test_binary_entities_satisfy_ha_description_contract() -> None:
         entity = WasherBinarySensor(_coordinator(), _Entry(), spec)
         assert entity.entity_registry_visible_default is True
         assert entity.entity_registry_enabled_default is spec.enabled_default
+        assert entity.translation_key == spec.key
+        assert not hasattr(entity, "_attr_name")
         assert entity.force_update is False
         assert entity.translation_placeholders == {}
         assert not hasattr(entity, "entity_description")

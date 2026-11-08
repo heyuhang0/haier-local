@@ -40,7 +40,6 @@ def _device_info(entry: ConfigEntry) -> DeviceInfo:
 
 class WasherSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
     _attr_has_entity_name = True
-    _attr_name = None
 
     def __init__(self, coordinator: WasherCoordinator, entry: ConfigEntry,
                  description: SensorSpec) -> None:
@@ -99,7 +98,6 @@ class RawStateSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "raw_state"
-    _attr_name = None
     _attr_icon = "mdi:code-json"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = False
@@ -129,7 +127,6 @@ class FeatureFlagsSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "feature_flags"
-    _attr_name = None
     _attr_icon = "mdi:toggle-switch-outline"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = False
