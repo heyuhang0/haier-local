@@ -25,9 +25,6 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-_DEFAULT_NAME = "Haier Washer"
-
-
 def _clean_device_id(value: str) -> str:
     return "".join(ch for ch in value if ch.isalnum()).upper()
 
@@ -58,7 +55,7 @@ def _user_schema(defaults: dict | None = None) -> vol.Schema:
             vol.Required(CONF_HOST, default=d.get(CONF_HOST, vol.UNDEFINED)): str,
             vol.Required(CONF_LOCAL_KEY): str,
             vol.Optional(CONF_DEVICE_ID, default=d.get(CONF_DEVICE_ID, "")): str,
-            vol.Optional(CONF_NAME, default=d.get(CONF_NAME, _DEFAULT_NAME)): str,
+            vol.Optional(CONF_NAME): str,
             vol.Optional(
                 CONF_SCAN_INTERVAL,
                 default=d.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
@@ -123,7 +120,7 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_HOST: host,
                     CONF_DEVICE_ID: device_id,
                     CONF_LOCAL_KEY: local_key,
-                    CONF_NAME: user_input.get(CONF_NAME) or _DEFAULT_NAME,
+                    CONF_NAME: (user_input.get(CONF_NAME) or "").strip(),
                     CONF_SCAN_INTERVAL: int(
                         user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
                     ),
@@ -157,7 +154,7 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(pending[CONF_DEVICE_ID])
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
-            title=pending[CONF_NAME],
+            title=pending[CONF_NAME] or pending[CONF_HOST],
             data={
                 CONF_HOST: pending[CONF_HOST],
                 CONF_DEVICE_ID: pending[CONF_DEVICE_ID],

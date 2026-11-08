@@ -123,7 +123,7 @@ Do not clone the repository directly into
 | LAN address | yes | e.g. `192.168.1.50` |
 | localKey | yes | 32-hex key, or paste the whole `local_key.json` (the key and device id are extracted) |
 | Device ID | no | UDISCOVERY fills it from the MAC; enter it manually only if discovery fails |
-| Name | no | default `Haier Washer` |
+| Name | no | no default; blank uses the LAN address as the config-entry title |
 | Poll interval | no | default 30 s, minimum 15 s |
 
 There is no device-type selector. UDISCOVERY returns `deviceId` and `uPlusId`;

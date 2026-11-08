@@ -122,7 +122,7 @@ Settings → Devices & services → Add integration → **Haier Local**.
 | LAN address | yes | e.g. `192.168.1.50` |
 | localKey | yes | 32-hex key, or paste the whole `local_key.json` (auto-extracts key/device_id) |
 | Device ID | no | UDISCOVERY fills it; manual MAC only if discovery fails |
-| Name | no | default `Haier Washer` |
+| Name | no | no default; blank uses the LAN address as the config-entry title |
 | Poll interval | no | default 30 s, minimum 15 s |
 
 No device-type selection: UDISCOVERY returns `deviceId` + `uPlusId`, and the
