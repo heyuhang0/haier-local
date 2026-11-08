@@ -1,6 +1,8 @@
 """Binary sensors for the local washer, driven by specs.py."""
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -16,6 +18,8 @@ from .const import CONF_DEVICE_ID, DOMAIN
 from .coordinator import WasherCoordinator
 from .profile import DEVICE
 from .specs import BinarySpec, as_bool
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _device_info(entry: ConfigEntry) -> DeviceInfo:
@@ -69,6 +73,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: WasherCoordinator = hass.data[DOMAIN][entry.entry_id]
+    _LOGGER.info("creating %d binary sensor entities", len(DEVICE.binary_sensors))
     async_add_entities(
         WasherBinarySensor(coordinator, entry, spec) for spec in DEVICE.binary_sensors
     )
