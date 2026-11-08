@@ -33,10 +33,6 @@ def is_running(state: dict) -> bool | None:
         return None
 
 
-def _value(source: str):
-    return lambda state: state.get(source)
-
-
 def _bool(source: str, invert: bool = False):
     def value(state):
         parsed = as_bool(state.get(source))

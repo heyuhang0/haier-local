@@ -87,9 +87,8 @@ with `--raw-out` for future regression evidence.
 
 Two practical details:
 
-- The 219-field class-0501 map is loaded from the vendored
-  `vendor/haier_local_hrdp/device_models.json.gz`, selected by
-  `profile.map_typeid`; there is no separate checked-in copy.
+- The 219-field class-0501 map is selected by `profile.map_typeid` from the
+  vendored `vendor/haier_local_hrdp/device_models.json.gz`.
 - The 93 attributes exposed by `Raw state` are an explicit whitelist in
   `custom_components/haier_local/specs.py`.
 

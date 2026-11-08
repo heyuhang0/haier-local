@@ -35,9 +35,9 @@ cp LICENSE "$REPO/tools/vendor/haismart_extractor/LICENSE"
 cd "$REPO"
 ```
 
-The profile's `map_typeid` is loaded directly from
-`vendor/haier_local_hrdp/device_models.json.gz`; there is no separate copy to
-regenerate. After updating the snapshot, run:
+The profile's `map_typeid` selects its record in
+`vendor/haier_local_hrdp/device_models.json.gz`. After updating the snapshot,
+run:
 
 ```bash
 python -m pytest

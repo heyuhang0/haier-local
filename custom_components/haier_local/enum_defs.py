@@ -220,19 +220,3 @@ ENUM_DEFS: dict[str, dict[int, tuple[str, str, str]]] = {
         6: ("tv", "TV", "TV"),
     },
 }
-
-
-def token_for(enum: str, raw) -> str | None:
-    entry = ENUM_DEFS.get(enum, {}).get(raw)
-    return entry[0] if entry else None
-
-
-def labels_for(enum: str, raw, language: str = "en") -> str:
-    entry = ENUM_DEFS.get(enum, {}).get(raw)
-    if not entry:
-        return str(raw)
-    return entry[2] if language.startswith("zh") else entry[1]
-
-
-def options_for(enum: str) -> list[str]:
-    return [entry[0] for entry in ENUM_DEFS.get(enum, {}).values()]

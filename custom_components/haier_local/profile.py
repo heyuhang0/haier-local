@@ -1,9 +1,4 @@
-"""The device profile used by the decoder and entities.
-
-This module assembles the one verified device definition.  A second profile
-would supply its own entity tuples, field whitelist and enum table; there is no
-registry or selection framework until that device exists.
-"""
+"""The verified device profile: identity plus entity, field and enum data."""
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -26,21 +21,27 @@ class DeviceProfile:
     extra_sensor_names: tuple[tuple[str, str, str], ...]
     enums: Mapping[str, Mapping[int, tuple[str, str, str]]]
 
+    def enum_values(self, enum: str):
+        try:
+            values = self.enums[enum]
+        except KeyError:
+            raise KeyError(f"profile has no enum definition for {enum!r}") from None
+        if not values:
+            raise ValueError(f"profile enum {enum!r} is empty")
+        return values
+
     def token_for(self, enum: str, raw):
-        entry = self.enums.get(enum, {}).get(raw)
+        entry = self.enum_values(enum).get(raw)
         return entry[0] if entry else None
 
     def labels_for(self, enum: str, raw, language: str = "en") -> str:
-        entry = self.enums.get(enum, {}).get(raw)
+        entry = self.enum_values(enum).get(raw)
         if not entry:
             return str(raw)
         return entry[2] if language.startswith("zh") else entry[1]
 
     def options_for(self, enum: str) -> list[str]:
-        return [entry[0] for entry in self.enums.get(enum, {}).values()]
-
-    def enum_values(self, enum: str):
-        return self.enums.get(enum, {})
+        return [entry[0] for entry in self.enum_values(enum).values()]
 
 
 CASARTE_CE_AB13LWTUWCU1 = DeviceProfile(

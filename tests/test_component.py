@@ -61,6 +61,7 @@ def test_enum_translations_and_tokens() -> None:
         if not spec.enum:
             continue
         entries = DEVICE.enum_values(spec.enum)
+        assert entries, spec.enum
         tokens = [entry[0] for entry in entries.values()]
         assert len(tokens) == len(set(tokens)), spec.enum
 
@@ -111,7 +112,12 @@ def test_profile_data_is_owned_by_the_instance() -> None:
     assert other.sensors == ()
     assert other.raw_state_fields == ()
     assert other.enums == {}
-    assert other.token_for("phase", 0) is None
+    try:
+        other.token_for("phase", 0)
+    except KeyError:
+        pass
+    else:
+        raise AssertionError("an empty profile must not resolve enum values")
     assert DEVICE.sensors
 
 

@@ -77,10 +77,7 @@ def parse_alarms(blobs: list[bytes]) -> dict:
     alarm_codes: list = []
     alarm_labels: list = []
     for blob in blobs:
-        try:
-            alarm = parse_alarm_frame(blob, names, shared_table=False)
-        except Exception:  # noqa: BLE001 - a non-alarm frame is normal
-            continue
+        alarm = parse_alarm_frame(blob, names, shared_table=False)
         if not alarm:
             continue
         alarm_count += int(alarm.get("alarm_count") or 0)
