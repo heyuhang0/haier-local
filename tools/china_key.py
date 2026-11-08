@@ -92,16 +92,9 @@ DEFAULT_HOSTS = [
     "gw.haieriot.net:56042",
 ]
 
-# SHA-256 fingerprints of the DER certificates known for gw.haier.net
-# (self-signed, CN=gw.haier.net, valid 2014..2044).  The gateway is reached by
-# IP and has no publicly trusted chain, so pin a known certificate before
-# sending the account token over MQTT.
-GATEWAY_CERT_SHA256S = {
-    # Embedded in the mainland app / observed originally.
-    "163f1c6f89c896866bac8c85d1996927a01d49fa78ad6a35fbc58b11be49c4c9",
-    # Presented by 39.107.46.61:56262 on 2026-11-09.
-    "d5cabcab7d6429aaecfc43cc1fa1beb6bec8140761e334a39eec149491829e76",
-}
+# The APK certificate is the trust anchor for the uSDK gateway. The leaf
+# certificate currently presented by 39.107.46.61:56262 chains to it.
+GATEWAY_CA_FILE = Path(__file__).resolve().parent / "certs/gw-haier-apk.pem"
 
 
 def _sign(app_id: str, app_key: str, timestamp: str, body: str, url: str) -> str:
@@ -268,32 +261,26 @@ class PlainMqttConnection(_TlsMqttConnection):
 
 
 class LegacyTlsMqttConnection(_TlsMqttConnection):
-    """MQTT/TLS to the uSDK ``gw.haier.net`` gateway (self-signed 2014 cert).
+    """MQTT/TLS to the uSDK ``gw.haier.net`` gateway.
 
-    The APK pins this exact certificate; it is C=CN, O=haier ubic, CN=gw.haier.net,
-    valid 2014-2044. Modern trust stores reject it, so the chain is not trusted;
-    instead the exact DER certificate is pinned by SHA-256 before any MQTT
-    credentials are sent.  The host is fixed to the app's gateway IP and SNI.
+    The APK certificate is the dedicated trust anchor. The gateway's current
+    leaf certificate chains to it; hostname verification still checks
+    ``gw.haier.net``. No MQTT credentials are sent until verification succeeds.
     """
 
     def __init__(self, creds, sni: str = "gw.haier.net") -> None:
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+        ctx = ssl.create_default_context(cafile=str(GATEWAY_CA_FILE))
+        ctx.check_hostname = True
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        # OpenSSL rejects this legacy Haier CA unless it is explicitly treated
+        # as a trusted anchor; chain and hostname verification stay enabled.
+        ctx.verify_flags = getattr(ssl, "VERIFY_X509_TRUSTED_FIRST", 0)
         try:
             ctx.set_ciphers("DEFAULT@SECLEVEL=0")
         except ssl.SSLError:
             pass
         raw = socket.create_connection((creds.host, creds.port), timeout=8)
         self.ss = ctx.wrap_socket(raw, server_hostname=sni)
-        server_cert = self.ss.getpeercert(binary_form=True)
-        actual = hashlib.sha256(server_cert or b"").hexdigest()
-        if actual not in GATEWAY_CERT_SHA256S:
-            self.ss.close()
-            raise GatewayConnectionError(
-                "gateway certificate pin mismatch: "
-                f"expected one of {sorted(GATEWAY_CERT_SHA256S)}, got {actual}"
-            )
         self._pid = 0
         self._buf = b""
         self._subacked: set[int] = set()

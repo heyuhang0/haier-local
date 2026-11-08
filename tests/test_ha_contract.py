@@ -29,8 +29,8 @@ class _Entry:
     data = {CONF_DEVICE_ID: "AABBCCDDEEFF"}
 
 
-def _coordinator() -> SimpleNamespace:
-    return SimpleNamespace(data={}, hass=None)
+def _coordinator(data: dict | None = None) -> SimpleNamespace:
+    return SimpleNamespace(data=data or {}, hass=None)
 
 
 def test_sensor_entities_satisfy_ha_description_contract() -> None:
@@ -39,7 +39,8 @@ def test_sensor_entities_satisfy_ha_description_contract() -> None:
         assert entity.entity_registry_visible_default is True
         assert entity.entity_registry_enabled_default is spec.enabled_default
         assert entity.suggested_unit_of_measurement is None
-        assert entity.native_value is None
+        assert entity.force_update is False
+        assert entity.translation_placeholders == {}
         assert isinstance(entity.extra_state_attributes, (dict, type(None)))
         assert not hasattr(entity, "entity_description")
 
@@ -49,4 +50,15 @@ def test_binary_entities_satisfy_ha_description_contract() -> None:
         entity = WasherBinarySensor(_coordinator(), _Entry(), spec)
         assert entity.entity_registry_visible_default is True
         assert entity.entity_registry_enabled_default is spec.enabled_default
-        assert entity.is_on is None
+        assert entity.force_update is False
+        assert entity.translation_placeholders == {}
+        assert not hasattr(entity, "entity_description")
+
+
+def test_problem_binary_semantics() -> None:
+    spec = next(spec for spec in profile.DEVICE.binary_sensors if spec.key == "problem")
+    coordinator = _coordinator({"_alarm_count": 0})
+    entity = WasherBinarySensor(coordinator, _Entry(), spec)
+    assert entity.is_on is False
+    coordinator.data = {"_alarm_count": 1}
+    assert entity.is_on is True
