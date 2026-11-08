@@ -16,11 +16,12 @@ openssl verify -show_chain -verify_hostname gw.haier.net \
   tools/certs/gw-haier-current.pem
 ```
 
-The chain is accepted by OpenSSL, but the legacy CA's Basic Constraints
-extension is not marked critical. Python therefore needs
-`VERIFY_X509_TRUSTED_FIRST`; `china_key.py` also keeps hostname verification
-enabled. The leaf has a different subject DN and validity times from the CA;
-they are not the same certificate.
+The chain is accepted by OpenSSL, but Python's default context enables
+`VERIFY_X509_STRICT`, which rejects this legacy CA because its Basic Constraints
+extension is not critical and it has no Key Usage extension. `china_key.py`
+clears only that strict flag; chain and hostname verification stay enabled. The
+leaf has a different subject DN and validity times from the CA; they are not the
+same certificate.
 
 If the gateway presents another leaf, first check whether it chains to the APK
 certificate:

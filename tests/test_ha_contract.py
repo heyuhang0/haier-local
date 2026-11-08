@@ -1,9 +1,12 @@
-"""Contract check against a real Home Assistant installation.
+"""Entity construction/property contract against a real Home Assistant.
 
-CI does not install Home Assistant (the static tests run without it), so this
-file is skipped there. Run it in an environment with Home Assistant installed:
+The `ha-contract` CI job installs Home Assistant 2026.11.0 and runs this file.
+Locally it is skipped when Home Assistant is not installed:
 
     pytest tests/test_ha_contract.py
+
+This checks construction and entity-description/property access, not full
+EntityPlatform registration.
 """
 from __future__ import annotations
 

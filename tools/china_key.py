@@ -272,9 +272,10 @@ class LegacyTlsMqttConnection(_TlsMqttConnection):
         ctx = ssl.create_default_context(cafile=str(GATEWAY_CA_FILE))
         ctx.check_hostname = True
         ctx.verify_mode = ssl.CERT_REQUIRED
-        # OpenSSL rejects this legacy Haier CA unless it is explicitly treated
-        # as a trusted anchor; chain and hostname verification stay enabled.
-        ctx.verify_flags = getattr(ssl, "VERIFY_X509_TRUSTED_FIRST", 0)
+        # The default context already enables TRUSTED_FIRST.  STRICT rejects
+        # this legacy CA (non-critical Basic Constraints and no Key Usage);
+        # disable only that check, keeping chain and hostname verification.
+        ctx.verify_flags &= ~getattr(ssl, "VERIFY_X509_STRICT", 0)
         try:
             ctx.set_ciphers("DEFAULT@SECLEVEL=0")
         except ssl.SSLError:
