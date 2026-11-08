@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_DEVICE_ID, DOMAIN
 from .coordinator import WasherCoordinator
+from .profile import CASARTE_CE_AB13LWTUWCU1
 from .specs import ALL_BINARY, BinarySpec, as_bool
 
 
@@ -22,8 +23,8 @@ def _device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, device_id)},
         name=entry.title,
-        manufacturer="Haier / Casarte",
-        model="CE AB13LWTUWCU1",
+        manufacturer=CASARTE_CE_AB13LWTUWCU1.manufacturer,
+        model=CASARTE_CE_AB13LWTUWCU1.model,
         serial_number=device_id,
     )
 

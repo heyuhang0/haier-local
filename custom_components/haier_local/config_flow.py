@@ -20,10 +20,11 @@ from .const import (
     DOMAIN,
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
-    MODEL_UPIUS_ID,
 )
+from .profile import CASARTE_CE_AB13LWTUWCU1
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def _clean_device_id(value: str) -> str:
     return "".join(ch for ch in value if ch.isalnum()).upper()
@@ -126,7 +127,9 @@ class HaierLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ),
                     CONF_UPIUS_ID: uplus_id,
                 }
-                if uplus_id and uplus_id.upper() != MODEL_UPIUS_ID.upper():
+                if uplus_id and (
+                    uplus_id.upper() != CASARTE_CE_AB13LWTUWCU1.uplus_id.upper()
+                ):
                     return await self.async_step_confirm()
                 return await self._async_create_entry()
 

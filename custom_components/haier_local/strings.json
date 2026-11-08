@@ -14,7 +14,7 @@
       },
       "confirm": {
         "title": "Unverified model",
-        "description": "Detected uPlusId {uplus_id}, which is not the model verified by this integration (Casarte CE AB13LWTUWCU1). Continue anyway?",
+        "description": "Detected uPlusId {uplus_id}, which is not a profile verified by this integration. Continue anyway?",
         "data": {
           "confirm": "I understand this model is unverified"
         }

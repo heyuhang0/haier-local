@@ -1,16 +1,16 @@
 # Protocol notes
 
-How the local connection to the **Casarte CE AB13LWTUWCU1** (Haier class
-`0501`) works, and how the implementation was verified.
+How the supported class-0501 washer profile is read locally. Device-specific
+verification and entity presentation live in
+[`devices/casarte-ce-ab13lwtu.md`](devices/casarte-ce-ab13lwtu.md).
 
 ## Result
 
 - The appliance exposes Haier's uSS protocol on **TCP 56800**.
 - UDISCOVERY on **UDP 7083** identifies it without a key.
 - The status report is AES-128-CBC encrypted with a per-device `localKey`.
-- The class-0501 byte map decodes **93 attributes**. All 92 attributes with a
-  non-null value in Haier's cloud shadow matched; the remaining cloud value was null.
-- The integration is read-only and does not use the cloud at runtime.
+- A fixed class-0501 map decodes the profile's status report; the device page
+  records the observed field and value results.
 
 ## Discovery
 
@@ -68,10 +68,6 @@ APK. The APK was used only to confirm that identity; it is not redistributed.
 before sending any MQTT credentials. The key is written with mode `0600` and
 verified with one read-only uSS session; it is not part of this repository.
 
-The key remains valid for local use while the appliance is cut off from
-Haier's cloud; that is why the WAN block is done only after the HA entities
-work.
-
 ## Status decoding
 
 The class-0501 map used for this unit is:
@@ -81,12 +77,13 @@ The class-0501 map used for this unit is:
 ```
 
 It contains 219 fields and 61 alarm positions. The device's own uPlusId is not
-in the bundled model table, so `tools/read_washer.py` tries the bundled
-class-0501 maps against a live report and selects the map that places the most
-known fields. The selected map produced the same 93 field names as the cloud
-digital model; all 92 non-null values matched, including `remainingTimeHH/MM`, `cyclePhase`, `laundryCycle`,
-`washTemp`, `spinSpeed`, `currentWater/totalWater`, and
-`currentElectricity/totalElectricity`.
+in the bundled model table, so this profile pins the map explicitly. Both the
+integration and `tools/read_washer.py` load that map from the profile; neither
+guesses a map at read time.
+
+The map's field/value verification is recorded in the profile's device page.
+The paired values and capture conditions are in
+[`tests/fixtures/`](../tests/fixtures/).
 
 Two practical details:
 
@@ -95,33 +92,17 @@ Two practical details:
 - The 93 attributes exposed for this unit and their cloud descriptions are in
   `custom_components/haier_local/data/digital_model.json`.
 
-The paired values from the verification run are kept as sanitized fixtures in
-`tests/fixtures/`; `tests/test_component.py` compares all 93 offline.
+## Reconstruction
 
-## Integration
+The profile map is stored in
+`custom_components/haier_local/data/model_0501.json`, and the 93 exposed
+attributes with cloud descriptions are in
+`custom_components/haier_local/data/digital_model.json`. See
+[`maintenance.md`](maintenance.md) for the commands that regenerate them and for
+updating the vendored decoder.
 
-`custom_components/haier_local/` uses a `DataUpdateCoordinator` to read the
-appliance every 30 seconds (configurable, minimum 15 seconds). The config flow
-takes the LAN address and key, discovers the device, checks the `0501` class,
-and validates the key with a real status read.
-
-Entity tiers keep the device page readable:
-
-- 20 primary entities;
-- 21 enabled diagnostic entities;
-- 18 disabled-by-default diagnostic entities, including grouped `Raw state`
-  and `Feature flags`.
-
-The full 93-field state remains available in `Raw state` as attributes.
-Controls are not implemented; this version is read-only.
-
-## Limitations
-
-- One local session at a time; do not run another poller against the washer.
-- The map is verified on the CE AB13LWTUWCU1; another class-0501 model may need
-  a different map and asks for confirmation in the config flow.
-- The localKey is required before any status read; the helper is the only part
-  that contacts Haier's cloud.
+One local session is allowed at a time; this is a device constraint, not an
+integration setting.
 
 ## References
 

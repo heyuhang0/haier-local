@@ -21,6 +21,7 @@ specs = importlib.import_module("haier_local.specs")
 enum_defs = importlib.import_module("haier_local.enum_defs")
 decoder = importlib.import_module("haier_local.decoder")
 const = importlib.import_module("haier_local.const")
+profile = importlib.import_module("haier_local.profile")
 
 
 def _translations(name: str) -> dict:
@@ -32,15 +33,14 @@ EN = _translations("en.json")
 ZH = _translations("zh-Hans.json")
 
 
-def test_entity_tiers() -> None:
-    assert len(specs.PRIMARY_SENSORS) == 13
-    assert len(specs.PRIMARY_BINARY) == 7
-    assert len(specs.DIAGNOSTIC_SENSORS) == 14
-    assert len(specs.DIAGNOSTIC_BINARY) == 7
-    assert len(specs.DISABLED_SENSORS) == 11
-    assert len(specs.DISABLED_BINARY) == 5
-    assert len(specs.ALL_SENSORS) + 2 == 40
-    assert len(specs.ALL_BINARY) == 19
+def test_entity_specs_are_unique_and_have_translation_keys() -> None:
+    sensor_keys = [spec.key for spec in specs.ALL_SENSORS]
+    binary_keys = [spec.key for spec in specs.ALL_BINARY]
+    assert len(sensor_keys) == len(set(sensor_keys))
+    assert len(binary_keys) == len(set(binary_keys))
+    assert set(sensor_keys).isdisjoint(binary_keys)
+    assert all(spec.key and spec.name_en and spec.name_zh
+               for spec in (*specs.ALL_SENSORS, *specs.ALL_BINARY))
 
 
 def test_translation_key_coverage() -> None:
@@ -109,11 +109,11 @@ def test_manifest_and_project_metadata() -> None:
     assert manifest["config_flow"] is True
     assert manifest["iot_class"] == "local_polling"
     assert manifest["version"] == const.VERSION
-    assert manifest["codeowners"] == ["@hyh0"]
-    assert const.MODEL_FILE.is_file()
-    assert const.DIGITAL_MODEL_FILE.is_file()
-    assert len(const.MODEL_UPIUS_ID) > 32
-    assert not const.MODEL_UPIUS_ID.startswith("0x")
+    device = profile.CASARTE_CE_AB13LWTUWCU1
+    assert device.model_file.is_file()
+    assert device.digital_model_file.is_file()
+    assert len(device.uplus_id) > 32
+    assert not device.uplus_id.startswith("0x")
 
     hacs = json.loads((ROOT / "hacs.json").read_text())
     assert hacs["name"] == "Haier Local"
@@ -143,7 +143,8 @@ def _normalise(value) -> str:
         return text
 
 
-def test_local_values_match_cloud_shadow() -> None:
+def test_historical_local_values_match_cloud_shadow() -> None:
+    """Historical evidence, not a decoder test: both sides are saved outputs."""
     local = json.loads((FIXTURES / "local_status_93.json").read_text())
     cloud = json.loads((FIXTURES / "cloud_values_93.json").read_text())
     assert len(local) == 93

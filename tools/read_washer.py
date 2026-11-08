@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Read the Casarte washer locally over uSS and decode class 0501 fields.
+"""Read the supported washer locally and decode it with the integration's map.
 
-Fully offline once local_key.json exists. Uses the manufacturer's class-0501
-byte maps bundled with haismart-local; our exact uPlusId is not in that bundle,
-so each class map is tried against the live report and the one that places the
-most fields is printed.
+This uses the same fixed class-0501 profile as the Home Assistant integration,
+not a map-guessing heuristic.  It is read-only and fully offline once
+``local_key.json`` exists.
+
+Usage:
+    python3 -I tools/read_washer.py --host <washer-ip>
+    python3 -I tools/read_washer.py --host <washer-ip> --out /tmp/state.json
 """
 from __future__ import annotations
 
 import argparse
-import gzip
+import importlib.util
 import json
 import os
 import sys
@@ -19,32 +22,28 @@ PROJECT = Path(__file__).resolve().parent.parent
 VENDOR = PROJECT / "custom_components/haier_local/vendor"
 sys.path.insert(0, str(VENDOR))
 
-from haier_local_hrdp.device_model import ModelField, model_from_record  # noqa: E402
+from haier_local_hrdp.device_model import model_from_record  # noqa: E402
 from haier_local_hrdp.uss import read_status  # noqa: E402
 
-MODELS = VENDOR / "haier_local_hrdp/device_models.json.gz"
-INTERESTING = (
-    "remainingTime", "remaining", "cyclePhase", "cycle", "laundryCycle",
-    "currentWashCycle", "washTemp", "spinSpeed", "weight", "loadWeight",
-    "door", "remote", "childLock", "onOff", "power", "runningMode",
-    "program", "procedure", "water", "electric", "energy", "message",
-    "fault", "alarm", "error", "dirty", "detergent", "softener",
+_profile_spec = importlib.util.spec_from_file_location(
+    "haier_local_profile",
+    PROJECT / "custom_components/haier_local/profile.py",
 )
+_profile = importlib.util.module_from_spec(_profile_spec)
+sys.modules["haier_local_profile"] = _profile
+assert _profile_spec.loader is not None
+_profile_spec.loader.exec_module(_profile)
+CASARTE_CE_AB13LWTUWCU1 = _profile.CASARTE_CE_AB13LWTUWCU1
 
 
-def load_models() -> list[tuple[str, object]]:
-    bundle = json.load(gzip.open(MODELS, "rt", encoding="utf-8"))
-    out = []
-    for typeid, record in bundle["models"].items():
-        if record.get("cls") != "0501":
-            continue
-        out.append((typeid, model_from_record(typeid, record)))
-    return out
-
-
-def interesting(name: str) -> bool:
-    lower = name.lower()
-    return any(word.lower() in lower for word in INTERESTING)
+def load_model():
+    record = json.loads(CASARTE_CE_AB13LWTUWCU1.model_file.read_text())
+    model = model_from_record(
+        record["typeid"],
+        {"cls": record["cls"], "fields": record["fields"],
+         "alarms": record.get("alarms", [])},
+    )
+    return model
 
 
 def main() -> int:
@@ -55,6 +54,7 @@ def main() -> int:
     parser.add_argument("--attributes", help="optional JSON list of declared attribute names")
     parser.add_argument("--status-cmd", default="6D01")
     parser.add_argument("--out", default=str(PROJECT / "washer_status.json"))
+    parser.add_argument("--raw-out", help="also save the decrypted report bytes")
     args = parser.parse_args()
     host = args.host or os.environ.get("HAIER_WASHER_IP", "")
     if not host:
@@ -75,25 +75,22 @@ def main() -> int:
         return 1
 
     full = max(blobs, key=len)
-    print(f"  decoding {len(full)}-byte blob as {args.status_cmd}")
-    best = None
-    for typeid, model in load_models():
-        decoded = model.decode(
-            full, status_cmd=args.status_cmd,
-            only=frozenset(declared) if declared else None,
-        )
-        score = sum(1 for name in decoded if interesting(name))
-        if best is None or score > best[0]:
-            best = (score, typeid, model, decoded)
-        print(f"    {typeid[:24]}… fields={len(model.fields):3d} "
-              f"decoded={len(decoded):3d} interesting={score:2d}")
+    if args.raw_out:
+        Path(args.raw_out).write_bytes(full)
+        print(f"  raw report written to {args.raw_out}")
+    model = load_model()
+    decoded = model.decode(
+        full, status_cmd=args.status_cmd,
+        only=frozenset(declared) if declared else None,
+    )
+    print(f"  map {model.typeid} ({len(model.fields)} fields); "
+          f"decoded {len(decoded)} attributes")
+    if not decoded:
+        print("the report did not decode with the configured profile")
+        return 2
 
-    score, typeid, model, decoded = best
-    print(f"\nbest map: {typeid} (score {score})")
-    print("interesting values:")
     for name in sorted(decoded):
-        if interesting(name):
-            print(f"  {name:42} {decoded[name]}")
+        print(f"  {name:42} {decoded[name]}")
     Path(args.out).write_text(json.dumps(decoded, indent=2, ensure_ascii=False, default=str))
     print(f"\nfull decoded state written to {args.out}")
     return 0

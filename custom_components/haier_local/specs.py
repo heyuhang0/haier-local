@@ -254,7 +254,7 @@ DISABLED_BINARY: tuple[BinarySpec, ...] = (
                diagnostic=True, enabled_default=False),
 )
 
-# Fields that never become individual entities; raw_state carries them.
+# This profile keeps these fields in Raw state rather than as entities.
 RAW_ONLY: frozenset[str] = frozenset({
     "clothesIdIndex", "clothesInfoHW", "clothesInfoLW", "clothesInfoMW",
     "clothesRecogNum", "clothesRecogResult", "clothesRecogStatus",

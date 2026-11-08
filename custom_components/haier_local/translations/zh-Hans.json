@@ -14,7 +14,7 @@
       },
       "confirm": {
         "title": "未验证型号",
-        "description": "检测到 uPlusId {uplus_id}，不是本集成验证过的型号（Casarte CE AB13LWTUWCU1）。仍要继续吗？",
+        "description": "检测到 uPlusId {uplus_id}，不是本集成验证过的型号配置。仍要继续吗？",
         "data": {
           "confirm": "我了解该型号未经完整验证"
         }

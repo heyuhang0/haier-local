@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from .const import MODEL_FILE, DIGITAL_MODEL_FILE
+from .profile import CASARTE_CE_AB13LWTUWCU1
 
 _VENDOR = Path(__file__).resolve().parent / "vendor"
 if str(_VENDOR) not in sys.path:
@@ -18,14 +18,14 @@ from haier_local_hrdp.device_model import model_from_record  # noqa: E402
 from haier_local_hrdp.udiscovery import query as _udiscovery_query  # noqa: E402
 from haier_local_hrdp.uss import parse_alarm_frame, read_status  # noqa: E402
 
-_record = json.loads(MODEL_FILE.read_text())
+_record = json.loads(CASARTE_CE_AB13LWTUWCU1.model_file.read_text())
 _MODEL = model_from_record(
     _record["typeid"],
     {"cls": _record["cls"], "fields": _record["fields"], "alarms": _record.get("alarms", [])},
 )
 _DIGITAL = {
     a["name"]: a
-    for a in json.loads(DIGITAL_MODEL_FILE.read_text())
+    for a in json.loads(CASARTE_CE_AB13LWTUWCU1.digital_model_file.read_text())
     if a.get("name")
 }
 
