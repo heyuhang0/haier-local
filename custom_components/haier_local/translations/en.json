@@ -390,35 +390,35 @@
       "drain_diagnostic": {
         "name": "Drain diagnostic result",
         "state": {
-          "not_passed": "Not passed",
+          "untested_or_failed": "Untested / failed",
           "passed": "Diagnostic passed"
         }
       },
       "inlet_diagnostic": {
         "name": "Inlet diagnostic result",
         "state": {
-          "not_passed": "Not passed",
+          "untested_or_failed": "Untested / failed",
           "passed": "Diagnostic passed"
         }
       },
       "spin_diagnostic": {
         "name": "Spin diagnostic result",
         "state": {
-          "not_passed": "Not passed",
+          "untested_or_failed": "Untested / failed",
           "passed": "Diagnostic passed"
         }
       },
       "wash_diagnostic": {
         "name": "Wash diagnostic result",
         "state": {
-          "not_passed": "Not passed",
+          "untested_or_failed": "Untested / failed",
           "passed": "Diagnostic passed"
         }
       },
       "dry_diagnostic": {
         "name": "Dry diagnostic result",
         "state": {
-          "not_passed": "Not passed",
+          "untested_or_failed": "Untested / failed",
           "passed": "Diagnostic passed"
         }
       },
