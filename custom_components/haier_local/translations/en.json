@@ -318,7 +318,108 @@
           "hand_wash": "Hand wash",
           "rinse_only": "Rinse only",
           "spin_only": "Spin only",
-          "dry_only": "Dry only"
+          "dry_only": "Dry only",
+          "texture_32": "Drain only",
+          "texture_33": "Bed sheets",
+          "texture_34": "Night wash",
+          "texture_35": "Rack dry",
+          "texture_36": "Loosen",
+          "texture_37": "Skin care",
+          "texture_38": "Sanitise",
+          "texture_39": "Premium wash",
+          "texture_41": "Intensive",
+          "texture_42": "Easy iron",
+          "texture_43": "Little sun",
+          "texture_44": "Timed dry",
+          "texture_45": "Hanger dry",
+          "texture_46": "Card wash",
+          "texture_47": "Wave wash",
+          "texture_48": "EU cotton",
+          "texture_49": "EU synthetics",
+          "texture_50": "Anti-allergy",
+          "texture_51": "Odour removal",
+          "texture_52": "Timed wash",
+          "texture_53": "Shell jacket",
+          "texture_54": "App self-diagnosis",
+          "texture_55": "Blanket",
+          "texture_56": "Standard wash",
+          "texture_57": "Local AI wash",
+          "texture_58": "AI cloud wash",
+          "texture_59": "Bath towels (EU)",
+          "texture_60": "UV sanitise",
+          "texture_61": "Anti-mite dry",
+          "texture_62": "Pasteurise",
+          "texture_63": "i-Refresh",
+          "texture_64": "Super wash",
+          "texture_65": "Quick 30",
+          "texture_66": "Quick wash & dry",
+          "texture_67": "Beauty care",
+          "texture_68": "AI wash & dry",
+          "texture_71": "Aroma sanitise",
+          "texture_72": "Aroma refresh",
+          "texture_73": "Mink",
+          "texture_74": "Silk quilt",
+          "texture_75": "School uniform",
+          "texture_76": "Shearling",
+          "texture_77": "Wool sweater",
+          "texture_78": "Chiffon",
+          "texture_79": "Suits",
+          "texture_80": "Home textiles",
+          "texture_81": "Plush toys",
+          "texture_82": "Face masks",
+          "texture_83": "Quick 39",
+          "texture_84": "Seasonal",
+          "texture_85": "EU cotton 2",
+          "texture_86": "EU synthetics 2",
+          "texture_87": "Mixed 2",
+          "texture_88": "New clothes 2 / hand wash 2",
+          "texture_89": "Tweed",
+          "texture_90": "Luxury textiles",
+          "texture_91": "Drum wash & dry",
+          "texture_92": "Linen",
+          "texture_93": "Fragrance care",
+          "texture_94": "Lasting fragrance (softening soak 20)",
+          "texture_95": "Fleece",
+          "texture_96": "Luxury care",
+          "texture_128": "Quick 58",
+          "texture_129": "Cotton 20",
+          "texture_130": "ECO 40-60",
+          "texture_131": "New EU drying performance"
+        }
+      },
+      "drain_diagnostic": {
+        "name": "Drain diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "inlet_diagnostic": {
+        "name": "Inlet diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "spin_diagnostic": {
+        "name": "Spin diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "wash_diagnostic": {
+        "name": "Wash diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "dry_diagnostic": {
+        "name": "Dry diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
         }
       },
       "haier_detergent_weight": {
@@ -413,21 +514,6 @@
       },
       "dry_status": {
         "name": "Drying"
-      },
-      "drain_problem": {
-        "name": "Drain problem"
-      },
-      "inlet_problem": {
-        "name": "Inlet problem"
-      },
-      "spin_problem": {
-        "name": "Spin problem"
-      },
-      "wash_problem": {
-        "name": "Wash problem"
-      },
-      "dry_problem": {
-        "name": "Dry problem"
       },
       "detergent_b_status": {
         "name": "Detergent B dosing"

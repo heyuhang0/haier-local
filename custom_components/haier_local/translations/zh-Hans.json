@@ -318,7 +318,108 @@
           "hand_wash": "手洗",
           "rinse_only": "单漂洗",
           "spin_only": "单脱水",
-          "dry_only": "单烘干"
+          "dry_only": "单烘干",
+          "texture_32": "单排水",
+          "texture_33": "床单",
+          "texture_34": "夜洗",
+          "texture_35": "架干燥",
+          "texture_36": "抖散",
+          "texture_37": "护肤洗",
+          "texture_38": "消毒洗",
+          "texture_39": "高端专属洗",
+          "texture_41": "加强洗",
+          "texture_42": "熨烫",
+          "texture_43": "小太阳",
+          "texture_44": "定时烘干",
+          "texture_45": "衣架烘干",
+          "texture_46": "卡片洗",
+          "texture_47": "巨浪洗",
+          "texture_48": "欧标棉麻",
+          "texture_49": "欧标化纤",
+          "texture_50": "防过敏",
+          "texture_51": "除异味",
+          "texture_52": "时间洗",
+          "texture_53": "冲锋衣",
+          "texture_54": "APP自诊断",
+          "texture_55": "毛毯洗",
+          "texture_56": "标准洗",
+          "texture_57": "本地智慧洗",
+          "texture_58": "智慧云洗",
+          "texture_59": "浴巾(欧标）",
+          "texture_60": "紫外除菌",
+          "texture_61": "烘干除螨",
+          "texture_62": "巴氏杀菌",
+          "texture_63": "超级空气洗",
+          "texture_64": "超级洗",
+          "texture_65": "快洗30",
+          "texture_66": "快洗快烘",
+          "texture_67": "美颜洗",
+          "texture_68": "智慧洗烘",
+          "texture_71": "香薰除菌",
+          "texture_72": "香薰清新",
+          "texture_73": "貂皮",
+          "texture_74": "蚕丝被",
+          "texture_75": "校服",
+          "texture_76": "皮毛一体",
+          "texture_77": "羊毛衫",
+          "texture_78": "雪纺纱",
+          "texture_79": "西装",
+          "texture_80": "家纺",
+          "texture_81": "毛绒玩具",
+          "texture_82": "口罩",
+          "texture_83": "快洗39",
+          "texture_84": "换季洗",
+          "texture_85": "欧标棉麻2",
+          "texture_86": "欧标化纤2",
+          "texture_87": "混合2",
+          "texture_88": "新衣洗2/手洗2",
+          "texture_89": "毛呢",
+          "texture_90": "奢品家纺",
+          "texture_91": "筒洗烘",
+          "texture_92": "亚麻",
+          "texture_93": "香护",
+          "texture_94": "留香洗(软化浸泡20)",
+          "texture_95": "摇粒绒",
+          "texture_96": "奢护",
+          "texture_128": "快洗58",
+          "texture_129": "Cotton20",
+          "texture_130": "ECO40-60",
+          "texture_131": "新欧标烘干性能"
+        }
+      },
+      "drain_diagnostic": {
+        "name": "排水系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "inlet_diagnostic": {
+        "name": "进水系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "spin_diagnostic": {
+        "name": "脱水系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "wash_diagnostic": {
+        "name": "洗涤系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "dry_diagnostic": {
+        "name": "烘干系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
         }
       },
       "haier_detergent_weight": {
@@ -413,21 +514,6 @@
       },
       "dry_status": {
         "name": "烘干中"
-      },
-      "drain_problem": {
-        "name": "排水系统异常"
-      },
-      "inlet_problem": {
-        "name": "进水系统异常"
-      },
-      "spin_problem": {
-        "name": "脱水系统异常"
-      },
-      "wash_problem": {
-        "name": "洗涤系统异常"
-      },
-      "dry_problem": {
-        "name": "烘干系统异常"
       },
       "detergent_b_status": {
         "name": "洗涤剂B投放"

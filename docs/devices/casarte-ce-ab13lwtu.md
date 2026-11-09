@@ -39,7 +39,7 @@ The integration exposes this profile as:
   and problem.
 - 21 enabled diagnostic entities: cycle counters, standby time, program state,
   detergent/softener/booster levels, drying fields, detergent type/ratio,
-  dirt/stain/fabric, and subsystem problem sensors.
+  dirt/stain/fabric, and the five subsystem diagnostic-result sensors.
 - 18 disabled-by-default diagnostic entities: dosing weights, detergent B, dry
   type/flag/cleaning reminder, air wash, cloud program fields, weights, wash
   speed, and the grouped `Feature flags` and `Raw state` entities.
