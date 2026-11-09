@@ -4,6 +4,8 @@ A local Home Assistant integration for Haier/Casarte appliances that speak the
 uSS protocol on TCP 56800. It reads status directly from the appliance and uses
 the cloud only once, to obtain the per-device `localKey`.
 
+[![Open your Home Assistant instance and open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=heyuhang0&repository=haier-local&category=integration)
+
 ## Supported devices
 
 | Device | Class | Status | Details |
