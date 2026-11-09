@@ -159,7 +159,7 @@ def test_cycle_totals_and_texture_coverage() -> None:
     assert by_key["total_water"].state_class == "total_increasing"
     assert by_key["total_energy"].state_class == "total_increasing"
     assert len(DEVICE.enum_values("fabric")) == 97
-    assert DEVICE.enum_values("diag_result")[False][0] == "untested_or_failed"
+    assert DEVICE.enum_values("diag_result")[False][0] == "not_passed"
     assert DEVICE.enum_values("diag_result")[True][0] == "passed"
 
 

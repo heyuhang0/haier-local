@@ -10,7 +10,7 @@ from __future__ import annotations
 # raw value -> (token, english label, chinese label)
 ENUM_DEFS: dict[str, dict[int, tuple[str, str, str]]] = {
     "diag_result": {
-        0: ("untested_or_failed", "Untested / failed", "未测 / 不合格"),
+        0: ("not_passed", "Not diagnosed or failed", "未诊断或不合格"),
         1: ("passed", "Diagnostic passed", "诊断通过"),
     },
     "phase": {

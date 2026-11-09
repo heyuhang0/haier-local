@@ -390,35 +390,35 @@
       "drain_diagnostic": {
         "name": "排水系统诊断结果",
         "state": {
-          "untested_or_failed": "未测 / 不合格",
+          "not_passed": "未诊断或不合格",
           "passed": "诊断通过"
         }
       },
       "inlet_diagnostic": {
         "name": "进水系统诊断结果",
         "state": {
-          "untested_or_failed": "未测 / 不合格",
+          "not_passed": "未诊断或不合格",
           "passed": "诊断通过"
         }
       },
       "spin_diagnostic": {
         "name": "脱水系统诊断结果",
         "state": {
-          "untested_or_failed": "未测 / 不合格",
+          "not_passed": "未诊断或不合格",
           "passed": "诊断通过"
         }
       },
       "wash_diagnostic": {
         "name": "洗涤系统诊断结果",
         "state": {
-          "untested_or_failed": "未测 / 不合格",
+          "not_passed": "未诊断或不合格",
           "passed": "诊断通过"
         }
       },
       "dry_diagnostic": {
         "name": "烘干系统诊断结果",
         "state": {
-          "untested_or_failed": "未测 / 不合格",
+          "not_passed": "未诊断或不合格",
           "passed": "诊断通过"
         }
       },
