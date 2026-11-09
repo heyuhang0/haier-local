@@ -7,6 +7,8 @@ Install their dependency with `pip install -r requirements.txt`.
 
 - `read_washer.py` — read-only status using the same fixed profile map as the
   integration.
+- `fetch_cloud_model.py` — fetch the device's cloud digital model for enum
+  curation (requires the saved token and key).
 - `generate_component_translations.py` — regenerate entity/enum translations
   from specs.
 

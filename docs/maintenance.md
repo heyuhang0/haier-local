@@ -46,6 +46,21 @@ python3 -I tools/read_washer.py --help
 
 Update the upstream revision in `THIRD_PARTY_NOTICES.md`.
 
+## Fetch the cloud model
+
+`tools/fetch_cloud_model.py` retrieves the device's `attributes[]` document from
+the mainland cloud digital-model endpoint. It writes `cloud_model.json`
+(gitignored) and does not modify the integration:
+
+```bash
+python3 -I tools/fetch_cloud_model.py
+```
+
+Use `valueRange.dataList` for enum labels. The cloud list is not identical to
+the catalogue map: for `texture`, the cloud has 106 values while the selected
+map can output 97 `stdValue`s; the nine cloud-only values cannot be decoded by
+this profile.
+
 ## Regenerate translations
 
 `tools/generate_component_translations.py` expands the entity and enum tables in

@@ -165,6 +165,8 @@ ENUM_DEFS: dict[str, dict[int, tuple[str, str, str]]] = {
         25: ("chili_sauce", "Chili sauce", "辣椒酱"),
         26: ("fruit", "Fruit", "果渍"),
     },
+    # Chinese labels: cloud texture.valueRange. English: vendored laundry labels
+    # plus manual review; values without a catalogue variant are not included.
     "fabric": {
         0: ("not_selected", "Not selected", "未选择或未识别"),
         1: ("cotton", "Cotton", "棉麻"),

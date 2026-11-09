@@ -30,3 +30,5 @@ venv/
 .vscode/
 .DS_Store
 *.log
+
+cloud_model.json
