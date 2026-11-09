@@ -94,7 +94,7 @@ def test_spec_sources_exist_in_raw_state_fields_and_catalogue() -> None:
     for spec in (*DEVICE.sensors, *DEVICE.binary_sensors):
         if spec.source is not None:
             assert spec.source in fields, spec.key
-    for field in (*DEVICE.raw_only, *(row[0] for row in DEVICE.feature_flags)):
+    for field in DEVICE.raw_only:
         assert field in fields, field
 
 
@@ -135,7 +135,6 @@ def test_profile_data_is_owned_by_the_instance() -> None:
         sensors=(),
         binary_sensors=(),
         raw_state_fields=(),
-        feature_flags=(),
         raw_only=frozenset(),
         extra_sensor_names=(),
         enums={},
@@ -194,21 +193,26 @@ def test_cycle_totals_and_texture_coverage() -> None:
 
 
 def test_new_fields_follow_the_existing_category_rules() -> None:
-    by_key = {spec.key: spec for spec in DEVICE.sensors}
-    # Settings a user is likely to check: diagnostic, enabled.
-    assert by_key["softener_concentration"].diagnostic
-    assert by_key["softener_concentration"].enabled_default
-    assert by_key["softener_ratio"].diagnostic
-    assert by_key["softener_ratio"].enabled_default
-    # Niche measurements: diagnostic, disabled by default.
-    assert by_key["water_hardness"].diagnostic
-    assert not by_key["water_hardness"].enabled_default
+    sensors = {spec.key: spec for spec in DEVICE.sensors}
+    binary = {spec.key: spec for spec in DEVICE.binary_sensors}
+
+    assert not sensors["softener_concentration"].diagnostic
+    assert sensors["softener_concentration"].enabled_default
+    assert not sensors["softener_ratio"].diagnostic
+    assert sensors["softener_ratio"].enabled_default
+    assert not sensors["water_hardness"].diagnostic
+    assert not sensors["water_hardness"].enabled_default
     for key in ("box1_remaining", "box2_remaining", "box3_remaining", "box4_remaining"):
-        assert by_key[key].diagnostic
-        assert not by_key[key].enabled_default
-    # Booleans stay in the grouped Feature flags entity, not as individual entities.
-    flags = {field for field, _en, _zh in DEVICE.feature_flags}
-    assert {"antiCrease", "photoPlasmaStatus", "freshAir", "wetcleaningProgram"} <= flags
+        assert not sensors[key].diagnostic
+        assert not sensors[key].enabled_default
+
+    for key in ("air_wash_level", "air_wash_time", "care", "wet_cleaning"):
+        spec = sensors.get(key) or binary[key]
+        assert not spec.diagnostic
+        assert spec.enabled_default
+    for key in ("anti_crease", "fresh_air", "photo_plasma", "spa_rinse_heat"):
+        assert not binary[key].diagnostic
+        assert not binary[key].enabled_default
     assert "clothesAnionStatus" not in DEVICE.raw_state_fields
 
 

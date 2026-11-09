@@ -155,24 +155,6 @@
       "remaining_rinse": {
         "name": "剩余漂洗次数"
       },
-      "current_water": {
-        "name": "本次用水量"
-      },
-      "total_water": {
-        "name": "累计用水量"
-      },
-      "current_energy": {
-        "name": "本次用电量"
-      },
-      "total_energy": {
-        "name": "累计用电量"
-      },
-      "current_cycle": {
-        "name": "周期内洗涤次数"
-      },
-      "total_cycles": {
-        "name": "累计洗涤次数"
-      },
       "remaining_standby": {
         "name": "剩余待机时间"
       },
@@ -233,6 +215,16 @@
           "quick": "快速"
         }
       },
+      "dry_type": {
+        "name": "烘干方式",
+        "state": {
+          "timed": "定时烘干",
+          "standard": "标准",
+          "iron": "熨烫",
+          "hanger": "衣架",
+          "sun": "太阳"
+        }
+      },
       "detergent_type": {
         "name": "洗涤剂类型",
         "state": {
@@ -252,6 +244,98 @@
       },
       "softener_ratio": {
         "name": "柔顺剂投放比例"
+      },
+      "air_wash_time": {
+        "name": "空气洗时间"
+      },
+      "air_wash_level": {
+        "name": "空气洗温度档位",
+        "state": {
+          "not_set": "未设定",
+          "low": "低温",
+          "medium": "中温",
+          "high": "高温",
+          "reserved_1": "预留档位1",
+          "reserved_2": "预留档位2",
+          "reserved_3": "预留档位3"
+        }
+      },
+      "weight_actual": {
+        "name": "实测衣物重量"
+      },
+      "haier_detergent_weight": {
+        "name": "洗涤剂投放量"
+      },
+      "haier_softener_weight": {
+        "name": "柔顺剂投放量"
+      },
+      "total_water": {
+        "name": "累计用水量"
+      },
+      "total_energy": {
+        "name": "累计用电量"
+      },
+      "current_cycle": {
+        "name": "周期内洗涤次数"
+      },
+      "total_cycles": {
+        "name": "累计洗涤次数"
+      },
+      "drain_diagnostic": {
+        "name": "排水系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "inlet_diagnostic": {
+        "name": "进水系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "spin_diagnostic": {
+        "name": "脱水系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "wash_diagnostic": {
+        "name": "洗涤系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "dry_diagnostic": {
+        "name": "烘干系统诊断结果",
+        "state": {
+          "not_passed": "未诊断或不合格",
+          "passed": "诊断通过"
+        }
+      },
+      "current_water": {
+        "name": "本次用水量"
+      },
+      "current_energy": {
+        "name": "本次用电量"
+      },
+      "cloud_prog_id": {
+        "name": "云程序编号"
+      },
+      "cloud_prog_src": {
+        "name": "云程序启动来源",
+        "state": {
+          "unknown": "未知",
+          "panel": "本机",
+          "app": "APP",
+          "voice_module": "语音模块",
+          "speaker": "音箱",
+          "fridge": "冰箱",
+          "tv": "TV"
+        }
       },
       "dirt_level": {
         "name": "脏污度",
@@ -406,50 +490,6 @@
           "texture_131": "新欧标烘干性能"
         }
       },
-      "drain_diagnostic": {
-        "name": "排水系统诊断结果",
-        "state": {
-          "not_passed": "未诊断或不合格",
-          "passed": "诊断通过"
-        }
-      },
-      "inlet_diagnostic": {
-        "name": "进水系统诊断结果",
-        "state": {
-          "not_passed": "未诊断或不合格",
-          "passed": "诊断通过"
-        }
-      },
-      "spin_diagnostic": {
-        "name": "脱水系统诊断结果",
-        "state": {
-          "not_passed": "未诊断或不合格",
-          "passed": "诊断通过"
-        }
-      },
-      "wash_diagnostic": {
-        "name": "洗涤系统诊断结果",
-        "state": {
-          "not_passed": "未诊断或不合格",
-          "passed": "诊断通过"
-        }
-      },
-      "dry_diagnostic": {
-        "name": "烘干系统诊断结果",
-        "state": {
-          "not_passed": "未诊断或不合格",
-          "passed": "诊断通过"
-        }
-      },
-      "haier_detergent_weight": {
-        "name": "洗涤剂投放量"
-      },
-      "haier_softener_weight": {
-        "name": "柔顺剂投放量"
-      },
-      "detergent_b_ratio": {
-        "name": "洗涤剂B投放比例"
-      },
       "water_hardness": {
         "name": "水硬度"
       },
@@ -489,60 +529,20 @@
           "empty": "无"
         }
       },
-      "dry_type": {
-        "name": "烘干方式",
-        "state": {
-          "timed": "定时烘干",
-          "standard": "标准",
-          "iron": "熨烫",
-          "hanger": "衣架",
-          "sun": "太阳"
-        }
-      },
-      "air_wash_time": {
-        "name": "空气洗时间"
-      },
-      "air_wash_level": {
-        "name": "空气洗温度档位",
-        "state": {
-          "not_set": "未设定",
-          "low": "低温",
-          "medium": "中温",
-          "high": "高温",
-          "reserved_1": "预留档位1",
-          "reserved_2": "预留档位2",
-          "reserved_3": "预留档位3"
-        }
-      },
-      "cloud_prog_id": {
-        "name": "云程序编号"
-      },
-      "cloud_prog_src": {
-        "name": "云程序启动来源",
-        "state": {
-          "unknown": "未知",
-          "panel": "本机",
-          "app": "APP",
-          "voice_module": "语音模块",
-          "speaker": "音箱",
-          "fridge": "冰箱",
-          "tv": "TV"
-        }
+      "detergent_b_ratio": {
+        "name": "洗涤剂B投放比例"
       },
       "weight_set": {
         "name": "设定衣物重量"
       },
-      "weight_actual": {
-        "name": "实测衣物重量"
-      },
       "wash_speed": {
         "name": "设定洗涤转速"
       },
+      "photo_plasma_care_time": {
+        "name": "光等离子护理时间"
+      },
       "raw_state": {
         "name": "原始状态"
-      },
-      "feature_flags": {
-        "name": "功能开关"
       }
     },
     "binary_sensor": {
@@ -558,35 +558,71 @@
       "door_lock": {
         "name": "门锁"
       },
-      "remote_control": {
-        "name": "远程控制"
-      },
       "child_lock": {
         "name": "童锁"
-      },
-      "problem": {
-        "name": "故障"
-      },
-      "program_started": {
-        "name": "程序已运行"
       },
       "dry_status": {
         "name": "烘干中"
       },
-      "detergent_b_status": {
-        "name": "洗涤剂B投放"
+      "anti_allergy": {
+        "name": "防过敏"
+      },
+      "uv_sterilization": {
+        "name": "紫外杀菌"
+      },
+      "scheduled": {
+        "name": "预约"
+      },
+      "care": {
+        "name": "护理"
+      },
+      "wet_cleaning": {
+        "name": "湿洗"
+      },
+      "problem": {
+        "name": "故障"
+      },
+      "remote_control": {
+        "name": "远程控制"
+      },
+      "remote_control_enabled": {
+        "name": "远程控制使能"
+      },
+      "remote_power_on": {
+        "name": "远程开机"
+      },
+      "long_term_authorization": {
+        "name": "长期授权"
+      },
+      "standby_extended": {
+        "name": "延时待机"
       },
       "dry_prog_flag": {
         "name": "烘干程序标志"
       },
-      "dry_cleaning_needed": {
-        "name": "需要干洗"
-      },
       "def_set_allowed": {
         "name": "允许设置默认参数"
       },
-      "standby_extended": {
-        "name": "延时待机"
+      "detergent_b_status": {
+        "name": "洗涤剂B投放"
+      },
+      "dry_cleaning_needed": {
+        "name": "需要干洗"
+      },
+      "program_started": {
+        "name": "程序已运行"
+      },
+      "anti_crease": {
+        "name": "抗皱"
+      },
+      "fresh_air": {
+        "name": "新风"
+      },
+      "photo_plasma": {
+        "name": "光等离子"
+      },
+      "spa_rinse_heat": {
+        "name": "SPA漂洗加热"
       }
     }
   }

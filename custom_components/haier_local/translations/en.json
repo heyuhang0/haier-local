@@ -155,24 +155,6 @@
       "remaining_rinse": {
         "name": "Remaining rinses"
       },
-      "current_water": {
-        "name": "Current water"
-      },
-      "total_water": {
-        "name": "Total water"
-      },
-      "current_energy": {
-        "name": "Current energy"
-      },
-      "total_energy": {
-        "name": "Total energy"
-      },
-      "current_cycle": {
-        "name": "Current cycles"
-      },
-      "total_cycles": {
-        "name": "Total cycles"
-      },
       "remaining_standby": {
         "name": "Remaining standby"
       },
@@ -233,6 +215,16 @@
           "quick": "Quick"
         }
       },
+      "dry_type": {
+        "name": "Dry type",
+        "state": {
+          "timed": "Timed",
+          "standard": "Standard",
+          "iron": "Iron",
+          "hanger": "Hanger",
+          "sun": "Sun"
+        }
+      },
       "detergent_type": {
         "name": "Detergent type",
         "state": {
@@ -252,6 +244,98 @@
       },
       "softener_ratio": {
         "name": "Softener ratio"
+      },
+      "air_wash_time": {
+        "name": "Air wash time"
+      },
+      "air_wash_level": {
+        "name": "Air wash level",
+        "state": {
+          "not_set": "Not set",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "reserved_1": "Reserved 1",
+          "reserved_2": "Reserved 2",
+          "reserved_3": "Reserved 3"
+        }
+      },
+      "weight_actual": {
+        "name": "Measured clothes weight"
+      },
+      "haier_detergent_weight": {
+        "name": "Detergent dose"
+      },
+      "haier_softener_weight": {
+        "name": "Softener dose"
+      },
+      "total_water": {
+        "name": "Total water"
+      },
+      "total_energy": {
+        "name": "Total energy"
+      },
+      "current_cycle": {
+        "name": "Current cycles"
+      },
+      "total_cycles": {
+        "name": "Total cycles"
+      },
+      "drain_diagnostic": {
+        "name": "Drain diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "inlet_diagnostic": {
+        "name": "Inlet diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "spin_diagnostic": {
+        "name": "Spin diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "wash_diagnostic": {
+        "name": "Wash diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "dry_diagnostic": {
+        "name": "Dry diagnostic result",
+        "state": {
+          "not_passed": "Not diagnosed or failed",
+          "passed": "Diagnostic passed"
+        }
+      },
+      "current_water": {
+        "name": "Current water"
+      },
+      "current_energy": {
+        "name": "Current energy"
+      },
+      "cloud_prog_id": {
+        "name": "Cloud program ID"
+      },
+      "cloud_prog_src": {
+        "name": "Cloud program source",
+        "state": {
+          "unknown": "Unknown",
+          "panel": "Panel",
+          "app": "App",
+          "voice_module": "Voice module",
+          "speaker": "Speaker",
+          "fridge": "Fridge",
+          "tv": "TV"
+        }
       },
       "dirt_level": {
         "name": "Dirt level",
@@ -406,50 +490,6 @@
           "texture_131": "New EU drying performance"
         }
       },
-      "drain_diagnostic": {
-        "name": "Drain diagnostic result",
-        "state": {
-          "not_passed": "Not diagnosed or failed",
-          "passed": "Diagnostic passed"
-        }
-      },
-      "inlet_diagnostic": {
-        "name": "Inlet diagnostic result",
-        "state": {
-          "not_passed": "Not diagnosed or failed",
-          "passed": "Diagnostic passed"
-        }
-      },
-      "spin_diagnostic": {
-        "name": "Spin diagnostic result",
-        "state": {
-          "not_passed": "Not diagnosed or failed",
-          "passed": "Diagnostic passed"
-        }
-      },
-      "wash_diagnostic": {
-        "name": "Wash diagnostic result",
-        "state": {
-          "not_passed": "Not diagnosed or failed",
-          "passed": "Diagnostic passed"
-        }
-      },
-      "dry_diagnostic": {
-        "name": "Dry diagnostic result",
-        "state": {
-          "not_passed": "Not diagnosed or failed",
-          "passed": "Diagnostic passed"
-        }
-      },
-      "haier_detergent_weight": {
-        "name": "Detergent dose"
-      },
-      "haier_softener_weight": {
-        "name": "Softener dose"
-      },
-      "detergent_b_ratio": {
-        "name": "Detergent B ratio"
-      },
       "water_hardness": {
         "name": "Water hardness"
       },
@@ -489,60 +529,20 @@
           "empty": "Empty"
         }
       },
-      "dry_type": {
-        "name": "Dry type",
-        "state": {
-          "timed": "Timed",
-          "standard": "Standard",
-          "iron": "Iron",
-          "hanger": "Hanger",
-          "sun": "Sun"
-        }
-      },
-      "air_wash_time": {
-        "name": "Air wash time"
-      },
-      "air_wash_level": {
-        "name": "Air wash level",
-        "state": {
-          "not_set": "Not set",
-          "low": "Low",
-          "medium": "Medium",
-          "high": "High",
-          "reserved_1": "Reserved 1",
-          "reserved_2": "Reserved 2",
-          "reserved_3": "Reserved 3"
-        }
-      },
-      "cloud_prog_id": {
-        "name": "Cloud program ID"
-      },
-      "cloud_prog_src": {
-        "name": "Cloud program source",
-        "state": {
-          "unknown": "Unknown",
-          "panel": "Panel",
-          "app": "App",
-          "voice_module": "Voice module",
-          "speaker": "Speaker",
-          "fridge": "Fridge",
-          "tv": "TV"
-        }
+      "detergent_b_ratio": {
+        "name": "Detergent B ratio"
       },
       "weight_set": {
         "name": "Set clothes weight"
       },
-      "weight_actual": {
-        "name": "Measured clothes weight"
-      },
       "wash_speed": {
         "name": "Wash speed"
       },
+      "photo_plasma_care_time": {
+        "name": "Photo plasma care time"
+      },
       "raw_state": {
         "name": "Raw state"
-      },
-      "feature_flags": {
-        "name": "Feature flags"
       }
     },
     "binary_sensor": {
@@ -558,35 +558,71 @@
       "door_lock": {
         "name": "Door lock"
       },
-      "remote_control": {
-        "name": "Remote control"
-      },
       "child_lock": {
         "name": "Child lock"
-      },
-      "problem": {
-        "name": "Problem"
-      },
-      "program_started": {
-        "name": "Program started"
       },
       "dry_status": {
         "name": "Drying"
       },
-      "detergent_b_status": {
-        "name": "Detergent B dosing"
+      "anti_allergy": {
+        "name": "Anti-allergy"
+      },
+      "uv_sterilization": {
+        "name": "UV sterilization"
+      },
+      "scheduled": {
+        "name": "Scheduled"
+      },
+      "care": {
+        "name": "Care"
+      },
+      "wet_cleaning": {
+        "name": "Wet cleaning"
+      },
+      "problem": {
+        "name": "Problem"
+      },
+      "remote_control": {
+        "name": "Remote control"
+      },
+      "remote_control_enabled": {
+        "name": "Remote control enabled"
+      },
+      "remote_power_on": {
+        "name": "Remote power-on"
+      },
+      "long_term_authorization": {
+        "name": "Long-term authorization"
+      },
+      "standby_extended": {
+        "name": "Standby extended"
       },
       "dry_prog_flag": {
         "name": "Dry program flag"
       },
-      "dry_cleaning_needed": {
-        "name": "Dry cleaning needed"
-      },
       "def_set_allowed": {
         "name": "Default settings allowed"
       },
-      "standby_extended": {
-        "name": "Standby extended"
+      "detergent_b_status": {
+        "name": "Detergent B dosing"
+      },
+      "dry_cleaning_needed": {
+        "name": "Dry cleaning needed"
+      },
+      "program_started": {
+        "name": "Program started"
+      },
+      "anti_crease": {
+        "name": "Anti-crease"
+      },
+      "fresh_air": {
+        "name": "Fresh air"
+      },
+      "photo_plasma": {
+        "name": "Photo plasma"
+      },
+      "spa_rinse_heat": {
+        "name": "SPA rinse heat"
       }
     }
   }

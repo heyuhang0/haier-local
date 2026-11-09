@@ -16,7 +16,6 @@ class DeviceProfile:
     sensors: tuple
     binary_sensors: tuple
     raw_state_fields: tuple[str, ...]
-    feature_flags: tuple[tuple[str, str, str], ...]
     raw_only: frozenset[str]
     extra_sensor_names: tuple[tuple[str, str, str], ...]
     enums: Mapping[str, Mapping[int, tuple[str, str, str]]]
@@ -54,11 +53,9 @@ CASARTE_CE_AB13LWTUWCU1 = DeviceProfile(
     sensors=specs.ALL_SENSORS,
     binary_sensors=specs.ALL_BINARY,
     raw_state_fields=specs.RAW_STATE_FIELDS,
-    feature_flags=specs.FEATURE_FLAGS,
     raw_only=specs.RAW_ONLY,
     extra_sensor_names=(
         ("raw_state", "Raw state", "原始状态"),
-        ("feature_flags", "Feature flags", "功能开关"),
     ),
     enums=enum_defs.ENUM_DEFS,
 )

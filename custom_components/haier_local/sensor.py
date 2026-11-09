@@ -19,10 +19,7 @@ from . import decoder
 from .const import CONF_DEVICE_ID, DOMAIN
 from .coordinator import WasherCoordinator
 from .profile import DEVICE
-from .specs import (
-    SensorSpec,
-    as_bool,
-)
+from .specs import SensorSpec
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -122,37 +119,11 @@ class RawStateSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
         return attrs
 
 
-class FeatureFlagsSensor(CoordinatorEntity[WasherCoordinator], SensorEntity):
-    """Grouped optional feature flags, diagnostic and disabled by default."""
-
-    _attr_has_entity_name = True
-    _attr_translation_key = "feature_flags"
-    _attr_icon = "mdi:toggle-switch-outline"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False
-
-    def __init__(self, coordinator: WasherCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{entry.data[CONF_DEVICE_ID]}_feature_flags"
-        self._attr_device_info = _device_info(entry)
-
-    @property
-    def native_value(self):
-        state = self.coordinator.data or {}
-        return sum(1 for field, _en, _zh in DEVICE.feature_flags if as_bool(state.get(field)))
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        state = self.coordinator.data or {}
-        return {english: as_bool(state.get(field)) for field, english, _zh in DEVICE.feature_flags}
-
-
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: WasherCoordinator = hass.data[DOMAIN][entry.entry_id]
-    _LOGGER.info("creating %d sensor entities", len(DEVICE.sensors) + 2)
+    _LOGGER.info("creating %d sensor entities", len(DEVICE.sensors) + 1)
     entities = [WasherSensor(coordinator, entry, spec) for spec in DEVICE.sensors]
     entities.append(RawStateSensor(coordinator, entry))
-    entities.append(FeatureFlagsSensor(coordinator, entry))
     async_add_entities(entities)

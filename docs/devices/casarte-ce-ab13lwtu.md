@@ -36,38 +36,18 @@ a decrypted report for a future regression test; see
 
 The integration exposes this profile as:
 
-- 20 primary entities: remaining time, phase, program, running mode, message,
-  wash temperature, spin speed, remaining main wash/rinse, current and total
-  water/energy, plus power, running, door, door lock, remote control, child lock
-  and problem.
-- 23 enabled diagnostic entities: cycle counters, standby time, program state,
-  detergent/softener/booster levels, drying fields, detergent type/ratio,
-  softener concentration/ratio, dirt/stain/fabric, and the five subsystem
-  diagnostic-result sensors.
-- 21 disabled-by-default diagnostic entities: dosing weights, detergent B, dry
-  type/flag/cleaning reminder, air wash, cloud program fields, weights, wash
-  speed, water hardness, four cartridge levels, and the grouped
-  `Feature flags` and `Raw state` entities.
+- 39 Sensors, enabled by default: live state, current run settings, care and
+  air-wash parameters, consumable levels, and lifetime water/energy totals.
+- 13 Diagnostics, enabled by default: cycle counters, fault/problem, remote and
+  authorization flags, standby state and the five subsystem diagnostic results.
+- 26 disabled entities: current-cycle telemetry, cloud/internal fields,
+  optional cartridges and Fabric/Dirt/Stain/advanced care fields, plus
+  `Raw state`.
+- `Raw state` carries all 132 `6D01` fields from the exact configFile.
 
-The primary list is small because those are the values useful in automations;
-diagnostic values stay available without crowding the device page. Clothing
-recognition, voice-module, cartridge detail and factory/test fields are exposed
-only through `Raw state`; the 37 optional booleans are grouped in
-`Feature flags`. `Raw state` now carries all 132 `6D01` fields from the exact
-configFile.
-
-Category rules for the optional fields:
-
-- **Primary:** none added; the existing core status set is unchanged.
-- **Diagnostic, enabled:** softener concentration and softener ratio, parallel
-  to the existing detergent type/ratio.
-- **Diagnostic, disabled:** water hardness and the four optional cartridge
-  levels. They are useful when the matching hardware is fitted, but not common.
-- **Feature flags:** new booleans such as anti-crease, fresh air, photo plasma,
-  remote-control enable, linkage and cartridge dosing stay in the grouped
-  diagnostic entity rather than becoming individual entities.
-- **Raw only:** cartridge concentration/liquid type/volume, local program
-  names, service mode, photo-plasma care time and the program-storage index.
+`Raw state` is diagnostic and disabled by default. It is the only place for
+protocol fields without a dedicated entity; clothing recognition, voice-module,
+cartridge detail and factory/test fields stay there.
 
 ## Behavior
 

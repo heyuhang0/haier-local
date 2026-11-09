@@ -31,7 +31,6 @@ from haier_local import profile  # noqa: E402
 from haier_local.binary_sensor import WasherBinarySensor  # noqa: E402
 from haier_local.const import CONF_DEVICE_ID  # noqa: E402
 from haier_local.sensor import (  # noqa: E402
-    FeatureFlagsSensor,
     RawStateSensor,
     WasherSensor,
 )
@@ -56,8 +55,8 @@ async def _check_translated_names(tmp_path: Path) -> None:
     loader_setup(hass)
 
     expected = {
-        "en": ("Remaining time", "Problem", "Raw state", "Feature flags"),
-        "zh-Hans": ("剩余时间", "故障", "原始状态", "功能开关"),
+        "en": ("Remaining time", "Problem", "Raw state"),
+        "zh-Hans": ("剩余时间", "故障", "原始状态"),
     }
     remaining_time = next(
         spec for spec in profile.DEVICE.sensors if spec.key == "remaining_time"
@@ -77,12 +76,10 @@ async def _check_translated_names(tmp_path: Path) -> None:
         sensor = WasherSensor(_coordinator(), _Entry(), remaining_time)
         binary = WasherBinarySensor(_coordinator(), _Entry(), problem)
         raw = RawStateSensor(_coordinator(), _Entry())
-        flags = FeatureFlagsSensor(_coordinator(), _Entry())
         sensor.platform_data = sensor_data
         binary.platform_data = binary_data
         raw.platform_data = sensor_data
-        flags.platform_data = sensor_data
-        assert (sensor.name, binary.name, raw.name, flags.name) == names
+        assert (sensor.name, binary.name, raw.name) == names
 
 
 def test_sensor_entities_satisfy_ha_description_contract() -> None:
