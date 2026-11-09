@@ -10,6 +10,7 @@ EntityPlatform registration.
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -24,7 +25,11 @@ sys.path.insert(0, str(ROOT / "custom_components"))
 from haier_local import profile  # noqa: E402
 from haier_local.binary_sensor import WasherBinarySensor  # noqa: E402
 from haier_local.const import CONF_DEVICE_ID  # noqa: E402
-from haier_local.sensor import WasherSensor  # noqa: E402
+from haier_local.sensor import (  # noqa: E402
+    FeatureFlagsSensor,
+    RawStateSensor,
+    WasherSensor,
+)
 
 
 class _Entry:
@@ -34,6 +39,29 @@ class _Entry:
 
 def _coordinator(data: dict | None = None) -> SimpleNamespace:
     return SimpleNamespace(data=data or {}, hass=None)
+
+
+def _platform_translations(filename: str) -> dict[str, str]:
+    document = json.loads(
+        (ROOT / "custom_components/haier_local/translations" / filename).read_text()
+    )
+    translations: dict[str, str] = {}
+    for domain in ("sensor", "binary_sensor"):
+        for key, block in document["entity"][domain].items():
+            translations[
+                f"component.{domain}.entity.haier_local.{key}.name"
+            ] = block["name"]
+    return translations
+
+
+def _attach_platform(entity, domain: str, translations: dict[str, str]) -> None:
+    entity.platform_data = SimpleNamespace(
+        platform_name=domain,
+        domain="haier_local",
+        platform_translations=translations,
+        component_translations={},
+        object_id_platform_translations={},
+    )
 
 
 def test_sensor_entities_satisfy_ha_description_contract() -> None:
@@ -60,6 +88,34 @@ def test_binary_entities_satisfy_ha_description_contract() -> None:
         assert entity.force_update is False
         assert entity.translation_placeholders == {}
         assert not hasattr(entity, "entity_description")
+
+
+def test_translated_names_for_all_entity_classes() -> None:
+    expected = {
+        "en.json": ("Remaining time", "Problem", "Raw state", "Feature flags"),
+        "zh-Hans.json": ("剩余时间", "故障", "原始状态", "功能开关"),
+    }
+    for filename, names in expected.items():
+        translations = _platform_translations(filename)
+        remaining_time = next(
+            spec for spec in profile.DEVICE.sensors if spec.key == "remaining_time"
+        )
+        problem = next(
+            spec for spec in profile.DEVICE.binary_sensors if spec.key == "problem"
+        )
+
+        sensor = WasherSensor(_coordinator(), _Entry(), remaining_time)
+        binary = WasherBinarySensor(_coordinator(), _Entry(), problem)
+        raw = RawStateSensor(_coordinator(), _Entry())
+        flags = FeatureFlagsSensor(_coordinator(), _Entry())
+        for entity, domain in (
+            (sensor, "sensor"),
+            (binary, "binary_sensor"),
+            (raw, "sensor"),
+            (flags, "sensor"),
+        ):
+            _attach_platform(entity, domain, translations)
+        assert (sensor.name, binary.name, raw.name, flags.name) == names
 
 
 def test_problem_binary_semantics() -> None:
