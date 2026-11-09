@@ -87,13 +87,43 @@ def test_enum_helpers() -> None:
 def test_spec_sources_exist_in_raw_state_fields_and_catalogue() -> None:
     fields = set(DEVICE.raw_state_fields)
     catalogue = decoder.map_field_names()
-    assert len(fields) == 93
+    assert DEVICE.map_typeid == DEVICE.uplus_id
+    assert len(fields) == 132
+    assert len(decoder._MODEL.fields_for("6D01")) == 132
     assert fields <= catalogue
     for spec in (*DEVICE.sensors, *DEVICE.binary_sensors):
         if spec.source is not None:
             assert spec.source in fields, spec.key
     for field in (*DEVICE.raw_only, *(row[0] for row in DEVICE.feature_flags)):
         assert field in fields, field
+
+
+def test_exact_map_places_the_previously_wrong_fields() -> None:
+    detergent = decoder._MODEL.field("detergentType")
+    softener = decoder._MODEL.field("softenerConcentrationType")
+    plasma = decoder._MODEL.field("photoPlasmaStatus")
+    assert (detergent.word, detergent.bit, detergent.length) == (15, 0, 4)
+    assert (softener.word, softener.bit, softener.length) == (15, 4, 4)
+    assert (plasma.word, plasma.bit, plasma.length) == (14, 9, 1)
+    assert decoder._MODEL.field("clothesAnionStatus") is None
+
+
+def test_exact_map_decodes_split_nibbles_and_photo_plasma() -> None:
+    # 6D01's attribute block starts at byte 92. Word 15 carries detergent
+    # type in bits 0-3 and softener concentration in bits 4-7; an 8-bit read
+    # of detergentType would fold them into 0x11. Word 14 bit 9 is the
+    # photo-plasma flag, not the old map's clothesAnionStatus.
+    blob = bytearray(92 + 2 * 66)
+    word15 = 92 + 2 * (15 - 1)
+    blob[word15:word15 + 2] = (0x11).to_bytes(2, "big")
+    word14 = 92 + 2 * (14 - 1)
+    word14_value = int.from_bytes(blob[word14:word14 + 2], "big") | (1 << 9)
+    blob[word14:word14 + 2] = word14_value.to_bytes(2, "big")
+    state = decoder._MODEL.decode(bytes(blob), status_cmd="6D01")
+    assert state["detergentType"] == 2
+    assert state["softenerConcentrationType"] == 2
+    assert state["photoPlasmaStatus"] is True
+    assert "clothesAnionStatus" not in state
 
 
 def test_profile_data_is_owned_by_the_instance() -> None:
@@ -158,9 +188,28 @@ def test_cycle_totals_and_texture_coverage() -> None:
     assert by_key["current_energy"].state_class is None
     assert by_key["total_water"].state_class == "total_increasing"
     assert by_key["total_energy"].state_class == "total_increasing"
-    assert len(DEVICE.enum_values("fabric")) == 97
+    assert len(DEVICE.enum_values("fabric")) == 106
     assert DEVICE.enum_values("diag_result")[False][0] == "not_passed"
     assert DEVICE.enum_values("diag_result")[True][0] == "passed"
+
+
+def test_new_fields_follow_the_existing_category_rules() -> None:
+    by_key = {spec.key: spec for spec in DEVICE.sensors}
+    # Settings a user is likely to check: diagnostic, enabled.
+    assert by_key["softener_concentration"].diagnostic
+    assert by_key["softener_concentration"].enabled_default
+    assert by_key["softener_ratio"].diagnostic
+    assert by_key["softener_ratio"].enabled_default
+    # Niche measurements: diagnostic, disabled by default.
+    assert by_key["water_hardness"].diagnostic
+    assert not by_key["water_hardness"].enabled_default
+    for key in ("box1_remaining", "box2_remaining", "box3_remaining", "box4_remaining"):
+        assert by_key[key].diagnostic
+        assert not by_key[key].enabled_default
+    # Booleans stay in the grouped Feature flags entity, not as individual entities.
+    flags = {field for field, _en, _zh in DEVICE.feature_flags}
+    assert {"antiCrease", "photoPlasmaStatus", "freshAir", "wetcleaningProgram"} <= flags
+    assert "clothesAnionStatus" not in DEVICE.raw_state_fields
 
 
 def test_decoder_value_helpers() -> None:

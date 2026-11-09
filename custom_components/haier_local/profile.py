@@ -44,15 +44,13 @@ class DeviceProfile:
         return [entry[0] for entry in self.enum_values(enum).values()]
 
 
+UPLUS_ID = "201c51890c31c308050100218006664300000000000000000000000000000040"
+
 CASARTE_CE_AB13LWTUWCU1 = DeviceProfile(
     manufacturer="Haier / Casarte",
     model="CE AB13LWTUWCU1",
-    uplus_id=(
-        "201c51890c31c308050100218006664300000000000000000000000000000040"
-    ),
-    map_typeid=(
-        "201c51890c31c30805010021800239584d000000000000000000000000000140"
-    ),
+    uplus_id=UPLUS_ID,
+    map_typeid=UPLUS_ID,
     sensors=specs.ALL_SENSORS,
     binary_sensors=specs.ALL_BINARY,
     raw_state_fields=specs.RAW_STATE_FIELDS,

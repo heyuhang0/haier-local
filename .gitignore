@@ -32,3 +32,4 @@ venv/
 *.log
 
 cloud_model.json
+device_config.json

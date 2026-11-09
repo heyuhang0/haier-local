@@ -101,6 +101,16 @@ ENUM_DEFS: dict[str, dict[int, tuple[str, str, str]]] = {
         1: ("present", "Present", "有"),
         2: ("empty", "Empty", "无"),
     },
+    "box_remaining": {
+        0: ("unknown", "Unknown", "未知"),
+        1: ("present", "Present", "有"),
+        2: ("low", "Low", "少"),
+        3: ("empty", "Empty", "无"),
+    },
+    "softener_concentration": {
+        1: ("normal", "Normal", "普通型"),
+        2: ("concentrated", "Concentrated", "浓缩型"),
+    },
     "dry_mode": {
         0: ("no_dry", "No drying", "无烘干过程"),
         1: ("strong", "Strong", "强烘"),
@@ -166,7 +176,8 @@ ENUM_DEFS: dict[str, dict[int, tuple[str, str, str]]] = {
         26: ("fruit", "Fruit", "果渍"),
     },
     # Chinese labels: cloud texture.valueRange. English: vendored laundry labels
-    # plus manual review; values without a catalogue variant are not included.
+    # plus manual review. The exact device configFile carries every variant in
+    # this table, including the nine steam/bra/intimates values at 97-105.
     "fabric": {
         0: ("not_selected", "Not selected", "未选择或未识别"),
         1: ("cotton", "Cotton", "棉麻"),
@@ -261,6 +272,15 @@ ENUM_DEFS: dict[str, dict[int, tuple[str, str, str]]] = {
         94: ("texture_94", "Lasting fragrance (softening soak 20)", "留香洗(软化浸泡20)"),
         95: ("texture_95", "Fleece", "摇粒绒"),
         96: ("texture_96", "Luxury care", "奢护"),
+        97: ("texture_97", "Steam AI wash", "蒸汽智慧洗"),
+        98: ("texture_98", "Steam shirt wash", "蒸汽衬衣洗"),
+        99: ("texture_99", "Steam baby care", "蒸汽爱婴洗"),
+        100: ("texture_100", "Steam anti-allergy", "蒸汽防过敏"),
+        101: ("texture_101", "Sports bra", "运动Bra"),
+        102: ("texture_102", "Seamless bra", "无感Bra"),
+        103: ("texture_103", "Shaping bra", "塑形Bra"),
+        104: ("texture_104", "Lace bra", "蕾丝Bra"),
+        105: ("texture_105", "Underwear", "内裤"),
         128: ("texture_128", "Quick 58", "快洗58"),
         129: ("texture_129", "Cotton 20", "Cotton20"),
         130: ("texture_130", "ECO 40-60", "ECO40-60"),

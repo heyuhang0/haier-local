@@ -243,6 +243,16 @@
       "detergent_ratio": {
         "name": "洗涤剂投放比例"
       },
+      "softener_concentration": {
+        "name": "柔顺剂浓度",
+        "state": {
+          "normal": "普通型",
+          "concentrated": "浓缩型"
+        }
+      },
+      "softener_ratio": {
+        "name": "柔顺剂投放比例"
+      },
       "dirt_level": {
         "name": "脏污度",
         "state": {
@@ -381,6 +391,15 @@
           "texture_94": "留香洗(软化浸泡20)",
           "texture_95": "摇粒绒",
           "texture_96": "奢护",
+          "texture_97": "蒸汽智慧洗",
+          "texture_98": "蒸汽衬衣洗",
+          "texture_99": "蒸汽爱婴洗",
+          "texture_100": "蒸汽防过敏",
+          "texture_101": "运动Bra",
+          "texture_102": "无感Bra",
+          "texture_103": "塑形Bra",
+          "texture_104": "蕾丝Bra",
+          "texture_105": "内裤",
           "texture_128": "快洗58",
           "texture_129": "Cotton20",
           "texture_130": "ECO40-60",
@@ -430,6 +449,45 @@
       },
       "detergent_b_ratio": {
         "name": "洗涤剂B投放比例"
+      },
+      "water_hardness": {
+        "name": "水硬度"
+      },
+      "box1_remaining": {
+        "name": "墨盒1余量",
+        "state": {
+          "unknown": "未知",
+          "present": "有",
+          "low": "少",
+          "empty": "无"
+        }
+      },
+      "box2_remaining": {
+        "name": "墨盒2余量",
+        "state": {
+          "unknown": "未知",
+          "present": "有",
+          "low": "少",
+          "empty": "无"
+        }
+      },
+      "box3_remaining": {
+        "name": "墨盒3余量",
+        "state": {
+          "unknown": "未知",
+          "present": "有",
+          "low": "少",
+          "empty": "无"
+        }
+      },
+      "box4_remaining": {
+        "name": "墨盒4余量",
+        "state": {
+          "unknown": "未知",
+          "present": "有",
+          "low": "少",
+          "empty": "无"
+        }
       },
       "dry_type": {
         "name": "烘干方式",

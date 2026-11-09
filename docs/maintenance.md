@@ -36,8 +36,11 @@ cd "$REPO"
 ```
 
 The profile's `map_typeid` selects its record in
-`vendor/haier_local_hrdp/device_models.json.gz`. After updating the snapshot,
-run:
+`vendor/haier_local_hrdp/device_models.json.gz`. The Casarte profile now points
+at its exact uPlusId; the bundle record was projected from Haier's configFile
+for that id (227 `Property` entries, 132 of them in `6D01`). Replacing the
+upstream snapshot replaces that file, so re-apply the exact record with the
+commands in **Update the device map** below. After updating the snapshot, run:
 
 ```bash
 python -m pytest
@@ -45,6 +48,27 @@ python3 -I tools/read_washer.py --help
 ```
 
 Update the upstream revision in `THIRD_PARTY_NOTICES.md`.
+
+## Update the device map
+
+The App selects its byte map from Haier's public configFile service by the
+device's full 64-hex uPlusId. Fetch it, then project it into the vendored
+bundle:
+
+```bash
+python3 -I tools/fetch_device_config.py --typeid <64-hex-uPlusId>
+python3 -I tools/update_vendored_map.py \
+  --typeid <64-hex-uPlusId> --config device_config.json
+python3 -I tools/update_vendored_map.py \
+  --typeid <64-hex-uPlusId> --config device_config.json --check
+```
+
+The first command verifies the service's published MD5. `device_config.json`
+is gitignored; the second command writes the compact projection (positions,
+enum tables, alarms and operation names) into
+`custom_components/haier_local/vendor/haier_local_hrdp/device_models.json.gz`.
+If the profile's `map_typeid` is not the exact uPlusId, update it in
+`profile.py` and rerun the tests.
 
 ## Fetch the cloud model
 

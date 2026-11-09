@@ -7,6 +7,10 @@ Install their dependency with `pip install -r requirements.txt`.
 
 - `read_washer.py` — read-only status using the same fixed profile map as the
   integration.
+- `fetch_device_config.py` — download and MD5-verify Haier's public configFile
+  for a device type id. This is the map the App itself uses.
+- `update_vendored_map.py` — project a fetched configFile into
+  `vendor/haier_local_hrdp/device_models.json.gz`.
 - `fetch_cloud_model.py` — fetch the device's cloud digital model for enum
   curation (requires the saved token and key).
 - `generate_component_translations.py` — regenerate entity/enum translations

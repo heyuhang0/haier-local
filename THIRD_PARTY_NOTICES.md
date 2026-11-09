@@ -19,6 +19,12 @@ The upstream package is named `haismart_hrdp`; it was renamed to
 `haier_local_hrdp` only to avoid a Python import conflict. The code and the
 bundled device-model data are otherwise upstream work.
 
+The `CE AB13LWTUWCU1` record in `device_models.json.gz` is the exception: it
+was projected from Haier's public configFile service for the device's exact
+uPlusId, using `tools/fetch_device_config.py` and
+`tools/update_vendored_map.py`. That record is vendor device metadata, not
+upstream code.
+
 ### `haismart_extractor`
 
 - Upstream: <https://github.com/enapt/haismart-local>

@@ -72,14 +72,14 @@ part of this repository.
 
 ## Status decoding
 
-The class-0501 map used for this unit is:
+The exact class-0501 map used for this unit is keyed by its own uPlusId:
 
 ```text
-201c51890c31c30805010021800239584d000000000000000000000000000140
+201c51890c31c308050100218006664300000000000000000000000000000040
 ```
 
-It contains 219 fields and 61 alarm positions. The device's own uPlusId is not
-in the bundled model table, so this profile pins the map explicitly. Both the
+Its configFile has 227 `Property` entries, of which 132 sit in `6D01`, plus 312
+`Bigdata` rows for the `7D01`-`7D10` reports and 73 alarm positions. Both the
 integration and `tools/read_washer.py` load that map from the profile; neither
 guesses a map at read time.
 
@@ -89,16 +89,16 @@ with `--raw-out` for future regression evidence.
 
 Two practical details:
 
-- The 219-field class-0501 map is selected by `profile.map_typeid` from the
+- The exact class-0501 map is selected by `profile.map_typeid` from the
   vendored `vendor/haier_local_hrdp/device_models.json.gz`.
-- The 93 attributes exposed by `Raw state` are an explicit whitelist in
+- The 132 attributes exposed by `Raw state` are an explicit whitelist in
   `custom_components/haier_local/specs.py`.
 
 ## Reconstruction
 
-See [`maintenance.md`](maintenance.md) for updating the vendored catalogue,
-and regenerating translations. The map itself is not regenerated: the profile
-pins the catalogue id.
+See [`maintenance.md`](maintenance.md) for fetching the App's configFile,
+projecting it into the vendored map and regenerating translations. The
+integration and reader share the same vendored projection.
 
 One local session is allowed at a time; this is a device constraint, not an
 integration setting.

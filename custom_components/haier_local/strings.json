@@ -243,6 +243,16 @@
       "detergent_ratio": {
         "name": "Detergent ratio"
       },
+      "softener_concentration": {
+        "name": "Softener concentration",
+        "state": {
+          "normal": "Normal",
+          "concentrated": "Concentrated"
+        }
+      },
+      "softener_ratio": {
+        "name": "Softener ratio"
+      },
       "dirt_level": {
         "name": "Dirt level",
         "state": {
@@ -381,6 +391,15 @@
           "texture_94": "Lasting fragrance (softening soak 20)",
           "texture_95": "Fleece",
           "texture_96": "Luxury care",
+          "texture_97": "Steam AI wash",
+          "texture_98": "Steam shirt wash",
+          "texture_99": "Steam baby care",
+          "texture_100": "Steam anti-allergy",
+          "texture_101": "Sports bra",
+          "texture_102": "Seamless bra",
+          "texture_103": "Shaping bra",
+          "texture_104": "Lace bra",
+          "texture_105": "Underwear",
           "texture_128": "Quick 58",
           "texture_129": "Cotton 20",
           "texture_130": "ECO 40-60",
@@ -430,6 +449,45 @@
       },
       "detergent_b_ratio": {
         "name": "Detergent B ratio"
+      },
+      "water_hardness": {
+        "name": "Water hardness"
+      },
+      "box1_remaining": {
+        "name": "Cartridge 1 level",
+        "state": {
+          "unknown": "Unknown",
+          "present": "Present",
+          "low": "Low",
+          "empty": "Empty"
+        }
+      },
+      "box2_remaining": {
+        "name": "Cartridge 2 level",
+        "state": {
+          "unknown": "Unknown",
+          "present": "Present",
+          "low": "Low",
+          "empty": "Empty"
+        }
+      },
+      "box3_remaining": {
+        "name": "Cartridge 3 level",
+        "state": {
+          "unknown": "Unknown",
+          "present": "Present",
+          "low": "Low",
+          "empty": "Empty"
+        }
+      },
+      "box4_remaining": {
+        "name": "Cartridge 4 level",
+        "state": {
+          "unknown": "Unknown",
+          "present": "Present",
+          "low": "Low",
+          "empty": "Empty"
+        }
       },
       "dry_type": {
         "name": "Dry type",

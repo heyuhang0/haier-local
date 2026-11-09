@@ -10,18 +10,21 @@ This is the only device profile currently verified for Haier Local.
 | uPlusId | `201c51890c31c308050100218006664300000000000000000000000000000040` |
 | Local transport | uSS over TCP `56800` |
 | Firmware observed | `e_4.6.38 / R_6.0.01` |
-| Decoder map | `201c51890c31c30805010021800239584d000000000000000000000000000140` (219 fields) |
+| Decoder map | Exact uPlusId, projected from Haier's configFile (227 properties, 132 `6D01` fields) |
 
-The map is selected from the MIT-licensed `haismart-local` catalogue. The
-device's exact uPlusId is not in that catalogue, but this map placed every
-observed field correctly.
+The map is now the device's exact configFile rather than the neighbouring
+`0501` catalogue record. The file also contains 312 `Bigdata` fields for the
+`7D01`-`7D10` reports, which the integration does not query yet. The public
+fetch and projection commands are in
+[`docs/maintenance.md`](../maintenance.md#update-the-device-map).
 
 ## Verification
 
 One local status report observed during initial development (2026-11-08,
-firmware `e_4.6.38 / R_6.0.01`) decoded to 93 attributes. The same 93 names were
-present in the cloud digital model; 92 non-null cloud values matched, and
-`clothesAnionStatus` was null in that snapshot.
+firmware `e_4.6.38 / R_6.0.01`) decoded to 93 attributes with the then-selected
+neighbouring map. The exact configFile now used by the profile carries 132
+`6D01` fields; the earlier cloud comparison still supports the shared positions
+(92 non-null cloud values matched, `clothesAnionStatus` was null).
 
 The repository does not currently contain the raw report or the original cloud
 response, so those numbers are development observations rather than an
@@ -37,17 +40,34 @@ The integration exposes this profile as:
   wash temperature, spin speed, remaining main wash/rinse, current and total
   water/energy, plus power, running, door, door lock, remote control, child lock
   and problem.
-- 21 enabled diagnostic entities: cycle counters, standby time, program state,
+- 23 enabled diagnostic entities: cycle counters, standby time, program state,
   detergent/softener/booster levels, drying fields, detergent type/ratio,
-  dirt/stain/fabric, and the five subsystem diagnostic-result sensors.
-- 18 disabled-by-default diagnostic entities: dosing weights, detergent B, dry
+  softener concentration/ratio, dirt/stain/fabric, and the five subsystem
+  diagnostic-result sensors.
+- 21 disabled-by-default diagnostic entities: dosing weights, detergent B, dry
   type/flag/cleaning reminder, air wash, cloud program fields, weights, wash
-  speed, and the grouped `Feature flags` and `Raw state` entities.
+  speed, water hardness, four cartridge levels, and the grouped
+  `Feature flags` and `Raw state` entities.
 
 The primary list is small because those are the values useful in automations;
 diagnostic values stay available without crowding the device page. Clothing
-recognition, voice-module and factory/test fields are exposed only through
-`Raw state` for this profile.
+recognition, voice-module, cartridge detail and factory/test fields are exposed
+only through `Raw state`; the 37 optional booleans are grouped in
+`Feature flags`. `Raw state` now carries all 132 `6D01` fields from the exact
+configFile.
+
+Category rules for the optional fields:
+
+- **Primary:** none added; the existing core status set is unchanged.
+- **Diagnostic, enabled:** softener concentration and softener ratio, parallel
+  to the existing detergent type/ratio.
+- **Diagnostic, disabled:** water hardness and the four optional cartridge
+  levels. They are useful when the matching hardware is fitted, but not common.
+- **Feature flags:** new booleans such as anti-crease, fresh air, photo plasma,
+  remote-control enable, linkage and cartridge dosing stay in the grouped
+  diagnostic entity rather than becoming individual entities.
+- **Raw only:** cartridge concentration/liquid type/volume, local program
+  names, service mode, photo-plasma care time and the program-storage index.
 
 ## Behavior
 
