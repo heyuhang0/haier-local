@@ -10,7 +10,8 @@ EntityPlatform registration.
 """
 from __future__ import annotations
 
-import json
+import asyncio
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -20,8 +21,12 @@ import pytest
 pytest.importorskip("homeassistant")
 
 ROOT = Path(__file__).resolve().parent.parent
+COMPONENT = ROOT / "custom_components" / "haier_local"
 sys.path.insert(0, str(ROOT / "custom_components"))
 
+from homeassistant.core import HomeAssistant  # noqa: E402
+from homeassistant.helpers.entity_platform import PlatformData  # noqa: E402
+from homeassistant.loader import async_setup as loader_setup  # noqa: E402
 from haier_local import profile  # noqa: E402
 from haier_local.binary_sensor import WasherBinarySensor  # noqa: E402
 from haier_local.const import CONF_DEVICE_ID  # noqa: E402
@@ -41,27 +46,43 @@ def _coordinator(data: dict | None = None) -> SimpleNamespace:
     return SimpleNamespace(data=data or {}, hass=None)
 
 
-def _platform_translations(filename: str) -> dict[str, str]:
-    document = json.loads(
-        (ROOT / "custom_components/haier_local/translations" / filename).read_text()
-    )
-    translations: dict[str, str] = {}
-    for domain in ("sensor", "binary_sensor"):
-        for key, block in document["entity"][domain].items():
-            translations[
-                f"component.{domain}.entity.haier_local.{key}.name"
-            ] = block["name"]
-    return translations
+async def _check_translated_names(tmp_path: Path) -> None:
+    # Load the integration through HA's real loader rather than rebuilding its
+    # translation key format by hand.
+    custom_components = tmp_path / "custom_components"
+    custom_components.mkdir()
+    os.symlink(COMPONENT, custom_components / "haier_local")
+    hass = HomeAssistant(str(tmp_path))
+    loader_setup(hass)
 
-
-def _attach_platform(entity, domain: str, translations: dict[str, str]) -> None:
-    entity.platform_data = SimpleNamespace(
-        platform_name=domain,
-        domain="haier_local",
-        platform_translations=translations,
-        component_translations={},
-        object_id_platform_translations={},
+    expected = {
+        "en": ("Remaining time", "Problem", "Raw state", "Feature flags"),
+        "zh-Hans": ("剩余时间", "故障", "原始状态", "功能开关"),
+    }
+    remaining_time = next(
+        spec for spec in profile.DEVICE.sensors if spec.key == "remaining_time"
     )
+    problem = next(
+        spec for spec in profile.DEVICE.binary_sensors if spec.key == "problem"
+    )
+    for language, names in expected.items():
+        hass.config.language = language
+        sensor_data = PlatformData(hass, domain="sensor", platform_name="haier_local")
+        binary_data = PlatformData(
+            hass, domain="binary_sensor", platform_name="haier_local"
+        )
+        await sensor_data.async_load_translations()
+        await binary_data.async_load_translations()
+
+        sensor = WasherSensor(_coordinator(), _Entry(), remaining_time)
+        binary = WasherBinarySensor(_coordinator(), _Entry(), problem)
+        raw = RawStateSensor(_coordinator(), _Entry())
+        flags = FeatureFlagsSensor(_coordinator(), _Entry())
+        sensor.platform_data = sensor_data
+        binary.platform_data = binary_data
+        raw.platform_data = sensor_data
+        flags.platform_data = sensor_data
+        assert (sensor.name, binary.name, raw.name, flags.name) == names
 
 
 def test_sensor_entities_satisfy_ha_description_contract() -> None:
@@ -90,32 +111,8 @@ def test_binary_entities_satisfy_ha_description_contract() -> None:
         assert not hasattr(entity, "entity_description")
 
 
-def test_translated_names_for_all_entity_classes() -> None:
-    expected = {
-        "en.json": ("Remaining time", "Problem", "Raw state", "Feature flags"),
-        "zh-Hans.json": ("剩余时间", "故障", "原始状态", "功能开关"),
-    }
-    for filename, names in expected.items():
-        translations = _platform_translations(filename)
-        remaining_time = next(
-            spec for spec in profile.DEVICE.sensors if spec.key == "remaining_time"
-        )
-        problem = next(
-            spec for spec in profile.DEVICE.binary_sensors if spec.key == "problem"
-        )
-
-        sensor = WasherSensor(_coordinator(), _Entry(), remaining_time)
-        binary = WasherBinarySensor(_coordinator(), _Entry(), problem)
-        raw = RawStateSensor(_coordinator(), _Entry())
-        flags = FeatureFlagsSensor(_coordinator(), _Entry())
-        for entity, domain in (
-            (sensor, "sensor"),
-            (binary, "binary_sensor"),
-            (raw, "sensor"),
-            (flags, "sensor"),
-        ):
-            _attach_platform(entity, domain, translations)
-        assert (sensor.name, binary.name, raw.name, flags.name) == names
+def test_translated_names_for_all_entity_classes(tmp_path: Path) -> None:
+    asyncio.run(_check_translated_names(tmp_path))
 
 
 def test_problem_binary_semantics() -> None:
