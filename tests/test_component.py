@@ -154,8 +154,8 @@ def test_washer_alarm_labels_are_not_air_conditioner_labels() -> None:
 
 def test_cycle_totals_and_texture_coverage() -> None:
     by_key = {spec.key: spec for spec in DEVICE.sensors}
-    assert by_key["current_water"].state_class == "total"
-    assert by_key["current_energy"].state_class == "total"
+    assert by_key["current_water"].state_class is None
+    assert by_key["current_energy"].state_class is None
     assert by_key["total_water"].state_class == "total_increasing"
     assert by_key["total_energy"].state_class == "total_increasing"
     assert len(DEVICE.enum_values("fabric")) == 97
